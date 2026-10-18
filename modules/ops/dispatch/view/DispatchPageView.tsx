@@ -38,7 +38,7 @@ export function DispatchPageView({ vm }: { vm: DispatchPageVm }) {
   return (
     <div className="min-h-screen bg-[#F8F5EE] text-[#303A36] dark:bg-[#17201D] dark:text-[#F5EBDD] py-8 px-4 sm:px-6 max-w-6xl mx-auto">
       {/* ─── Header & Mascot Dispatch Bar ───────────────────────────────────── */}
-      <div className="rounded-3xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
+      <div id="tour-dispatch-header" className="rounded-3xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
           <YoonieMascot
             mood={criticalCount > 0 ? "thinking" : completedCount === allTasksCount ? "happy" : "calm"}
@@ -116,7 +116,7 @@ export function DispatchPageView({ vm }: { vm: DispatchPageVm }) {
       </div>
 
       {/* ─── Task Cards List ────────────────────────────────────────────────── */}
-      <div className="space-y-4">
+      <div id="tour-dispatch-tasks" className="space-y-4">
         {tasks.length === 0 ? (
           <div className="p-12 rounded-3xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] text-center flex flex-col items-center gap-3">
             <YoonieMascot mood="sleeping" size="md" />

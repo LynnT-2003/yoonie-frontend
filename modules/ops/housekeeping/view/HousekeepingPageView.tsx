@@ -137,7 +137,7 @@ export function HousekeepingPageView({ vm }: { vm: HousekeepingPageVm }) {
   return (
     <div className="min-h-screen bg-[#F8F5EE] text-[#303A36] dark:bg-[#17201D] dark:text-[#F5EBDD] py-8 px-4 sm:px-6 max-w-7xl mx-auto">
       {/* ─── Header & Mascot Bar ────────────────────────────────────────────── */}
-      <div className="rounded-3xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
+      <div id="tour-hk-header" className="rounded-3xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-6 mb-8">
         <div className="flex items-center gap-4">
           <YoonieMascot
             mood={allClear ? "sleeping" : board.dirty.length > 2 ? "worried" : "checking"}
@@ -190,7 +190,7 @@ export function HousekeepingPageView({ vm }: { vm: HousekeepingPageVm }) {
       {/* ─── 4 Columns Kanban ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Column 1: Dirty */}
-        <div className="flex flex-col gap-3">
+        <div id="tour-hk-dirty-column" className="flex flex-col gap-3">
           <div className="flex items-center justify-between pb-2 border-b-2 border-red-500">
             <span className="text-xs font-extrabold tracking-wider text-red-600 dark:text-red-400 uppercase flex items-center gap-1.5">
               <ShieldAlert className="size-4" /> Dirty ({board.dirty.length})
@@ -255,7 +255,7 @@ export function HousekeepingPageView({ vm }: { vm: HousekeepingPageVm }) {
         </div>
 
         {/* Column 4: Inspected */}
-        <div className="flex flex-col gap-3">
+        <div id="tour-hk-inspected-column" className="flex flex-col gap-3">
           <div className="flex items-center justify-between pb-2 border-b-2 border-[#28594E]">
             <span className="text-xs font-extrabold tracking-wider text-[#28594E] dark:text-[#D8E6DA] uppercase flex items-center gap-1.5">
               <CheckCircle2 className="size-4" /> Inspected ({board.inspected.length})

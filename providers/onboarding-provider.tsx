@@ -2,197 +2,109 @@
 
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
+import type { MascotMood } from "@/components/mascot/YoonieMascot";
 
-export type OnboardingStepInfo = {
+export type SpotlightStep = {
   id: string;
   pageRoute: string;
-  pageName: string;
+  targetId: string;
   badge: string;
   title: string;
-  subtitle: string;
-  description: string;
-  elementsWalkthrough: Array<{
-    name: string;
-    description: string;
-    endpoint?: string;
-    badge?: string;
-  }>;
+  mascotMood: MascotMood;
+  speech: string;
+  actionHint: string;
 };
 
-export const ONBOARDING_STEPS: OnboardingStepInfo[] = [
+export const SPOTLIGHT_STEPS: SpotlightStep[] = [
   {
-    id: "booking-engine",
+    id: "stay-search",
     pageRoute: "/",
-    pageName: "Direct Booking Engine",
-    badge: "Page 1: Direct-Channel Booking",
-    title: "Direct Composite Booking Engine",
-    subtitle: "Combines room nights, waterside dining, and airport minivans in one checkout.",
-    description:
-      "This is the guest-facing digital front door. It enables independent boutique hotels to bypass high 15–25% OTA commissions by providing a frictionless composite reservation experience.",
-    elementsWalkthrough: [
-      {
-        name: "Property & Stay Dates Bar",
-        description:
-          "Computes nights dynamically and verifies property settings (VAT 7%, Service Charge 10%, check-in 14:00).",
-        endpoint: "GET /branches",
-        badge: "Settings",
-      },
-      {
-        name: "Room Catalog & Availability",
-        description:
-          "Displays Standard King, Deluxe River Balcony, and Pool Villa. Never computes room availability from room keys — queries atomic bookable inventory slots.",
-        endpoint: "GET /inventory/availability",
-        badge: "Atomic Slot",
-      },
-      {
-        name: "Composite Add-on Experiences",
-        description:
-          "Guests can bundle Bangkok Airport Minivan transfers, Chao Phraya Sunset Cruises, and Riverside Terrace dining in the same cart.",
-        endpoint: "GET /services & GET /restaurants",
-        badge: "Multi-Product",
-      },
-      {
-        name: "15-Minute Atomic Hold Cart",
-        description:
-          "Locks inventory slots atomically ($inc: { held: +qty }). Live countdown with Yoonie mascot changing from thinking to worried if under 3 minutes.",
-        endpoint: "POST /inventory/hold",
-        badge: "Concurrency",
-      },
-      {
-        name: "Direct Attribution Checkout",
-        description:
-          "Captures verified guest contacts (phone, LINE ID) and attaches UTM attribution (DIRECT_WEB). Generates bilingual airport pickup cards.",
-        endpoint: "POST /orders & POST /orders/:id/confirm",
-        badge: "Direct ROI",
-      },
-    ],
+    targetId: "tour-stay-search",
+    badge: "1/7 · Direct Booking",
+    title: "Stay Search & Dates",
+    mascotMood: "calm",
+    speech:
+      "Here! This is the Stay Search Bar. Pick your arrival and departure dates and guest count. Notice how it instantly calculates your stay nights and pulls live branch settings directly from the backend.",
+    actionHint: "Click 'Next' to view the direct room selection catalog.",
   },
   {
-    id: "housekeeping",
+    id: "room-catalog",
+    pageRoute: "/",
+    targetId: "tour-room-catalog",
+    badge: "2/7 · Atomic Inventory",
+    title: "Direct Sanctuary Catalog",
+    mascotMood: "checking",
+    speech:
+      "Here! These are the bookable rooms: Standard King, Deluxe River Balcony, and Private Pool Villa. Yoonie queries atomic bookable inventory slots, preventing double-bookings without paying 15–25% OTA commissions.",
+    actionHint: "Click 'Choose Room' on any card to hold it in your composite cart.",
+  },
+  {
+    id: "experience-addons",
+    pageRoute: "/",
+    targetId: "tour-experiences",
+    badge: "3/7 · Composite Cart",
+    title: "Experiences & Dining Add-Ons",
+    mascotMood: "happy",
+    speech:
+      "Here! Yoonie lets guests bundle airport minivans, Chao Phraya Sunset Cruises, and riverside dining into the exact same reservation checkout.",
+    actionHint: "Click 'Next' to navigate to the Housekeeping Command Board.",
+  },
+  {
+    id: "hk-header-gauge",
     pageRoute: "/ops/housekeeping",
-    pageName: "Housekeeping Command Board",
-    badge: "Page 2: Front-Desk Zero",
-    title: "Front-Desk Zero Housekeeping Board",
-    subtitle: "Rooms cleaned in guest arrival ETA & VIP order, not numeric room order.",
-    description:
-      "A tablet-optimized command board for housekeeping leads and attendants. Eliminates the traditional hotel problem of VIP guests waiting in the lobby because their room wasn't cleaned in time.",
-    elementsWalkthrough: [
-      {
-        name: "Front-Desk Zero Gauge",
-        description:
-          "Shows real-time percentage of rooms inspected and key-ready for handover.",
-        badge: "Operational Metric",
-      },
-      {
-        name: "ETA-Ranked Dirty Column",
-        description:
-          "Rooms sorted by guest arrival urgency. A guest whose flight lands at 09:40 is automatically prioritized at the top.",
-        endpoint: "GET /rooms/housekeeping",
-        badge: "dispatch-rules.ts",
-      },
-      {
-        name: "In Progress Column",
-        description:
-          "Timestamped cleaning underway. Prevents duplicate cleaning by attendants.",
-        badge: "Attendant View",
-      },
-      {
-        name: "Clean & Inspected Columns",
-        description:
-          "Attendant finishes → flips to CLEAN. Supervisor signs off → flips to INSPECTED (green key-ready state).",
-        endpoint: "PATCH /rooms/:id/cleaning",
-        badge: "1-Tap Action",
-      },
-      {
-        name: "Sleeping Mascot State",
-        description:
-          "When all rooms are inspected, Yoonie rests peacefully, confirming zero pending cleanings.",
-        badge: "Mascot Reactive",
-      },
-    ],
+    targetId: "tour-hk-header",
+    badge: "4/7 · Front-Desk Zero",
+    title: "Front-Desk Zero Gauge",
+    mascotMood: "thinking",
+    speech:
+      "We've arrived at the Housekeeping Command Board! Here is the Front-Desk Zero gauge, tracking the percentage of rooms inspected and key-ready for arriving guests.",
+    actionHint: "Now take a look at how dirty rooms are prioritized below.",
   },
   {
-    id: "dispatch",
+    id: "hk-dirty-queue",
+    pageRoute: "/ops/housekeeping",
+    targetId: "tour-hk-dirty-column",
+    badge: "5/7 · ETA Priority",
+    title: "ETA & VIP Cleaning Priority",
+    mascotMood: "worried",
+    speech:
+      "Here! This is the Dirty Rooms queue. Instead of cleaning in numeric room order, Yoonie automatically prioritizes rooms by the guest's flight arrival ETA and VIP status so no guest waits in the lobby!",
+    actionHint: "Housekeeping staff tap 'Start Cleaning' to transition rooms to In Progress.",
+  },
+  {
+    id: "dispatch-header",
     pageRoute: "/ops/dispatch",
-    pageName: "05:30 Morning Dispatch Run-Sheet",
-    badge: "Page 3: Frontline Operations",
-    title: "Daily Morning Dispatch Hub",
-    subtitle: "Automated air-traffic controller for tours, flight transfers, and turnarounds.",
-    description:
-      "Every morning at 05:30, the system evaluates all active bookings and flight arrivals to generate prioritized, idempotent task cards with natural-key deduplication.",
-    elementsWalkthrough: [
-      {
-        name: "Task Severity & Urgency Score",
-        description:
-          "Every task is calculated with a priorityScore (e.g. 965 for early international flight pickups, 910 for VIP room turns).",
-        endpoint: "GET /dispatch?serviceDate=YYYY-MM-DD",
-        badge: "Priority Engine",
-      },
-      {
-        name: "Tour Yield Consolidation",
-        description:
-          "Flags tours with booked pax below the 40% threshold or minViablePax. Computes projected THB loss and recommends WATCH or MERGE_OR_CANCEL.",
-        badge: "Yield Optimizer",
-      },
-      {
-        name: "Bilingual Airport Pickup Cards",
-        description:
-          "Ready-to-send English & Thai driver cards with flight numbers, vehicle plates, drivers, and meeting doors (with 1-click copy).",
-        badge: "Bilingual Cards",
-      },
-      {
-        name: "Task Status Progression",
-        description:
-          "Staff advance tasks: OPEN → ACKNOWLEDGED → IN_PROGRESS → DONE, maintaining live visibility across all hotel staff.",
-        endpoint: "PATCH /dispatch/:id/status",
-        badge: "Task Workflow",
-      },
-    ],
+    targetId: "tour-dispatch-header",
+    badge: "6/7 · Daily Operations",
+    title: "05:30 Morning Dispatch Hub",
+    mascotMood: "checking",
+    speech:
+      "Welcome to Frontline Operations! Every morning at 05:30, this automated air-traffic controller processes all flight arrivals, VIP check-ins, and tour consolidations.",
+    actionHint: "Notice the alert counter highlighting urgent actions for the day.",
   },
   {
-    id: "account",
-    pageRoute: "/account",
-    pageName: "Master Guest CDP",
-    badge: "Page 4: Guest Loyalty & CDP",
-    title: "Master Guest CDP & Account Portal",
-    subtitle: "Own guest identity and track lifetime value without OTA data masking.",
-    description:
-      "When guests book directly, the hotel owns the relationship forever. This portal houses the guest's verified profile, loyalty tier, lifetime spend, and direct communication channels.",
-    elementsWalkthrough: [
-      {
-        name: "VIP Tier & Score Badge",
-        description:
-          "Derived from lifetime spend in THB and total stay count. Enables personalized frontline recognition.",
-        endpoint: "GET /users/me",
-        badge: "Guest CDP",
-      },
-      {
-        name: "Direct Communication Channels",
-        description:
-          "Stores phone (E.164), LINE User ID, and WhatsApp opt-in for automated transit cards and concierge messaging.",
-        badge: "Frontline Messaging",
-      },
-      {
-        name: "Unified Account Session",
-        description:
-          "Connected via JWT token rotation with silent refresh and multi-provider OAuth (Google, LINE).",
-        endpoint: "POST /auth/refresh",
-        badge: "Authentication",
-      },
-    ],
+    id: "dispatch-tasks",
+    pageRoute: "/ops/dispatch",
+    targetId: "tour-dispatch-tasks",
+    badge: "7/7 · Bilingual Logistics",
+    title: "Bilingual Driver & Tour Cards",
+    mascotMood: "happy",
+    speech:
+      "Here! Staff get 1-click bilingual (English & Thai) driver dispatch cards with flight numbers, terminal meeting doors, and vehicle plates ready to copy and send!",
+    actionHint: "You're all set! Click 'Finish Tour' to explore the operating system freely.",
   },
 ];
 
 type OnboardingContextValue = {
   isOpen: boolean;
   currentStepIndex: number;
-  currentStep: OnboardingStepInfo;
+  currentStep: SpotlightStep;
+  totalSteps: number;
   openTour: (stepIndex?: number) => void;
   closeTour: () => void;
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (index: number) => void;
-  navigateAndInspect: (route: string) => void;
 };
 
 const OnboardingContext = React.createContext<OnboardingContextValue | null>(null);
@@ -203,7 +115,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 
-  // Sync step with active route if opened
+  // Initialize from localStorage if onboarding has not been completed
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       const completed = localStorage.getItem("onboardingComplete");
@@ -213,11 +125,23 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
-  const currentStep = ONBOARDING_STEPS[currentStepIndex];
+  const currentStep = SPOTLIGHT_STEPS[currentStepIndex] || SPOTLIGHT_STEPS[0];
+
+  const navigateToStep = React.useCallback(
+    (stepIdx: number) => {
+      const targetStep = SPOTLIGHT_STEPS[stepIdx];
+      if (!targetStep) return;
+      setCurrentStepIndex(stepIdx);
+      if (pathname !== targetStep.pageRoute) {
+        router.push(targetStep.pageRoute);
+      }
+    },
+    [pathname, router]
+  );
 
   const openTour = (stepIndex = 0) => {
-    setCurrentStepIndex(stepIndex);
     setIsOpen(true);
+    navigateToStep(stepIndex);
   };
 
   const closeTour = () => {
@@ -227,17 +151,9 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     setIsOpen(false);
   };
 
-  const navigateAndInspect = (route: string) => {
-    if (pathname !== route) {
-      router.push(route);
-    }
-  };
-
   const nextStep = () => {
-    if (currentStepIndex < ONBOARDING_STEPS.length - 1) {
-      const nextIdx = currentStepIndex + 1;
-      setCurrentStepIndex(nextIdx);
-      navigateAndInspect(ONBOARDING_STEPS[nextIdx].pageRoute);
+    if (currentStepIndex < SPOTLIGHT_STEPS.length - 1) {
+      navigateToStep(currentStepIndex + 1);
     } else {
       closeTour();
     }
@@ -245,15 +161,14 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
 
   const prevStep = () => {
     if (currentStepIndex > 0) {
-      const prevIdx = currentStepIndex - 1;
-      setCurrentStepIndex(prevIdx);
-      navigateAndInspect(ONBOARDING_STEPS[prevIdx].pageRoute);
+      navigateToStep(currentStepIndex - 1);
     }
   };
 
   const goToStep = (index: number) => {
-    setCurrentStepIndex(index);
-    navigateAndInspect(ONBOARDING_STEPS[index].pageRoute);
+    if (index >= 0 && index < SPOTLIGHT_STEPS.length) {
+      navigateToStep(index);
+    }
   };
 
   return (
@@ -262,12 +177,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         isOpen,
         currentStepIndex,
         currentStep,
+        totalSteps: SPOTLIGHT_STEPS.length,
         openTour,
         closeTour,
         nextStep,
         prevStep,
         goToStep,
-        navigateAndInspect,
       }}
     >
       {children}
