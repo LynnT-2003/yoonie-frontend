@@ -46,6 +46,12 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --color-yoonie-forest: #28594e;
+  --color-yoonie-sage: #d8e6da;
+  --color-yoonie-linen: #f5ebdd;
+  --color-yoonie-amber: #e8a45b;
+  --color-yoonie-charcoal: #303a36;
 }
 
 :root {
