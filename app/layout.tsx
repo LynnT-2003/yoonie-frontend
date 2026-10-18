@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     "Direct booking engine, master guest CDP, and frontline dispatch operations for boutique hotels.",
 };
 
+import { OnboardingProvider } from "@/providers/onboarding-provider";
+import { YoonieOnboardingModal } from "@/components/onboarding/YoonieOnboardingModal";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -35,8 +38,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F8F5EE] text-[#303A36] dark:bg-[#17201D] dark:text-[#F5EBDD]">
         <AppQueryProvider>
           <AuthProvider>
-            <Navbar />
-            <main className="flex flex-1 flex-col">{children}</main>
+            <OnboardingProvider>
+              <Navbar />
+              <main className="flex flex-1 flex-col">{children}</main>
+              <YoonieOnboardingModal />
+            </OnboardingProvider>
           </AuthProvider>
         </AppQueryProvider>
       </body>

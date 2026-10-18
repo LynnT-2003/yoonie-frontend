@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { Sparkles, ClipboardList, BedDouble, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
+import { useOnboarding } from "@/providers/onboarding-provider";
 
 export function Navbar() {
   const { user, ready, logout } = useAuth();
+  const { openTour } = useOnboarding();
   const [loggingOut, setLoggingOut] = React.useState(false);
   const pathname = usePathname();
 
@@ -75,6 +77,15 @@ export function Navbar() {
               </Link>
             );
           })}
+
+          <button
+            type="button"
+            onClick={() => openTour()}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold tracking-wide text-[#E8A45B] hover:bg-[#E8A45B]/15 transition border border-[#E8A45B]/30 ml-1"
+          >
+            <Sparkles className="size-3.5" />
+            Tour OS
+          </button>
         </nav>
 
         {/* Right Auth / Account Links */}

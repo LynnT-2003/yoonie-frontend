@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
-import { YoonieOnboardingModal } from "@/components/onboarding/YoonieOnboardingModal";
 import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
 import type { RoomType } from "@/lib/types/hospitality";
 
@@ -99,9 +98,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,
-    isOnboardingOpen,
     openOnboarding,
-    closeOnboarding,
   } = vm;
 
   // Determine Yoonie mascot mood and message dynamically
@@ -648,9 +645,6 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
           </div>
         </div>
       ) : null}
-
-      {/* ─── Guided Onboarding Tour Modal ───────────────────────────────────── */}
-      <YoonieOnboardingModal isOpen={isOnboardingOpen} onClose={closeOnboarding} />
     </div>
   );
 }
