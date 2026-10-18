@@ -30,9 +30,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${geistSans.className} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${geistSans.className} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-[#F8F5EE] text-[#303A36] dark:bg-[#17201D] dark:text-[#F5EBDD]">
         <AppQueryProvider>
           <AuthProvider>
             <Navbar />
