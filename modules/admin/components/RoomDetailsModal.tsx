@@ -12,7 +12,14 @@ import {
   DialogTitle,
   SheetContent,
 } from "@/components/ui/dialog";
-import { Field, FormSection, Input, InputAffix, NativeSelect } from "@/components/ui/form";
+import { Field, FormSection, Input, InputAffix } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ImageUploadDropzone } from "@/components/media/ImageUploadDropzone";
 import { MediaGallery } from "@/components/media/MediaGallery";
 import {
@@ -173,17 +180,18 @@ export function RoomDetailsModal({
                   />
                 </Field>
                 <Field label="Room type" htmlFor="room-type" className="col-span-2">
-                  <NativeSelect
-                    id="room-type"
-                    value={roomType}
-                    onChange={(e) => setRoomType(e.target.value as RoomType)}
-                  >
-                    {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
-                      <option key={t} value={t}>
-                        {ROOM_TYPE_LABELS[t]}
-                      </option>
-                    ))}
-                  </NativeSelect>
+                  <Select value={roomType} onValueChange={(val) => setRoomType(val as RoomType)}>
+                    <SelectTrigger id="room-type" className="w-full">
+                      <SelectValue placeholder="Select room type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {ROOM_TYPE_LABELS[t]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
             </FormSection>
@@ -212,17 +220,21 @@ export function RoomDetailsModal({
                   />
                 </Field>
                 <Field label="Housekeeping status" htmlFor="room-cleaning">
-                  <NativeSelect
-                    id="room-cleaning"
+                  <Select
                     value={cleaningStatus}
-                    onChange={(e) => setCleaningStatus(e.target.value as RoomCleaningStatus)}
+                    onValueChange={(val) => setCleaningStatus(val as RoomCleaningStatus)}
                   >
-                    {CLEANING_STATUS_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </NativeSelect>
+                    <SelectTrigger id="room-cleaning" className="w-full">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CLEANING_STATUS_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
             </FormSection>

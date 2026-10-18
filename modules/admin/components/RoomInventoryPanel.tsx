@@ -13,7 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, Input, InputAffix, NativeSelect } from "@/components/ui/form";
+import { Field, Input, InputAffix } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ImageUploadDropzone } from "@/components/media/ImageUploadDropzone";
 import {
@@ -109,32 +116,32 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <NativeSelect
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            aria-label="Filter by room type"
-            className="w-48"
-          >
-            <option value="ALL">All room types</option>
-            {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
-              <option key={t} value={t}>
-                {ROOM_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            aria-label="Filter by housekeeping status"
-            className="w-40"
-          >
-            <option value="ALL">All statuses</option>
-            {CLEANING_STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </NativeSelect>
+          <Select value={selectedType} onValueChange={(val) => setSelectedType(val)}>
+            <SelectTrigger className="w-48" aria-label="Filter by room type">
+              <SelectValue placeholder="All room types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All room types</SelectItem>
+              {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
+                <SelectItem key={t} value={t}>
+                  {ROOM_TYPE_LABELS[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedStatus} onValueChange={(val) => setSelectedStatus(val)}>
+            <SelectTrigger className="w-40" aria-label="Filter by housekeeping status">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All statuses</SelectItem>
+              {CLEANING_STATUS_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <span className="pl-1 text-sm text-muted-foreground">
             {rooms.length} {rooms.length === 1 ? "room" : "rooms"}
           </span>
@@ -271,13 +278,18 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
               </div>
 
               <Field label="Room type" htmlFor="new-type">
-                <NativeSelect id="new-type" value={newType} onChange={(e) => setNewType(e.target.value as RoomType)}>
-                  {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
-                    <option key={t} value={t}>
-                      {ROOM_TYPE_LABELS[t]}
-                    </option>
-                  ))}
-                </NativeSelect>
+                <Select value={newType} onValueChange={(val) => setNewType(val as RoomType)}>
+                  <SelectTrigger id="new-type" className="w-full">
+                    <SelectValue placeholder="Select room type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(ROOM_TYPE_LABELS) as RoomType[]).map((t) => (
+                      <SelectItem key={t} value={t}>
+                        {ROOM_TYPE_LABELS[t]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </Field>
 
               <div className="grid grid-cols-2 gap-4">

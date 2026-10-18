@@ -9,9 +9,15 @@ import {
   FormSection,
   Input,
   InputAffix,
-  NativeSelect,
   Textarea,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogBody,
@@ -223,26 +229,34 @@ export function ServiceDetailsModal({
                   <Input id="svc-name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </Field>
                 <Field label="Category" htmlFor="svc-category">
-                  <NativeSelect
-                    id="svc-category"
+                  <Select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as ServiceCategory)}
+                    onValueChange={(val) => setCategory(val as ServiceCategory)}
                   >
-                    <option value="TOURS">Tours &amp; sightseeing</option>
-                    <option value="TRANSPORT">Airport &amp; city transport</option>
-                    <option value="WELLNESS">Spa &amp; wellness</option>
-                  </NativeSelect>
+                    <SelectTrigger id="svc-category" className="w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TOURS">Tours &amp; sightseeing</SelectItem>
+                      <SelectItem value="TRANSPORT">Airport &amp; city transport</SelectItem>
+                      <SelectItem value="WELLNESS">Spa &amp; wellness</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Pricing model" htmlFor="svc-pricing">
-                  <NativeSelect
-                    id="svc-pricing"
+                  <Select
                     value={pricingModel}
-                    onChange={(e) => setPricingModel(e.target.value as PricingModel)}
+                    onValueChange={(val) => setPricingModel(val as PricingModel)}
                   >
-                    <option value="PER_PAX">Per guest</option>
-                    <option value="PER_VEHICLE">Per vehicle</option>
-                    <option value="PER_TREATMENT">Per treatment</option>
-                  </NativeSelect>
+                    <SelectTrigger id="svc-pricing" className="w-full">
+                      <SelectValue placeholder="Select pricing model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PER_PAX">Per guest</SelectItem>
+                      <SelectItem value="PER_VEHICLE">Per vehicle</SelectItem>
+                      <SelectItem value="PER_TREATMENT">Per treatment</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Base price" htmlFor="svc-price">
                   <InputAffix

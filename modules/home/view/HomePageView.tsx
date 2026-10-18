@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown, Clock, Plane, ShieldCheck, Users, X } from "lucide-react";
+import { Check, Clock, Plane, ShieldCheck, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -18,6 +18,13 @@ import {
   GuestRoomDetailsModal,
   type RoomCatalogItem,
 } from "@/modules/home/components/GuestRoomDetailsModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GuestServiceDetailsModal } from "@/modules/home/components/GuestServiceDetailsModal";
 import type { ServiceItem } from "@/lib/types/hospitality";
 import type { CartItem, HomePageVm } from "@/modules/home/viewModel/homePageVm";
@@ -140,23 +147,24 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
               className="w-full bg-transparent text-sm font-medium text-foreground outline-none"
             />
           </label>
-          <label className="col-span-2 flex flex-col gap-1 border-b border-border px-5 py-4 md:col-span-1 md:border-b-0 md:border-r">
+          <div className="col-span-2 flex flex-col justify-center gap-1 border-b border-border px-5 py-4 md:col-span-1 md:border-b-0 md:border-r">
             <span className="text-xs text-muted-foreground">Guests</span>
-            <span className="relative">
-              <select
-                value={adults}
-                onChange={(e) => setAdults(Number(e.target.value))}
-                className="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-medium text-foreground outline-none"
-              >
+            <Select
+              value={String(adults)}
+              onValueChange={(val) => setAdults(Number(val))}
+            >
+              <SelectTrigger className="h-auto border-0 bg-transparent p-0 text-sm font-medium text-foreground shadow-none hover:border-0 focus-visible:ring-0">
+                <SelectValue placeholder="Select guests" />
+              </SelectTrigger>
+              <SelectContent>
                 {[1, 2, 3, 4].map((n) => (
-                  <option key={n} value={n}>
+                  <SelectItem key={n} value={String(n)}>
                     {n} {n === 1 ? "adult" : "adults"}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-0 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            </span>
-          </label>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="col-span-2 flex items-center justify-between gap-4 px-5 py-3 md:col-span-1 md:justify-end">
             <span className="text-sm text-muted-foreground md:hidden lg:inline">{nightsLabel}</span>
             <Button size="lg" onClick={scrollToRooms}>

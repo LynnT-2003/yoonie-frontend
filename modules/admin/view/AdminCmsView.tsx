@@ -3,7 +3,13 @@
 import * as React from "react";
 import { BedDouble, Building2, Compass, UtensilsCrossed } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NativeSelect } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BranchSettingsPanel } from "../components/BranchSettingsPanel";
 import { RoomInventoryPanel } from "../components/RoomInventoryPanel";
 import { RestaurantOutletsPanel } from "../components/RestaurantOutletsPanel";
@@ -57,17 +63,21 @@ export function AdminCmsView({ vm }: { vm: AdminCmsVm }) {
         <div className="flex flex-col gap-1.5">
           <span className="text-xs font-medium text-muted-foreground">Property</span>
           {branches.length > 0 ? (
-            <NativeSelect
+            <Select
               value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              aria-label="Select property"
+              onValueChange={(val) => setSelectedBranchId(val)}
             >
-              {branches.map((b) => (
-                <option key={b._id} value={b._id}>
-                  {b.name}
-                </option>
-              ))}
-            </NativeSelect>
+              <SelectTrigger aria-label="Select property" className="w-full">
+                <SelectValue placeholder="Select property" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((b) => (
+                  <SelectItem key={b._id} value={b._id}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           ) : (
             <div className="h-9 animate-pulse rounded-md bg-subtle" />
           )}

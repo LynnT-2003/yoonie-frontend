@@ -13,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Field, Input, InputAffix, NativeSelect } from "@/components/ui/form";
+import { Field, Input, InputAffix } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogBody,
@@ -328,34 +335,42 @@ export function ExperienceCatalogPanel({ branchId }: ExperienceCatalogPanelProps
                   />
                 </Field>
                 <Field label="Category" htmlFor="svc-new-category">
-                  <NativeSelect
-                    id="svc-new-category"
+                  <Select
                     value={newCategory}
-                    onChange={(e) => {
-                      const cat = e.target.value as "TOURS" | "TRANSPORT" | "WELLNESS";
+                    onValueChange={(val) => {
+                      const cat = val as "TOURS" | "TRANSPORT" | "WELLNESS";
                       setNewCategory(cat);
                       if (cat === "TOURS") setNewKind("SCHEDULED_TOUR");
                       if (cat === "TRANSPORT") setNewKind("AIRPORT_TRANSFER");
                       if (cat === "WELLNESS") setNewKind("SPA_TREATMENT");
                     }}
                   >
-                    <option value="TOURS">Tours</option>
-                    <option value="TRANSPORT">Transport</option>
-                    <option value="WELLNESS">Wellness</option>
-                  </NativeSelect>
+                    <SelectTrigger id="svc-new-category" className="w-full">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TOURS">Tours</SelectItem>
+                      <SelectItem value="TRANSPORT">Transport</SelectItem>
+                      <SelectItem value="WELLNESS">Wellness</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
                 <Field label="Pricing model" htmlFor="svc-new-pricing">
-                  <NativeSelect
-                    id="svc-new-pricing"
+                  <Select
                     value={newPricingModel}
-                    onChange={(e) =>
-                      setNewPricingModel(e.target.value as "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT")
+                    onValueChange={(val) =>
+                      setNewPricingModel(val as "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT")
                     }
                   >
-                    <option value="PER_PAX">Per guest</option>
-                    <option value="PER_VEHICLE">Per vehicle</option>
-                    <option value="PER_TREATMENT">Per treatment</option>
-                  </NativeSelect>
+                    <SelectTrigger id="svc-new-pricing" className="w-full">
+                      <SelectValue placeholder="Select pricing model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PER_PAX">Per guest</SelectItem>
+                      <SelectItem value="PER_VEHICLE">Per vehicle</SelectItem>
+                      <SelectItem value="PER_TREATMENT">Per treatment</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
               </div>
 
