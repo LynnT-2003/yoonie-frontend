@@ -32,6 +32,10 @@ export function Navbar() {
     { href: "/admin", label: "Content" },
   ];
 
+  if (pathname === "/") {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
