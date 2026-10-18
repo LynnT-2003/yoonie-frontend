@@ -129,9 +129,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               asChild
               className="border-[#28594E]/20 bg-white/50 text-[#28594E] hover:bg-white font-bold text-xs"
             >
-              <a href={getSubdomainUrl("ops")}>
+              <a href={getSubdomainUrl("ops", "/login")}>
                 <Lock className="size-3.5 mr-1 text-[#E8A45B]" />
-                Ops Portal (<code className="font-mono text-[10px]">ops.localhost:3000</code>)
+                Sign In to Ops Hub
               </a>
             </Button>
             <Button
@@ -305,13 +305,13 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
-                Tenant Registry
+                Client Showcase
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#28594E] mt-1">
-                Active Hotel Workspaces
+                Featured Boutique Properties
               </h2>
               <p className="text-xs text-[#7A8B84] mt-1">
-                Every hotel runs on its own isolated subdomain with dedicated rooms, dining, and frontline dispatch.
+                Discover independent luxury hotels and riverfront sanctuaries running direct-booking on Yoonie.
               </p>
             </div>
             <Button
@@ -321,7 +321,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               }}
               className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs cursor-pointer"
             >
-              <Plus className="size-3.5 mr-1.5" /> Register New Hotel Workspace
+              <Plus className="size-3.5 mr-1.5 text-[#E8A45B]" /> Create Your Hotel Workspace
             </Button>
           </div>
 
@@ -360,44 +360,16 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       size="sm"
                       variant="outline"
                       asChild
-                      className="flex-1 text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/10"
+                      className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/10"
                     >
                       <a href={getSubdomainUrl(codeSlug)} target="_blank" rel="noopener noreferrer">
-                        <Globe className="size-3 mr-1" /> Guest Subdomain
-                      </a>
-                    </Button>
-                    <Button
-                      size="sm"
-                      asChild
-                      className="flex-1 text-xs font-bold bg-[#28594E] text-[#F5EBDD] hover:bg-[#1E433A]"
-                    >
-                      <a href={getSubdomainUrl("ops")}>
-                        <Lock className="size-3 mr-1 text-[#E8A45B]" /> Open in Ops Hub
+                        <Globe className="size-3 mr-1 text-[#28594E]" /> Visit Direct Booking Site
                       </a>
                     </Button>
                   </div>
                 </Card>
               );
             })}
-
-            {/* Quick Provision Card */}
-            <div
-              onClick={() => {
-                setWizardStep(1);
-                setIsWizardOpen(true);
-              }}
-              className="rounded-2xl border-2 border-dashed border-[#28594E]/20 hover:border-[#28594E]/50 p-8 flex flex-col items-center justify-center gap-3 text-center cursor-pointer transition bg-white/30 hover:bg-white/60 min-h-[190px]"
-            >
-              <div className="size-10 rounded-full bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
-                <Plus className="size-5" />
-              </div>
-              <div>
-                <h4 className="font-bold text-sm text-[#28594E]">Add Another Property</h4>
-                <p className="text-xs text-[#7A8B84] mt-0.5">
-                  e.g. Sedona Hotel & Resort, Mountain Sanctuary
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </section>
