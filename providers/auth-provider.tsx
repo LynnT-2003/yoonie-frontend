@@ -17,7 +17,6 @@ import {
   registerRequest,
 } from "../lib/domain/auth/auth-api";
 import { getCurrentUser, userQueryKeys } from "../lib/domain/user/user-api";
-import { paymentQueryKeys } from "../lib/domain/payment/paymentApi";
 import { setSessionExpiredHandler } from "../lib/domain/api/NetworkManager";
 import type { RegisterBody } from "../lib/types/auth";
 
@@ -64,7 +63,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearPersistedSession();
     setUser(null);
     queryClient.removeQueries({ queryKey: userQueryKeys.all });
-    queryClient.removeQueries({ queryKey: paymentQueryKeys.all });
   }, [queryClient]);
 
   React.useEffect(() => {
@@ -89,7 +87,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     setUser(auth.user);
     queryClient.setQueryData(userQueryKeys.current(), auth.user);
-    void queryClient.invalidateQueries({ queryKey: paymentQueryKeys.all });
   }, [queryClient]);
 
   const login = React.useCallback(

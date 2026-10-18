@@ -2,7 +2,6 @@
 
 import type { AccountPageVm } from "@/modules/account/viewModel/accountPageVm";
 import { UserProfilePanel } from "@/modules/account/components/UserProfilePanel";
-import { PlanCard } from "@/modules/account/components/PlanCard";
 
 export function AccountPageView({ vm }: { vm: AccountPageVm }) {
   const { user, syncError } = vm;
@@ -31,7 +30,6 @@ export function AccountPageView({ vm }: { vm: AccountPageVm }) {
       ) : null}
 
       <UserProfilePanel user={user} />
-      <PlanCard />
     </div>
   );
 }
