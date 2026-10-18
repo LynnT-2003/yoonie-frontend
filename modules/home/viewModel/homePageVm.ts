@@ -5,6 +5,7 @@ import { useAuth } from "@/providers/auth-provider";
 import {
   useBranchesQuery,
   useRestaurantsQuery,
+  useRoomsQuery,
   useServicesQuery,
 } from "@/lib/domain/hospitality/hospitality-api";
 import type {
@@ -55,8 +56,92 @@ export function useHomePageVm() {
   const activeBranch: Branch | undefined = branchesQuery.data?.[0];
   const branchId = activeBranch?._id || "665a1b2c3d4e5f6a7b8c9d0e";
 
+  const roomsQuery = useRoomsQuery(branchId);
+  const rooms = React.useMemo(() => roomsQuery.data || [], [roomsQuery.data]);
   const servicesQuery = useServicesQuery(branchId);
   const restaurantsQuery = useRestaurantsQuery(branchId);
+
+  // Compute live room catalog dynamically from backend room inventory and R2 cover images
+  const roomCatalog = React.useMemo(() => {
+    const specs: Record<
+      RoomType,
+      {
+        type: RoomType;
+        title: string;
+        tagline: string;
+        pricePerNight: number;
+        capacity: string;
+        features: string[];
+        image: string;
+      }
+    > = {
+      STANDARD_KING: {
+        type: "STANDARD_KING",
+        title: "Standard King Room",
+        tagline: "Serene garden & partial river view, plush king bed",
+        pricePerNight: 2200,
+        capacity: "2 Guests · 32 sqm",
+        features: ["King Bed", "Rain Shower", "High-speed WiFi", "Organic Tea Bar"],
+        image:
+          "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
+      },
+      DELUXE_BALCONY: {
+        type: "DELUXE_BALCONY",
+        title: "Deluxe River Balcony",
+        tagline: "Panoramic Chao Phraya views from a private teak terrace",
+        pricePerNight: 3800,
+        capacity: "3 Guests · 48 sqm",
+        features: [
+          "Teak Balcony",
+          "Deep Soaking Tub",
+          "Sofa Daybed",
+          "Complimentary Sunset Drink",
+        ],
+        image:
+          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+      },
+      POOL_VILLA: {
+        type: "POOL_VILLA",
+        title: "Riverside Private Pool Villa",
+        tagline: "Ultra-luxury sanctuary with private plunge pool and butler service",
+        pricePerNight: 7500,
+        capacity: "4 Guests · 95 sqm",
+        features: [
+          "Private Plunge Pool",
+          "Outdoor Dining Lounge",
+          "Twin Loft Suite",
+          "Express Airport VIP Lane",
+        ],
+        image:
+          "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80",
+      },
+    };
+
+    if (rooms.length > 0) {
+      rooms.forEach((r) => {
+        if (specs[r.roomType]) {
+          if (r.coverImage) {
+            specs[r.roomType].image = r.coverImage;
+          } else if (r.images && r.images.length > 0) {
+            specs[r.roomType].image = r.images[0];
+          }
+          if (r.baseRateThb) {
+            specs[r.roomType].pricePerNight = r.baseRateThb;
+          }
+          if (r.amenities && r.amenities.length > 0) {
+            specs[r.roomType].features = r.amenities.map((a) =>
+              a.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+            );
+          }
+          if (r.maxOccupancy) {
+            specs[r.roomType].capacity = `${r.maxOccupancy} Guests`;
+          }
+        }
+      });
+    }
+
+    return Object.values(specs);
+  }, [rooms]);
 
   // Search parameters
   const [checkIn, setCheckIn] = React.useState("2026-10-20");
@@ -226,6 +311,8 @@ export function useHomePageVm() {
     ready,
     activeBranch,
     branchId,
+    roomCatalog,
+    rooms,
     services: servicesQuery.data || [],
     restaurants: restaurantsQuery.data || [],
     checkIn,

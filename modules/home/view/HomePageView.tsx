@@ -1,77 +1,59 @@
 "use client";
 
 import * as React from "react";
-import {
-  Calendar,
-  Clock,
-  Compass,
-  MapPin,
-  Plane,
-  Plus,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Check, ChevronDown, Clock, Plane, ShieldCheck, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { YoonieMascot } from "@/components/mascot/YoonieMascot";
-import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
-import type { RoomType } from "@/lib/types/hospitality";
+import {
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Field, Input } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+import {
+  GuestRoomDetailsModal,
+  type RoomCatalogItem,
+} from "@/modules/home/components/GuestRoomDetailsModal";
+import { GuestServiceDetailsModal } from "@/modules/home/components/GuestServiceDetailsModal";
+import type { ServiceItem } from "@/lib/types/hospitality";
+import type { CartItem, HomePageVm } from "@/modules/home/viewModel/homePageVm";
 
-const ROOM_CATALOG: Array<{
-  type: RoomType;
-  title: string;
-  tagline: string;
-  pricePerNight: number;
-  capacity: string;
-  features: string[];
-  image: string;
-}> = [
-  {
-    type: "STANDARD_KING",
-    title: "Standard King Room",
-    tagline: "Serene garden & partial river view, plush king bed",
-    pricePerNight: 2200,
-    capacity: "2 Guests · 32 sqm",
-    features: ["King Bed", "Rain Shower", "High-speed WiFi", "Organic Tea Bar"],
-    image:
-      "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    type: "DELUXE_BALCONY",
-    title: "Deluxe River Balcony",
-    tagline: "Panoramic Chao Phraya views from a private teak terrace",
-    pricePerNight: 3800,
-    capacity: "3 Guests · 48 sqm",
-    features: [
-      "Teak Balcony",
-      "Deep Soaking Tub",
-      "Sofa Daybed",
-      "Complimentary Sunset Drink",
-    ],
-    image:
-      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    type: "POOL_VILLA",
-    title: "Riverside Private Pool Villa",
-    tagline: "Ultra-luxury sanctuary with private plunge pool and butler service",
-    pricePerNight: 7500,
-    capacity: "4 Guests · 95 sqm",
-    features: [
-      "Private Plunge Pool",
-      "Outdoor Dining Lounge",
-      "Twin Loft Suite",
-      "Express Airport VIP Lane",
-    ],
-    image:
-      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80",
-  },
-];
+const HERO_FALLBACK =
+  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=80";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  TOURS: "Experience",
+  TRANSPORT: "Transfer",
+  WELLNESS: "Wellness",
+};
+
+const formatThb = (n: number) => `฿${n.toLocaleString("en-US")}`;
+
+const formatDate = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+};
+
+const formatTimer = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+};
 
 export function HomePageView({ vm }: { vm: HomePageVm }) {
+  const [selectedRoomForModal, setSelectedRoomForModal] =
+    React.useState<RoomCatalogItem | null>(null);
+  const [selectedServiceForModal, setSelectedServiceForModal] =
+    React.useState<ServiceItem | null>(null);
+
   const {
     activeBranch,
+    roomCatalog,
     services,
     restaurants,
     checkIn,
@@ -86,9 +68,13 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     addServiceToCart,
     addDiningToCart,
     removeFromCart,
+    subtotal,
+    serviceCharge,
+    vat,
     grandTotal,
     holdId,
     holdTimeLeft,
+    isHolding,
     triggerHold,
     isCheckoutOpen,
     setIsCheckoutOpen,
@@ -98,553 +84,640 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,
-    openOnboarding,
   } = vm;
 
-  // Determine Yoonie mascot mood and message dynamically
-  let mascotMood: "calm" | "happy" | "checking" | "thinking" | "worried" | "sleeping" = "calm";
-  let mascotMessage = "Welcome to BKK Riverside! Click me anytime.";
+  const hotelName = activeBranch?.name || "BKK Riverside";
+  const heroImage = roomCatalog[1]?.image || roomCatalog[0]?.image || HERO_FALLBACK;
+  const nightsLabel = `${nights} ${nights === 1 ? "night" : "nights"}`;
+  const guestsLabel = `${adults} ${adults === 1 ? "adult" : "adults"}`;
 
-  if (isConfirmed) {
-    mascotMood = "happy";
-    mascotMessage = "Yoonie is so excited to welcome you to Bangkok!";
-  } else if (holdTimeLeft !== null) {
-    if (holdTimeLeft < 180) {
-      mascotMood = "worried";
-      mascotMessage = `Quick! Your hold expires in ${Math.floor(holdTimeLeft / 60)}m ${holdTimeLeft % 60}s!`;
-    } else {
-      mascotMood = "thinking";
-      mascotMessage = `Holding your slots: ${Math.floor(holdTimeLeft / 60)}m ${holdTimeLeft % 60}s left`;
-    }
-  } else if (cart.length > 0) {
-    mascotMood = "checking";
-    mascotMessage = "Great choice! Add a sunset cruise or airport transfer below.";
-  }
-
-  const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  const scrollToRooms = () => {
+    document.getElementById("tour-room-catalog")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F5EE] text-[#303A36] dark:bg-[#17201D] dark:text-[#F5EBDD] pb-32">
-      {/* ─── Hero Section ──────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-8 pb-14 px-4 sm:px-6 max-w-6xl mx-auto">
-        <div className="relative rounded-3xl bg-linear-to-b from-[#EFE7DA] to-[#F8F5EE] dark:from-[#202C27] dark:to-[#17201D] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-10 shadow-xs">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-7 flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#28594E]/10 dark:bg-[#28594E]/30 text-[#28594E] dark:text-[#D8E6DA] text-xs font-bold uppercase tracking-wider w-fit">
-                  <Sparkles className="size-3.5 text-[#E8A45B]" />
-                  Direct Boutique Booking · No OTA Commissions
-                </div>
-                <button
-                  type="button"
-                  onClick={openOnboarding}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8A45B]/15 hover:bg-[#E8A45B]/25 text-[#303A36] dark:text-[#E8A45B] text-xs font-bold tracking-wide transition border border-[#E8A45B]/30"
-                >
-                  <Sparkles className="size-3.5 text-[#E8A45B]" />
-                  Take Guided Tour ✨
-                </button>
-              </div>
-
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#28594E] dark:text-[#F5EBDD] font-sans leading-tight">
-                Riverside sanctuary on the Chao Phraya.
-              </h1>
-
-              <p className="text-base sm:text-lg text-[#6B7B74] dark:text-[#A7B9B0] max-w-xl">
-                Stay in handcrafted rooms, dine over water, and arrive effortlessly with private airport transfers — synchronized in a single booking.
-              </p>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-[#6B7B74] dark:text-[#A7B9B0] pt-2">
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck className="size-4 text-[#28594E]" /> Best Rate Direct
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Clock className="size-4 text-[#28594E]" /> 15-Min Atomic Hold
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Plane className="size-4 text-[#28594E]" /> Flight-Tracked Transit
-                </span>
-              </div>
-            </div>
-
-            {/* Mascot Showcase Interactive Card */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 rounded-2xl bg-white/70 dark:bg-[#1A2521]/70 border border-[#E5DBD0] dark:border-[#2D3D36] backdrop-blur-xs text-center shadow-xs">
-              <YoonieMascot
-                mood={mascotMood}
-                size="lg"
-                interactive
-                message={mascotMessage}
-                badge="Concierge"
-              />
-              <p className="mt-3 text-xs font-bold text-[#28594E] dark:text-[#D8E6DA] tracking-wide">
-                Meet Yoonie
-              </p>
-              <p className="text-[11px] text-[#6B7B74] dark:text-[#8FA299]">
-                Your personal boutique stay companion. Click to cycle moods!
-              </p>
-            </div>
-          </div>
+    <div className={cn("bg-background text-foreground", cart.length > 0 ? "pb-28 lg:pb-24" : "pb-24")}>
+      {/* ─── Hero ──────────────────────────────────────────────────────────────── */}
+      <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden bg-foreground">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-black/10" />
+        <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-24 sm:px-6">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/80">
+            Bangkok · Chao Phraya River
+          </p>
+          <h1 className="mt-3 font-display text-4xl font-medium leading-[1.05] text-white sm:text-6xl">
+            {hotelName}
+          </h1>
+          <p className="mt-3 max-w-xl text-base text-white/85 sm:text-lg">
+            Riverside rooms, dining over the water and private arrivals, reserved together.
+          </p>
         </div>
+      </section>
 
-        {/* ─── Stay Search Bar ────────────────────────────────────────────────── */}
-        <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] shadow-sm grid grid-cols-1 sm:grid-cols-4 gap-4 items-center">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7B74] dark:text-[#8FA299] flex items-center gap-1">
-              <MapPin className="size-3 text-[#28594E]" /> Property
-            </label>
-            <p className="text-sm font-bold text-[#303A36] dark:text-[#F5EBDD]">
-              {activeBranch?.name || "BKK Riverside Boutique Hotel"}
-            </p>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7B74] dark:text-[#8FA299] flex items-center gap-1">
-              <Calendar className="size-3 text-[#28594E]" /> Check-In
-            </label>
+      {/* ─── Stay search ───────────────────────────────────────────────────────── */}
+      <div className="relative z-10 mx-auto -mt-12 max-w-6xl px-4 sm:px-6">
+        <div
+          id="tour-stay-search"
+          className="grid grid-cols-2 overflow-hidden rounded-lg border border-border bg-surface shadow-lg md:grid-cols-[1fr_1fr_1fr_auto]"
+        >
+          <label className="flex flex-col gap-1 border-b border-r border-border px-5 py-4 md:border-b-0">
+            <span className="text-xs text-muted-foreground">Check-in</span>
             <input
               type="date"
               value={checkIn}
               onChange={(e) => setCheckIn(e.target.value)}
-              className="w-full text-sm font-semibold bg-transparent border-0 p-0 text-[#303A36] dark:text-[#F5EBDD] focus:ring-0"
+              className="w-full bg-transparent text-sm font-medium text-foreground outline-none"
             />
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7B74] dark:text-[#8FA299] flex items-center gap-1">
-              <Calendar className="size-3 text-[#28594E]" /> Check-Out
-            </label>
+          </label>
+          <label className="flex flex-col gap-1 border-b border-border px-5 py-4 md:border-b-0 md:border-r">
+            <span className="text-xs text-muted-foreground">Check-out</span>
             <input
               type="date"
               value={checkOut}
+              min={checkIn}
               onChange={(e) => setCheckOut(e.target.value)}
-              className="w-full text-sm font-semibold bg-transparent border-0 p-0 text-[#303A36] dark:text-[#F5EBDD] focus:ring-0"
+              className="w-full bg-transparent text-sm font-medium text-foreground outline-none"
             />
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-[#6B7B74] dark:text-[#8FA299] flex items-center gap-1">
-              <Users className="size-3 text-[#28594E]" /> Guests
-            </label>
-            <select
-              value={adults}
-              onChange={(e) => setAdults(Number(e.target.value))}
-              className="w-full text-sm font-semibold bg-transparent border-0 p-0 text-[#303A36] dark:text-[#F5EBDD] focus:ring-0"
-            >
-              <option value={1} className="dark:bg-[#202C27]">1 Adult</option>
-              <option value={2} className="dark:bg-[#202C27]">2 Adults</option>
-              <option value={3} className="dark:bg-[#202C27]">3 Adults</option>
-              <option value={4} className="dark:bg-[#202C27]">4 Adults</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Room Selection Section ─────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-12">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#28594E] dark:text-[#F5EBDD]">
-              Select Your Sanctuary
-            </h2>
-            <p className="text-xs text-[#6B7B74] dark:text-[#8FA299]">
-              Stay length: {nights} {nights === 1 ? "night" : "nights"} ({checkIn} → {checkOut})
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {ROOM_CATALOG.map((room) => {
-            const isSelected = cart.some(
-              (i) => i.kind === "ROOM" && i.roomType === room.type
-            );
-            return (
-              <div
-                key={room.type}
-                className={`flex flex-col justify-between rounded-3xl overflow-hidden bg-white dark:bg-[#202C27] border transition-all duration-300 shadow-xs hover:shadow-md ${
-                  isSelected
-                    ? "border-[#28594E] ring-2 ring-[#28594E]/20"
-                    : "border-[#E5DBD0] dark:border-[#2D3D36]"
-                }`}
+          </label>
+          <label className="col-span-2 flex flex-col gap-1 border-b border-border px-5 py-4 md:col-span-1 md:border-b-0 md:border-r">
+            <span className="text-xs text-muted-foreground">Guests</span>
+            <span className="relative">
+              <select
+                value={adults}
+                onChange={(e) => setAdults(Number(e.target.value))}
+                className="w-full cursor-pointer appearance-none bg-transparent pr-6 text-sm font-medium text-foreground outline-none"
               >
-                <div>
-                  <div className="relative h-48 w-full overflow-hidden bg-[#D8E6DA]/30">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={room.image}
-                      alt={room.title}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                    <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-[#F8F5EE]/90 backdrop-blur-xs text-[10px] font-bold text-[#28594E] shadow-xs">
-                      {room.capacity}
-                    </span>
-                  </div>
-
-                  <div className="p-5 flex flex-col gap-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-[#303A36] dark:text-[#F5EBDD]">
-                        {room.title}
-                      </h3>
-                      <p className="text-xs text-[#6B7B74] dark:text-[#8FA299] mt-0.5">
-                        {room.tagline}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {room.features.map((f) => (
-                        <span
-                          key={f}
-                          className="px-2 py-0.5 rounded-lg bg-[#F8F5EE] dark:bg-[#1A2521] text-[10px] font-medium text-[#28594E] dark:text-[#D8E6DA] border border-[#E5DBD0] dark:border-[#2D3D36]"
-                        >
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-5 pt-0 border-t border-[#E5DBD0]/50 dark:border-[#2D3D36]/50 flex items-center justify-between mt-4">
-                  <div>
-                    <span className="text-xl font-extrabold text-[#28594E] dark:text-[#D8E6DA]">
-                      ฿{room.pricePerNight.toLocaleString()}
-                    </span>
-                    <span className="text-[11px] text-[#6B7B74] dark:text-[#8FA299]">
-                      {" "}
-                      / night
-                    </span>
-                  </div>
-
-                  <Button
-                    onClick={() =>
-                      addRoomToCart(room.type, room.title, room.pricePerNight)
-                    }
-                    className={`rounded-xl px-4 py-2 text-xs font-bold tracking-wide transition-all ${
-                      isSelected
-                        ? "bg-[#D8E6DA] text-[#28594E] hover:bg-[#C8DAD0]"
-                        : "bg-[#28594E] text-[#F5EBDD] hover:bg-[#1E433A]"
-                    }`}
-                  >
-                    {isSelected ? "Selected ✓" : "Choose Room"}
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ─── Experience Add-Ons (Tours, Transfers & Dining) ───────────────────── */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 pb-12">
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8A45B]/15 text-[#303A36] dark:text-[#E8A45B] text-[11px] font-bold uppercase tracking-wider mb-2">
-            <Compass className="size-3.5 text-[#E8A45B]" />
-            Composite Direct Cart
-          </div>
-          <h2 className="text-2xl font-bold tracking-tight text-[#28594E] dark:text-[#F5EBDD]">
-            Enhance Your Stay in Bangkok
-          </h2>
-          <p className="text-xs text-[#6B7B74] dark:text-[#8FA299]">
-            Book dining and experiences seamlessly in the same reservation.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {services.map((svc) => (
-            <div
-              key={svc._id}
-              className="rounded-2xl p-4 bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] flex flex-col justify-between shadow-xs hover:border-[#28594E]/40 transition"
-            >
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8A45B]">
-                  {svc.category}
-                </span>
-                <h4 className="font-bold text-sm text-[#303A36] dark:text-[#F5EBDD] mt-1">
-                  {svc.name}
-                </h4>
-                <p className="text-[11px] text-[#6B7B74] dark:text-[#8FA299] mt-1 line-clamp-2">
-                  {svc.kind === "AIRPORT_TRANSFER"
-                    ? "Flight-tracked private minivan pickup with bilingual driver card."
-                    : svc.tour?.meetingPoint || "Boutique concierge curated experience."}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 mt-3 border-t border-[#E5DBD0]/50 dark:border-[#2D3D36]/50">
-                <span className="font-bold text-sm text-[#28594E] dark:text-[#D8E6DA]">
-                  ฿{svc.basePriceThb.toLocaleString()}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => addServiceToCart(svc)}
-                  className="h-7 text-xs rounded-lg border-[#28594E]/30 text-[#28594E] hover:bg-[#D8E6DA]/50 dark:border-[#D8E6DA]/30 dark:text-[#D8E6DA]"
-                >
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-            </div>
-          ))}
-
-          {/* Dining Add-on from restaurant */}
-          {restaurants[0] ? (
-            <div className="rounded-2xl p-4 bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] flex flex-col justify-between shadow-xs hover:border-[#28594E]/40 transition">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8A45B]">
-                  DINING
-                </span>
-                <h4 className="font-bold text-sm text-[#303A36] dark:text-[#F5EBDD] mt-1">
-                  {restaurants[0].name} (Sunset Dinner)
-                </h4>
-                <p className="text-[11px] text-[#6B7B74] dark:text-[#8FA299] mt-1">
-                  Reserved prime riverside table with traditional Thai banquet for two.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 mt-3 border-t border-[#E5DBD0]/50 dark:border-[#2D3D36]/50">
-                <span className="font-bold text-sm text-[#28594E] dark:text-[#D8E6DA]">
-                  ฿1,200
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    addDiningToCart(
-                      restaurants[0],
-                      restaurants[0].shifts[1]?.code || "EVENING",
-                      "Evening Sunset Seating"
-                    )
-                  }
-                  className="h-7 text-xs rounded-lg border-[#28594E]/30 text-[#28594E] hover:bg-[#D8E6DA]/50 dark:border-[#D8E6DA]/30 dark:text-[#D8E6DA]"
-                >
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      {/* ─── Floating / Sticky Composite Cart Bar ─────────────────────────────── */}
-      {cart.length > 0 ? (
-        <aside
-          aria-label="Reservation Summary"
-          className="fixed bottom-4 left-4 right-4 z-50 max-w-4xl mx-auto rounded-3xl bg-[#28594E] text-[#F5EBDD] p-4 sm:p-5 shadow-2xl border border-[#D8E6DA]/30 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-bottom-6 duration-300"
-        >
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <YoonieMascot
-              mood={holdTimeLeft !== null ? (holdTimeLeft < 180 ? "worried" : "thinking") : "checking"}
-              size="sm"
-              className="shrink-0"
-            />
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
-                  {cart.length} {cart.length === 1 ? "Item" : "Items"} in Cart
-                </span>
-                {holdTimeLeft !== null ? (
-                  <span className="px-2 py-0.5 rounded-full bg-[#E8A45B] text-[#303A36] text-[10px] font-bold flex items-center gap-1 animate-pulse">
-                    <Clock className="size-2.5" /> Hold: {formatTimer(holdTimeLeft)}
-                  </span>
-                ) : null}
-              </div>
-              <p className="text-lg font-extrabold tracking-tight">
-                ฿{grandTotal.toLocaleString()}{" "}
-                <span className="text-[11px] font-normal text-[#D8E6DA]/80">
-                  (incl. 10% svc & 7% vat)
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-            {holdId ? (
-              <Button
-                onClick={() => setIsCheckoutOpen(true)}
-                className="w-full sm:w-auto rounded-xl bg-[#E8A45B] hover:bg-[#D9964E] text-[#303A36] font-bold text-xs px-5 py-2.5 shadow-sm"
-              >
-                Complete Booking →
-              </Button>
-            ) : (
-              <Button
-                onClick={triggerHold}
-                className="w-full sm:w-auto rounded-xl bg-[#D8E6DA] hover:bg-[#C5D8C7] text-[#28594E] font-bold text-xs px-5 py-2.5 shadow-sm"
-              >
-                Lock Rate & Hold (15 min)
-              </Button>
-            )}
-          </div>
-        </aside>
-      ) : null}
-
-      {/* ─── Checkout & Direct Attribution Modal ─────────────────────────────── */}
-      {isCheckoutOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-[#F8F5EE] dark:bg-[#1D2723] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-2xl text-[#303A36] dark:text-[#F5EBDD] flex flex-col gap-5">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <YoonieMascot mood="checking" size="sm" />
-                <div>
-                  <h3 className="text-xl font-bold text-[#28594E] dark:text-[#F5EBDD]">
-                    Direct Guest Reservation
-                  </h3>
-                  <p className="text-xs text-[#6B7B74] dark:text-[#8FA299]">
-                    Attribution: Direct Web Booking (No OTA fee)
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsCheckoutOpen(false)}
-                className="text-xs font-bold text-[#6B7B74] hover:text-[#303A36]"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Cart summary lines */}
-            <div className="rounded-2xl bg-white dark:bg-[#202C27] p-4 border border-[#E5DBD0] dark:border-[#2D3D36] space-y-2 max-h-40 overflow-y-auto">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between text-xs py-1 border-b border-[#E5DBD0]/40 last:border-0"
-                >
-                  <span className="font-medium">{item.title}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">฿{item.totalPrice.toLocaleString()}</span>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="size-3" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Guest Form */}
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="font-bold text-[#28594E] dark:text-[#D8E6DA]">
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={bookingGuest.fullName}
-                  onChange={(e) =>
-                    setBookingGuest({ ...bookingGuest, fullName: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-xl border border-[#E5DBD0] dark:border-[#2D3D36] bg-white dark:bg-[#202C27] p-2.5 font-medium"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-[#28594E] dark:text-[#D8E6DA]">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={bookingGuest.email}
-                    onChange={(e) =>
-                      setBookingGuest({ ...bookingGuest, email: e.target.value })
-                    }
-                    className="mt-1 w-full rounded-xl border border-[#E5DBD0] dark:border-[#2D3D36] bg-white dark:bg-[#202C27] p-2.5 font-medium"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-[#28594E] dark:text-[#D8E6DA]">
-                    Phone (E.164)
-                  </label>
-                  <input
-                    type="tel"
-                    value={bookingGuest.phoneE164}
-                    onChange={(e) =>
-                      setBookingGuest({ ...bookingGuest, phoneE164: e.target.value })
-                    }
-                    className="mt-1 w-full rounded-xl border border-[#E5DBD0] dark:border-[#2D3D36] bg-white dark:bg-[#202C27] p-2.5 font-medium"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-bold text-[#28594E] dark:text-[#D8E6DA]">
-                  LINE ID / Transit Updates
-                </label>
-                <input
-                  type="text"
-                  value={bookingGuest.lineUserId}
-                  onChange={(e) =>
-                    setBookingGuest({ ...bookingGuest, lineUserId: e.target.value })
-                  }
-                  className="mt-1 w-full rounded-xl border border-[#E5DBD0] dark:border-[#2D3D36] bg-white dark:bg-[#202C27] p-2.5 font-medium"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-[#E5DBD0] dark:border-[#2D3D36] flex items-center justify-between">
-              <div>
-                <p className="text-[10px] text-[#6B7B74]">Total Payable</p>
-                <p className="text-xl font-extrabold text-[#28594E] dark:text-[#E8A45B]">
-                  ฿{grandTotal.toLocaleString()}
-                </p>
-              </div>
-
-              <Button
-                onClick={finalizeBooking}
-                className="rounded-xl bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-6 py-2.5 text-xs shadow-md"
-              >
-                Confirm & Pay Direct
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* ─── Confirmation Screen Modal ────────────────────────────────────────── */}
-      {isConfirmed ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in zoom-in-95 duration-200">
-          <div className="w-full max-w-lg rounded-3xl bg-[#F8F5EE] dark:bg-[#1D2723] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-8 shadow-2xl text-center flex flex-col items-center gap-4">
-            <YoonieMascot
-              mood="happy"
-              size="lg"
-              message="Yay! Your reservation is confirmed!"
-            />
-
-            <div>
-              <span className="px-3 py-1 rounded-full bg-[#28594E]/10 text-[#28594E] dark:text-[#D8E6DA] text-xs font-bold tracking-wider">
-                CONFIRMED · {confirmedOrderNumber}
-              </span>
-              <h3 className="text-2xl font-extrabold text-[#28594E] dark:text-[#F5EBDD] mt-2">
-                Welcome to Bangkok!
-              </h3>
-              <p className="text-xs text-[#6B7B74] dark:text-[#8FA299] max-w-sm mt-1">
-                A confirmation has been sent to {bookingGuest.email}. Direct booking attribution recorded with zero OTA fee.
-              </p>
-            </div>
-
-            {/* Bilingual airport card sample */}
-            <div className="w-full text-left rounded-2xl bg-white dark:bg-[#202C27] border border-[#E5DBD0] dark:border-[#2D3D36] p-4 text-xs space-y-2">
-              <div className="flex items-center gap-2 font-bold text-[#28594E] dark:text-[#D8E6DA]">
-                <Plane className="size-3.5" /> Airport Pickup Card Generated (EN / TH)
-              </div>
-              <div className="p-2.5 rounded-xl bg-[#F8F5EE] dark:bg-[#17201D] font-mono text-[11px] text-[#303A36] dark:text-[#D8E6DA]">
-                <p>Welcome to BKK Riverside Boutique Hotel, {bookingGuest.fullName}!</p>
-                <p>Flight: TG917 | Door 4, Level 1</p>
-                <p>Driver: Somchai Rattana (White Minivan 1กก 1234)</p>
-                <p className="mt-1 text-[#6B7B74]">ยินดีต้อนรับสู่กรุงเทพฯ คนขับรอรับท่านที่ประตู 4 ชั้น 1</p>
-              </div>
-            </div>
-
-            <Button
-              onClick={resetBooking}
-              className="mt-2 rounded-xl bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs px-6 py-2.5 shadow-sm"
-            >
-              Back to Home
+                {[1, 2, 3, 4].map((n) => (
+                  <option key={n} value={n}>
+                    {n} {n === 1 ? "adult" : "adults"}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-0 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            </span>
+          </label>
+          <div className="col-span-2 flex items-center justify-between gap-4 px-5 py-3 md:col-span-1 md:justify-end">
+            <span className="text-sm text-muted-foreground md:hidden lg:inline">{nightsLabel}</span>
+            <Button size="lg" onClick={scrollToRooms}>
+              Check availability
             </Button>
           </div>
         </div>
+
+        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
+          <li className="flex items-center gap-1.5">
+            <ShieldCheck className="size-3.5" /> Best rate when booking direct
+          </li>
+          <li className="flex items-center gap-1.5">
+            <Clock className="size-3.5" /> 15-minute rate hold
+          </li>
+          <li className="flex items-center gap-1.5">
+            <Plane className="size-3.5" /> Flight-tracked airport transfers
+          </li>
+        </ul>
+      </div>
+
+      {/* ─── Content + summary ─────────────────────────────────────────────────── */}
+      <div className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-10">
+        <div className="flex flex-col gap-20 lg:col-span-8">
+          {/* Rooms */}
+          <section id="tour-room-catalog" className="scroll-mt-24">
+            <SectionHeading
+              overline="Accommodation"
+              title="Rooms & villas"
+              description={`${formatDate(checkIn)} – ${formatDate(checkOut)} · ${nightsLabel} · ${guestsLabel}`}
+            />
+
+            <div className="mt-8 flex flex-col gap-6">
+              {roomCatalog.map((room) => {
+                const isSelected = cart.some((i) => i.kind === "ROOM" && i.roomType === room.type);
+                return (
+                  <article
+                    key={room.type}
+                    className={cn(
+                      "grid overflow-hidden rounded-lg border bg-surface transition-colors sm:grid-cols-[40%_1fr]",
+                      isSelected ? "border-primary ring-1 ring-primary" : "border-border"
+                    )}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRoomForModal(room)}
+                      className="group relative aspect-4/3 overflow-hidden bg-subtle sm:aspect-auto sm:min-h-full"
+                      aria-label={`View ${room.title}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={room.image}
+                        alt={room.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                      />
+                    </button>
+
+                    <div className="flex flex-col gap-4 p-6">
+                      <div>
+                        <h3 className="font-display text-2xl font-medium leading-tight text-foreground">
+                          {room.title}
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">{room.tagline}</p>
+                      </div>
+
+                      <p className="flex items-center gap-1.5 text-[13px] text-foreground">
+                        <Users className="size-3.5 text-muted-foreground" /> {room.capacity}
+                      </p>
+
+                      <p className="text-[13px] leading-relaxed text-muted-foreground">
+                        {room.features.slice(0, 4).join(" · ")}
+                      </p>
+
+                      <div className="mt-auto flex flex-wrap items-end justify-between gap-4 border-t border-border pt-4">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedRoomForModal(room)}
+                          className="text-sm text-foreground underline decoration-border underline-offset-4 transition hover:decoration-foreground"
+                        >
+                          Room details
+                        </button>
+                        <div className="flex items-end gap-4">
+                          <div className="text-right">
+                            <p className="text-sm text-foreground">
+                              <span className="text-muted-foreground">From </span>
+                              <span className="text-lg font-medium tabular-nums">
+                                {formatThb(room.pricePerNight)}
+                              </span>
+                              <span className="text-muted-foreground"> / night</span>
+                            </p>
+                            <p className="text-xs tabular-nums text-muted-foreground">
+                              {formatThb(room.pricePerNight * nights)} total for {nightsLabel}
+                            </p>
+                          </div>
+                          <Button
+                            variant={isSelected ? "outline" : "default"}
+                            onClick={() => addRoomToCart(room.type, room.title, room.pricePerNight)}
+                          >
+                            {isSelected ? (
+                              <>
+                                <Check /> Selected
+                              </>
+                            ) : (
+                              "Select"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Experiences & dining */}
+          <section id="tour-experiences" className="scroll-mt-24">
+            <SectionHeading
+              overline="During your stay"
+              title="Experiences & dining"
+              description="Add transfers, tours, treatments and dinner reservations to the same booking."
+            />
+
+            <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
+              {services.map((svc) => {
+                const svcImg =
+                  svc.coverImage ||
+                  svc.images?.[0] ||
+                  (svc.kind === "AIRPORT_TRANSFER"
+                    ? "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800"
+                    : svc.category === "WELLNESS"
+                    ? "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800"
+                    : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800");
+
+                return (
+                  <AddOnCard
+                    key={svc._id}
+                    image={svcImg}
+                    category={CATEGORY_LABELS[svc.category] ?? "Experience"}
+                    title={svc.name}
+                    description={
+                      svc.kind === "AIRPORT_TRANSFER"
+                        ? "Private, flight-tracked pickup with a bilingual driver."
+                        : svc.description || svc.tour?.meetingPoint || "Curated by our concierge team."
+                    }
+                    price={svc.basePriceThb}
+                    inCart={cart.some((i) => i.kind === "SERVICE" && i.serviceId === svc._id)}
+                    onOpen={() => setSelectedServiceForModal(svc)}
+                    onAdd={() => addServiceToCart(svc)}
+                  />
+                );
+              })}
+
+              {restaurants.map((rest) => {
+                const restImg =
+                  rest.coverImage ||
+                  rest.images?.[0] ||
+                  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800";
+                const shift = rest.shifts?.[1] || rest.shifts?.[0];
+                const shiftLabel = shift?.label || shift?.name || "Dinner";
+
+                return (
+                  <AddOnCard
+                    key={rest._id}
+                    image={restImg}
+                    category="Dining"
+                    title={rest.name}
+                    description={`${rest.cuisine} · ${shiftLabel} seating, reserved table`}
+                    price={1200}
+                    inCart={cart.some((i) => i.kind === "DINING" && i.restaurantId === rest._id)}
+                    onAdd={() =>
+                      addDiningToCart(rest, shift?.code || "EVENING", `${shift?.label || "Evening"} Seating`)
+                    }
+                  />
+                );
+              })}
+            </div>
+          </section>
+        </div>
+
+        {/* Reservation summary (desktop) */}
+        <aside className="hidden lg:col-span-4 lg:block" aria-label="Your stay">
+          <div className="sticky top-24 rounded-lg border border-border bg-surface shadow-xs">
+            <div className="border-b border-border px-6 py-5">
+              <h2 className="font-display text-2xl font-medium">Your stay</h2>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                {formatDate(checkIn)} – {formatDate(checkOut)} · {guestsLabel}
+              </p>
+            </div>
+
+            {cart.length === 0 ? (
+              <p className="px-6 py-8 text-sm text-muted-foreground">
+                Select a room to begin. Experiences and dining can be added to the same reservation.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-5 px-6 py-5">
+                <CartLines cart={cart} onRemove={removeFromCart} />
+                <Totals subtotal={subtotal} serviceCharge={serviceCharge} vat={vat} grandTotal={grandTotal} />
+                {holdTimeLeft !== null ? (
+                  <p
+                    className={cn(
+                      "flex items-center gap-1.5 text-[13px]",
+                      holdTimeLeft < 180 ? "text-warning" : "text-muted-foreground"
+                    )}
+                  >
+                    <Clock className="size-3.5" /> Rate held for{" "}
+                    <span className="tabular-nums">{formatTimer(holdTimeLeft)}</span>
+                  </p>
+                ) : null}
+                {holdId ? (
+                  <Button size="lg" className="w-full" onClick={() => setIsCheckoutOpen(true)}>
+                    Continue to guest details
+                  </Button>
+                ) : (
+                  <Button size="lg" className="w-full" onClick={() => void triggerHold()} disabled={isHolding}>
+                    Hold rate for 15 minutes
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+
+      {/* ─── Mobile reservation bar ───────────────────────────────────────────── */}
+      {cart.length > 0 ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 backdrop-blur lg:hidden">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+            <div className="min-w-0">
+              <p className="text-lg font-medium tabular-nums">{formatThb(grandTotal)}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {cart.length} {cart.length === 1 ? "item" : "items"}
+                {holdTimeLeft !== null ? ` · held for ${formatTimer(holdTimeLeft)}` : " · taxes included"}
+              </p>
+            </div>
+            <div className="shrink-0">
+              {holdId ? (
+                <Button size="lg" onClick={() => setIsCheckoutOpen(true)}>
+                  Continue
+                </Button>
+              ) : (
+                <Button size="lg" onClick={() => void triggerHold()} disabled={isHolding}>
+                  Hold rate
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       ) : null}
+
+      {/* ─── Guest details ────────────────────────────────────────────────────── */}
+      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+        <DialogContent size="lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl font-medium">Guest details</DialogTitle>
+            <DialogDescription>
+              {hotelName} · {formatDate(checkIn)} – {formatDate(checkOut)}
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogBody>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-[1fr_15rem]">
+              <form
+                id="guest-details-form"
+                className="flex flex-col gap-4"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void finalizeBooking();
+                }}
+              >
+                <Field label="Full name" htmlFor="guest-name">
+                  <Input
+                    id="guest-name"
+                    autoComplete="name"
+                    required
+                    value={bookingGuest.fullName}
+                    onChange={(e) => setBookingGuest({ ...bookingGuest, fullName: e.target.value })}
+                  />
+                </Field>
+                <Field label="Email" htmlFor="guest-email">
+                  <Input
+                    id="guest-email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={bookingGuest.email}
+                    onChange={(e) => setBookingGuest({ ...bookingGuest, email: e.target.value })}
+                  />
+                </Field>
+                <Field label="Phone" htmlFor="guest-phone" hint="Include country code, e.g. +66 81 234 5678">
+                  <Input
+                    id="guest-phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={bookingGuest.phoneE164}
+                    onChange={(e) => setBookingGuest({ ...bookingGuest, phoneE164: e.target.value })}
+                  />
+                </Field>
+                <Field label="LINE ID (optional) — for arrival updates" htmlFor="guest-line">
+                  <Input
+                    id="guest-line"
+                    value={bookingGuest.lineUserId}
+                    onChange={(e) => setBookingGuest({ ...bookingGuest, lineUserId: e.target.value })}
+                  />
+                </Field>
+              </form>
+
+              <div className="flex flex-col gap-4 rounded-md bg-subtle p-4 sm:self-start">
+                <h3 className="text-sm font-medium">Reservation</h3>
+                <CartLines cart={cart} onRemove={removeFromCart} compact />
+                <Totals subtotal={subtotal} serviceCharge={serviceCharge} vat={vat} grandTotal={grandTotal} />
+              </div>
+            </div>
+          </DialogBody>
+
+          <DialogFooter className="justify-between">
+            <div>
+              <p className="text-xs text-muted-foreground">Total</p>
+              <p className="text-lg font-medium tabular-nums">{formatThb(grandTotal)}</p>
+            </div>
+            <Button size="lg" type="submit" form="guest-details-form" disabled={cart.length === 0}>
+              Confirm reservation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Confirmation ─────────────────────────────────────────────────────── */}
+      <Dialog open={isConfirmed} onOpenChange={(open) => (open ? null : resetBooking())}>
+        <DialogContent size="md">
+          <DialogBody className="flex flex-col items-center gap-5 px-8 pb-6 pt-10 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-success-soft text-success">
+              <Check className="size-6" />
+            </div>
+            <div>
+              <DialogTitle className="font-display text-3xl font-medium">
+                Your reservation is confirmed
+              </DialogTitle>
+              <p className="mt-2 font-mono text-sm text-foreground">{confirmedOrderNumber}</p>
+              <DialogDescription className="mx-auto mt-2 max-w-sm">
+                A confirmation has been sent to {bookingGuest.email}.
+              </DialogDescription>
+            </div>
+
+            <div className="w-full rounded-md border border-border text-left">
+              <div className="flex items-center gap-2 border-b border-border px-4 py-2.5 text-[13px] font-medium">
+                <Plane className="size-3.5 text-muted-foreground" /> Airport pickup card
+                <span className="ml-auto text-xs font-normal text-muted-foreground">EN / TH</span>
+              </div>
+              <div className="space-y-1 px-4 py-3 text-[13px] leading-relaxed text-foreground">
+                <p>
+                  Welcome to {hotelName}, {bookingGuest.fullName}.
+                </p>
+                <p className="text-muted-foreground">Flight TG917 · Door 4, Level 1</p>
+                <p className="text-muted-foreground">Driver: Somchai Rattana · White minivan 1กก 1234</p>
+                <p className="pt-1 text-muted-foreground">ยินดีต้อนรับสู่กรุงเทพฯ คนขับรอรับท่านที่ประตู 4 ชั้น 1</p>
+              </div>
+            </div>
+          </DialogBody>
+          <DialogFooter className="justify-center">
+            <Button size="lg" className="w-full sm:w-auto sm:min-w-40" onClick={resetBooking}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <GuestRoomDetailsModal
+        room={selectedRoomForModal}
+        isOpen={Boolean(selectedRoomForModal)}
+        isSelected={
+          selectedRoomForModal
+            ? cart.some((i) => i.kind === "ROOM" && i.roomType === selectedRoomForModal.type)
+            : false
+        }
+        onClose={() => setSelectedRoomForModal(null)}
+        onSelectRoom={() => {
+          if (selectedRoomForModal) {
+            addRoomToCart(
+              selectedRoomForModal.type,
+              selectedRoomForModal.title,
+              selectedRoomForModal.pricePerNight
+            );
+          }
+        }}
+      />
+
+      <GuestServiceDetailsModal
+        service={selectedServiceForModal}
+        isOpen={Boolean(selectedServiceForModal)}
+        isInCart={
+          selectedServiceForModal
+            ? cart.some((i) => i.kind === "SERVICE" && i.serviceId === selectedServiceForModal._id)
+            : false
+        }
+        onClose={() => setSelectedServiceForModal(null)}
+        onAddToCart={() => {
+          if (selectedServiceForModal) {
+            addServiceToCart(selectedServiceForModal);
+          }
+        }}
+      />
     </div>
+  );
+}
+
+function SectionHeading({
+  overline,
+  title,
+  description,
+}: {
+  overline: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="border-b border-border pb-5">
+      <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">{overline}</p>
+      <h2 className="mt-2 font-display text-3xl font-medium text-foreground sm:text-4xl">{title}</h2>
+      {description ? <p className="mt-2 text-sm text-muted-foreground">{description}</p> : null}
+    </div>
+  );
+}
+
+function AddOnCard({
+  image,
+  category,
+  title,
+  description,
+  price,
+  inCart,
+  onOpen,
+  onAdd,
+}: {
+  image: string;
+  category: string;
+  title: string;
+  description: string;
+  price: number;
+  inCart: boolean;
+  onOpen?: () => void;
+  onAdd: () => void;
+}) {
+  const imageEl = (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={image}
+      alt={title}
+      className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+    />
+  );
+
+  return (
+    <article className="flex flex-col">
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={onOpen}
+          className="group aspect-4/3 overflow-hidden rounded-md bg-subtle"
+          aria-label={`View ${title}`}
+        >
+          {imageEl}
+        </button>
+      ) : (
+        <div className="aspect-4/3 overflow-hidden rounded-md bg-subtle">{imageEl}</div>
+      )}
+      <p className="mt-4 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">{category}</p>
+      <h3 className="mt-1.5 text-base font-medium text-foreground">
+        {onOpen ? (
+          <button type="button" onClick={onOpen} className="text-left hover:underline hover:underline-offset-4">
+            {title}
+          </button>
+        ) : (
+          title
+        )}
+      </h3>
+      <p className="mt-1 line-clamp-1 text-[13px] text-muted-foreground">{description}</p>
+      <div className="mt-4 flex items-center justify-between">
+        <span className="text-sm font-medium tabular-nums">{formatThb(price)}</span>
+        <Button size="sm" variant="outline" onClick={onAdd}>
+          {inCart ? (
+            <>
+              <Check /> Added
+            </>
+          ) : (
+            "Add"
+          )}
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+function CartLines({
+  cart,
+  onRemove,
+  compact,
+}: {
+  cart: CartItem[];
+  onRemove: (id: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <ul className={cn("flex flex-col", compact ? "gap-2.5" : "gap-3")}>
+      {cart.map((item) => (
+        <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
+          <div className="min-w-0">
+            <p className="truncate text-foreground">{item.title}</p>
+            {!compact ? (
+              <p className="text-xs text-muted-foreground">
+                {item.kind === "ROOM"
+                  ? `${item.nights} ${item.nights === 1 ? "night" : "nights"} × ${formatThb(item.pricePerNight)}`
+                  : item.kind === "DINING"
+                  ? `${item.pax} guests · ${formatDate(item.diningDate)}`
+                  : `${item.pax} guests`}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className="tabular-nums text-foreground">{formatThb(item.totalPrice)}</span>
+            <button
+              type="button"
+              onClick={() => onRemove(item.id)}
+              className="rounded p-0.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label={`Remove ${item.title}`}
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function Totals({
+  subtotal,
+  serviceCharge,
+  vat,
+  grandTotal,
+}: {
+  subtotal: number;
+  serviceCharge: number;
+  vat: number;
+  grandTotal: number;
+}) {
+  return (
+    <dl className="flex flex-col gap-1.5 border-t border-border pt-4 text-[13px]">
+      <div className="flex justify-between text-muted-foreground">
+        <dt>Subtotal</dt>
+        <dd className="tabular-nums">{formatThb(subtotal)}</dd>
+      </div>
+      <div className="flex justify-between text-muted-foreground">
+        <dt>Service charge &amp; VAT</dt>
+        <dd className="tabular-nums">{formatThb(serviceCharge + vat)}</dd>
+      </div>
+      <div className="mt-2 flex items-baseline justify-between">
+        <dt className="text-sm text-foreground">Total</dt>
+        <dd className="text-2xl font-medium tabular-nums text-foreground">{formatThb(grandTotal)}</dd>
+      </div>
+      <p className="text-xs text-muted-foreground">Includes 10% service charge and 7% VAT</p>
+    </dl>
   );
 }
