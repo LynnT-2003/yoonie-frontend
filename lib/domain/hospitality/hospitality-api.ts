@@ -3,6 +3,7 @@ import {
   deleteRequest,
   getRequest,
   patchRequest,
+  postFileRequest,
   postRequest,
 } from "../api/NetworkManager";
 import { apiPath } from "../../config/api-path";
@@ -25,12 +26,18 @@ export const hospitalityKeys = {
   all: ["hospitality"] as const,
   branches: () => [...hospitalityKeys.all, "branches"] as const,
   branch: (code: string) => [...hospitalityKeys.all, "branch", code] as const,
+  rooms: (branchId: string) => [...hospitalityKeys.all, "rooms", branchId] as const,
+  room: (roomId: string) => [...hospitalityKeys.all, "room", roomId] as const,
   housekeeping: (branchId: string) =>
     [...hospitalityKeys.all, "housekeeping", branchId] as const,
   services: (branchId: string) =>
     [...hospitalityKeys.all, "services", branchId] as const,
+  service: (serviceId: string) =>
+    [...hospitalityKeys.all, "service", serviceId] as const,
   restaurants: (branchId: string) =>
     [...hospitalityKeys.all, "restaurants", branchId] as const,
+  restaurant: (restaurantId: string) =>
+    [...hospitalityKeys.all, "restaurant", restaurantId] as const,
   availability: (branchId: string, roomType: string, checkIn: string, checkOut: string) =>
     [...hospitalityKeys.all, "availability", branchId, roomType, checkIn, checkOut] as const,
   dispatch: (branchId: string, date: string) =>
@@ -53,7 +60,93 @@ export function useBranchesQuery() {
   });
 }
 
+export async function createBranch(body: Record<string, unknown>): Promise<Branch> {
+  return postRequest<Branch, Record<string, unknown>>(apiPath("branches"), body);
+}
+
+export function useCreateBranchMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createBranch,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.branches() });
+    },
+  });
+}
+
+export async function uploadBranchLogo(idOrCode: string, file: File): Promise<Branch> {
+  const formData = new FormData();
+  formData.append("logo", file);
+  return postFileRequest<Branch>(apiPath(`branches/${idOrCode}/logo`), formData);
+}
+
+export async function uploadBranchImages(idOrCode: string, files: File[]): Promise<Branch> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("images", f));
+  return postFileRequest<Branch>(apiPath(`branches/${idOrCode}/images`), formData);
+}
+
+export async function deleteBranchImage(idOrCode: string, imageUrl: string): Promise<Branch> {
+  return deleteRequest<Branch>(
+    apiPath(`branches/${idOrCode}/images?imageUrl=${encodeURIComponent(imageUrl)}`)
+  );
+}
+
 // ─── Housekeeping & Rooms ────────────────────────────────────────────────────
+
+export async function getRooms(
+  branchId: string,
+  roomType?: string,
+  cleaningStatus?: string
+): Promise<RoomItem[]> {
+  let url = `rooms?branchId=${encodeURIComponent(branchId)}`;
+  if (roomType) url += `&roomType=${encodeURIComponent(roomType)}`;
+  if (cleaningStatus) url += `&cleaningStatus=${encodeURIComponent(cleaningStatus)}`;
+  return getRequest<RoomItem[]>(apiPath(url), { isPublic: true });
+}
+
+export function useRoomsQuery(branchId: string, roomType?: string, cleaningStatus?: string) {
+  return useQuery({
+    queryKey: [...hospitalityKeys.rooms(branchId), roomType, cleaningStatus],
+    queryFn: () => getRooms(branchId, roomType, cleaningStatus),
+    enabled: Boolean(branchId),
+    staleTime: 30_000,
+  });
+}
+
+export async function createRoom(body: Record<string, unknown>): Promise<RoomItem> {
+  return postRequest<RoomItem, Record<string, unknown>>(apiPath("rooms"), body);
+}
+
+export function useCreateRoomMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRoom,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.rooms(branchId) });
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.housekeeping(branchId) });
+    },
+  });
+}
+
+export async function uploadRoomImages(
+  roomId: string,
+  files: File[],
+  isCover = false
+): Promise<RoomItem> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("images", f));
+  return postFileRequest<RoomItem>(
+    apiPath(`rooms/${roomId}/images?isCover=${isCover}`),
+    formData
+  );
+}
+
+export async function deleteRoomImage(roomId: string, imageUrl: string): Promise<RoomItem> {
+  return deleteRequest<RoomItem>(
+    apiPath(`rooms/${roomId}/images?imageUrl=${encodeURIComponent(imageUrl)}`)
+  );
+}
 
 export async function getHousekeepingBoard(branchId: string): Promise<HousekeepingBoard> {
   return getRequest<HousekeepingBoard>(apiPath(`rooms/housekeeping?branchId=${encodeURIComponent(branchId)}`), {
@@ -67,6 +160,40 @@ export function useHousekeepingBoardQuery(branchId: string, options?: { refetchI
     queryFn: () => getHousekeepingBoard(branchId),
     enabled: Boolean(branchId),
     refetchInterval: options?.refetchInterval ?? 15_000,
+  });
+}
+
+export async function getRoom(roomId: string): Promise<RoomItem> {
+  return getRequest<RoomItem>(apiPath(`rooms/${roomId}`), { isPublic: true });
+}
+
+export function useRoomQuery(roomId: string) {
+  return useQuery({
+    queryKey: hospitalityKeys.room(roomId),
+    queryFn: () => getRoom(roomId),
+    enabled: Boolean(roomId),
+  });
+}
+
+export async function updateRoom(
+  roomId: string,
+  body: Record<string, unknown>
+): Promise<RoomItem> {
+  return patchRequest<RoomItem, Record<string, unknown>>(apiPath(`rooms/${roomId}`), body);
+}
+
+export function useUpdateRoomMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ roomId, data }: { roomId: string; data: Record<string, unknown> }) =>
+      updateRoom(roomId, data),
+    onSuccess: (updatedRoom) => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.rooms(branchId) });
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.housekeeping(branchId) });
+      if (updatedRoom?._id) {
+        void queryClient.invalidateQueries({ queryKey: hospitalityKeys.room(updatedRoom._id) });
+      }
+    },
   });
 }
 
@@ -89,25 +216,94 @@ export function useUpdateRoomCleaningMutation(branchId: string) {
       void queryClient.invalidateQueries({
         queryKey: hospitalityKeys.housekeeping(branchId),
       });
+      void queryClient.invalidateQueries({
+        queryKey: hospitalityKeys.rooms(branchId),
+      });
     },
   });
 }
 
 // ─── Services & Restaurants ──────────────────────────────────────────────────
 
-export async function getServices(branchId: string): Promise<ServiceItem[]> {
-  return getRequest<ServiceItem[]>(apiPath(`services?branchId=${encodeURIComponent(branchId)}`), {
-    isPublic: true,
-  });
+export async function getServices(branchId: string, category?: string): Promise<ServiceItem[]> {
+  let url = `services?branchId=${encodeURIComponent(branchId)}`;
+  if (category) url += `&category=${encodeURIComponent(category)}`;
+  return getRequest<ServiceItem[]>(apiPath(url), { isPublic: true });
 }
 
-export function useServicesQuery(branchId: string) {
+export function useServicesQuery(branchId: string, category?: string) {
   return useQuery({
-    queryKey: hospitalityKeys.services(branchId),
-    queryFn: () => getServices(branchId),
+    queryKey: [...hospitalityKeys.services(branchId), category],
+    queryFn: () => getServices(branchId, category),
     enabled: Boolean(branchId),
     staleTime: 60_000,
   });
+}
+
+export async function createService(body: Record<string, unknown>): Promise<ServiceItem> {
+  return postRequest<ServiceItem, Record<string, unknown>>(apiPath("services"), body);
+}
+
+export function useCreateServiceMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createService,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.services(branchId) });
+    },
+  });
+}
+
+export async function getService(serviceId: string): Promise<ServiceItem> {
+  return getRequest<ServiceItem>(apiPath(`services/${serviceId}`), { isPublic: true });
+}
+
+export function useServiceQuery(serviceId: string) {
+  return useQuery({
+    queryKey: hospitalityKeys.service(serviceId),
+    queryFn: () => getService(serviceId),
+    enabled: Boolean(serviceId),
+  });
+}
+
+export async function updateService(
+  serviceId: string,
+  body: Record<string, unknown>
+): Promise<ServiceItem> {
+  return patchRequest<ServiceItem, Record<string, unknown>>(apiPath(`services/${serviceId}`), body);
+}
+
+export function useUpdateServiceMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ serviceId, data }: { serviceId: string; data: Record<string, unknown> }) =>
+      updateService(serviceId, data),
+    onSuccess: (updated) => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.services(branchId) });
+      if (updated?._id) {
+        void queryClient.invalidateQueries({ queryKey: hospitalityKeys.service(updated._id) });
+      }
+    },
+  });
+}
+
+export async function uploadServiceImages(
+  serviceId: string,
+  files: File[],
+  isCover = false
+): Promise<ServiceItem> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("images", f));
+  return postFileRequest<ServiceItem>(
+    apiPath(`services/${serviceId}/images?isCover=${isCover}`),
+    formData
+  );
+}
+
+export async function deleteServiceImage(serviceId: string, imageUrl: string): Promise<ServiceItem> {
+  return deleteRequest<ServiceItem>(
+    apiPath(`services/${serviceId}/images?imageUrl=${encodeURIComponent(imageUrl)}`)
+  );
 }
 
 export async function getRestaurants(branchId: string): Promise<RestaurantItem[]> {
@@ -123,6 +319,75 @@ export function useRestaurantsQuery(branchId: string) {
     enabled: Boolean(branchId),
     staleTime: 60_000,
   });
+}
+
+export async function getRestaurant(restaurantId: string): Promise<RestaurantItem> {
+  return getRequest<RestaurantItem>(apiPath(`restaurants/${restaurantId}`), { isPublic: true });
+}
+
+export function useRestaurantQuery(restaurantId: string) {
+  return useQuery({
+    queryKey: hospitalityKeys.restaurant(restaurantId),
+    queryFn: () => getRestaurant(restaurantId),
+    enabled: Boolean(restaurantId),
+  });
+}
+
+export async function updateRestaurant(
+  restaurantId: string,
+  body: Record<string, unknown>
+): Promise<RestaurantItem> {
+  return patchRequest<RestaurantItem, Record<string, unknown>>(apiPath(`restaurants/${restaurantId}`), body);
+}
+
+export function useUpdateRestaurantMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ restaurantId, data }: { restaurantId: string; data: Record<string, unknown> }) =>
+      updateRestaurant(restaurantId, data),
+    onSuccess: (updated) => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.restaurants(branchId) });
+      if (updated?._id) {
+        void queryClient.invalidateQueries({ queryKey: hospitalityKeys.restaurant(updated._id) });
+      }
+    },
+  });
+}
+
+export async function createRestaurant(body: Record<string, unknown>): Promise<RestaurantItem> {
+  return postRequest<RestaurantItem, Record<string, unknown>>(apiPath("restaurants"), body);
+}
+
+export function useCreateRestaurantMutation(branchId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRestaurant,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.restaurants(branchId) });
+    },
+  });
+}
+
+export async function uploadRestaurantImages(
+  restaurantId: string,
+  files: File[],
+  isCover = false
+): Promise<RestaurantItem> {
+  const formData = new FormData();
+  files.forEach((f) => formData.append("images", f));
+  return postFileRequest<RestaurantItem>(
+    apiPath(`restaurants/${restaurantId}/images?isCover=${isCover}`),
+    formData
+  );
+}
+
+export async function deleteRestaurantImage(
+  restaurantId: string,
+  imageUrl: string
+): Promise<RestaurantItem> {
+  return deleteRequest<RestaurantItem>(
+    apiPath(`restaurants/${restaurantId}/images?imageUrl=${encodeURIComponent(imageUrl)}`)
+  );
 }
 
 // ─── Inventory Availability & Hold ───────────────────────────────────────────
