@@ -50,10 +50,19 @@ export type CartItem =
       diningDate: string;
     };
 
-export function useHomePageVm() {
+export function useHomePageVm(branchCode?: string) {
   const { user, ready } = useAuth();
   const branchesQuery = useBranchesQuery();
-  const activeBranch: Branch | undefined = branchesQuery.data?.[0];
+  const activeBranch: Branch | undefined = React.useMemo(() => {
+    if (!branchesQuery.data || branchesQuery.data.length === 0) return undefined;
+    if (branchCode) {
+      const match = branchesQuery.data.find(
+        (b) => b.code.toLowerCase() === branchCode.toLowerCase()
+      );
+      if (match) return match;
+    }
+    return branchesQuery.data[0];
+  }, [branchesQuery.data, branchCode]);
   const branchId = activeBranch?._id || "665a1b2c3d4e5f6a7b8c9d0e";
 
   const roomsQuery = useRoomsQuery(branchId);
