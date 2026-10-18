@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
+import { YoonieOnboardingModal } from "@/components/onboarding/YoonieOnboardingModal";
 import type { HomePageVm } from "@/modules/home/viewModel/homePageVm";
 import type { RoomType } from "@/lib/types/hospitality";
 
@@ -98,6 +99,9 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,
+    isOnboardingOpen,
+    openOnboarding,
+    closeOnboarding,
   } = vm;
 
   // Determine Yoonie mascot mood and message dynamically
@@ -133,9 +137,19 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
         <div className="relative rounded-3xl bg-linear-to-b from-[#EFE7DA] to-[#F8F5EE] dark:from-[#202C27] dark:to-[#17201D] border border-[#E5DBD0] dark:border-[#2D3D36] p-6 sm:p-10 shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             <div className="lg:col-span-7 flex flex-col gap-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#28594E]/10 dark:bg-[#28594E]/30 text-[#28594E] dark:text-[#D8E6DA] text-xs font-bold uppercase tracking-wider w-fit">
-                <Sparkles className="size-3.5 text-[#E8A45B]" />
-                Direct Boutique Booking · No OTA Commissions
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#28594E]/10 dark:bg-[#28594E]/30 text-[#28594E] dark:text-[#D8E6DA] text-xs font-bold uppercase tracking-wider w-fit">
+                  <Sparkles className="size-3.5 text-[#E8A45B]" />
+                  Direct Boutique Booking · No OTA Commissions
+                </div>
+                <button
+                  type="button"
+                  onClick={openOnboarding}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8A45B]/15 hover:bg-[#E8A45B]/25 text-[#303A36] dark:text-[#E8A45B] text-xs font-bold tracking-wide transition border border-[#E8A45B]/30"
+                >
+                  <Sparkles className="size-3.5 text-[#E8A45B]" />
+                  Take Guided Tour ✨
+                </button>
               </div>
 
               <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-[#28594E] dark:text-[#F5EBDD] font-sans leading-tight">
@@ -634,6 +648,9 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
           </div>
         </div>
       ) : null}
+
+      {/* ─── Guided Onboarding Tour Modal ───────────────────────────────────── */}
+      <YoonieOnboardingModal isOpen={isOnboardingOpen} onClose={closeOnboarding} />
     </div>
   );
 }

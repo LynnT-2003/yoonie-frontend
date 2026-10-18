@@ -74,6 +74,19 @@ export function useHomePageVm() {
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
   const [isConfirmed, setIsConfirmed] = React.useState(false);
   const [confirmedOrderNumber, setConfirmedOrderNumber] = React.useState<string | null>(null);
+
+  // Guided onboarding state
+  const [isOnboardingOpen, setIsOnboardingOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const completed = localStorage.getItem("onboardingComplete");
+      if (!completed) {
+        setIsOnboardingOpen(true);
+      }
+    }
+  }, []);
+
   const [bookingGuest, setBookingGuest] = React.useState({
     fullName: user?.displayName || "Sarah Jenkins",
     email: user?.email || "sarah.j@example.com",
@@ -243,6 +256,15 @@ export function useHomePageVm() {
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,
+    isOnboardingOpen,
+    setIsOnboardingOpen,
+    openOnboarding: () => setIsOnboardingOpen(true),
+    closeOnboarding: () => {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("onboardingComplete", "true");
+      }
+      setIsOnboardingOpen(false);
+    },
   };
 }
 
