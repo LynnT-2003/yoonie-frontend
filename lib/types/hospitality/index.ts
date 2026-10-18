@@ -23,6 +23,9 @@ export type Branch = {
   };
   contactPhoneE164?: string;
   contactEmail?: string;
+  logoUrl?: string;
+  heroImageUrl?: string;
+  images?: string[];
   settings: BranchSettings;
   isActive: boolean;
 };
@@ -40,6 +43,8 @@ export type RoomItem = {
   baseRateThb?: number;
   amenities: string[];
   cleaningStatus: RoomCleaningStatus;
+  coverImage?: string;
+  images?: string[];
   isActive?: boolean;
   cleaningUpdatedAt?: string;
 };
@@ -52,6 +57,8 @@ export type HousekeepingBoard = {
 };
 
 export type ServiceKind = "AIRPORT_TRANSFER" | "SCHEDULED_TOUR" | "SPA_TREATMENT";
+export type PricingModel = "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT";
+export type ServiceCategory = "TOURS" | "TRANSPORT" | "WELLNESS";
 
 export type ServiceItem = {
   _id: string;
@@ -60,8 +67,11 @@ export type ServiceItem = {
   category: string;
   kind: ServiceKind;
   name: string;
+  description?: string;
   basePriceThb: number;
   pricingModel: string;
+  coverImage?: string;
+  images?: string[];
   tour?: {
     capacity: number;
     minViablePax: number;
@@ -85,11 +95,23 @@ export type ServiceItem = {
   };
 };
 
+export type RestaurantTable = {
+  tableCode: string;
+  seats: number;
+  minSeats?: number;
+  zone: string;
+  isHighTop?: boolean;
+  isActive?: boolean;
+};
+
 export type RestaurantShift = {
   code: string;
-  name: string;
-  startsAt: string;
-  endsAt: string;
+  name?: string;
+  label?: string;
+  startTime?: string;
+  endTime?: string;
+  startsAt?: string;
+  endsAt?: string;
 };
 
 export type RestaurantItem = {
@@ -98,6 +120,13 @@ export type RestaurantItem = {
   code: string;
   name: string;
   cuisine: string;
+  description?: string;
+  coverImage?: string;
+  images?: string[];
+  maxSeats?: number;
+  totalSeats?: number;
+  avgTurnMinutes?: number;
+  tables?: RestaurantTable[];
   shifts: RestaurantShift[];
 };
 

@@ -1,4 +1,19 @@
-export type UserRole = "user" | "admin";
+export enum UserRoleEnum {
+  USER = "user",
+  ADMIN = "admin",
+  BRANCH_MGR = "BRANCH_MGR",
+  DISPATCHER = "DISPATCHER",
+  STAFF = "STAFF",
+  GUEST = "GUEST",
+}
+
+export type UserRole =
+  | "user"
+  | "admin"
+  | "BRANCH_MGR"
+  | "DISPATCHER"
+  | "STAFF"
+  | "GUEST";
 
 export type UserProviderDetail = {
   provider: string;
