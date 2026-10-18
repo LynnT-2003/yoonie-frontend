@@ -149,9 +149,7 @@ export async function deleteRoomImage(roomId: string, imageUrl: string): Promise
 }
 
 export async function getHousekeepingBoard(branchId: string): Promise<HousekeepingBoard> {
-  return getRequest<HousekeepingBoard>(apiPath(`rooms/housekeeping?branchId=${encodeURIComponent(branchId)}`), {
-    isPublic: true,
-  });
+  return getRequest<HousekeepingBoard>(apiPath(`rooms/housekeeping?branchId=${encodeURIComponent(branchId)}`));
 }
 
 export function useHousekeepingBoardQuery(branchId: string, options?: { refetchInterval?: number }) {
@@ -201,9 +199,9 @@ export async function updateRoomCleaning(
   roomId: string,
   cleaningStatus: RoomCleaningStatus
 ): Promise<RoomItem> {
-  return patchRequest<RoomItem, { cleaningStatus: RoomCleaningStatus }>(
-    apiPath(`rooms/${roomId}/cleaning`),
-    { cleaningStatus }
+  return postRequest<RoomItem, { toStatus: RoomCleaningStatus }>(
+    apiPath(`staff/rooms/${roomId}/transition`),
+    { toStatus: cleaningStatus }
   );
 }
 
@@ -429,8 +427,9 @@ export async function createHold(body: CreateHoldBody): Promise<HoldResult> {
   });
 }
 
-export async function releaseHold(holdId: string): Promise<{ released: boolean }> {
-  return deleteRequest<{ released: boolean }>(apiPath(`inventory/hold/${holdId}`));
+export async function releaseHold(holdId: string, holdToken?: string): Promise<{ released: boolean }> {
+  const query = holdToken ? `?token=${encodeURIComponent(holdToken)}` : "";
+  return deleteRequest<{ released: boolean }>(apiPath(`inventory/hold/${holdId}${query}`));
 }
 
 // ─── Orders & Confirmation ───────────────────────────────────────────────────
@@ -462,8 +461,7 @@ export async function getDispatchTasks(
   return getRequest<DispatchTask[]>(
     apiPath(
       `dispatch?branchId=${encodeURIComponent(branchId)}&serviceDate=${encodeURIComponent(serviceDate)}`
-    ),
-    { isPublic: true }
+    )
   );
 }
 
