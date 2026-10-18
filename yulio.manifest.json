@@ -1,0 +1,36 @@
+{
+  "version": "1",
+  "templates": {
+    "crm": {
+      "description": "Used car dealership — leads, inventory, appointments",
+      "branch": "template/crm",
+      "modules": [
+        { "modulePath": "modules/inventory", "routePath": "app/(protected)/inventory", "domainPath": "lib/domain/inventory" },
+        { "modulePath": "modules/leads",     "routePath": "app/(protected)/leads",     "domainPath": "lib/domain/leads" },
+        { "modulePath": "modules/appointments", "routePath": "app/(protected)/appointments", "domainPath": "lib/domain/appointments" }
+      ],
+      "envVars": []
+    },
+    "hotel": {
+      "description": "Resort booking system — rooms, bookings, reviews",
+      "branch": "template/hotel",
+      "modules": [
+        { "modulePath": "modules/rooms",    "routePath": "app/(protected)/rooms",    "domainPath": "lib/domain/rooms" },
+        { "modulePath": "modules/bookings", "routePath": "app/(protected)/bookings", "domainPath": "lib/domain/bookings" },
+        { "modulePath": "modules/reviews",  "routePath": "app/(protected)/reviews",  "domainPath": "lib/domain/reviews" }
+      ],
+      "envVars": []
+    },
+    "ecommerce": {
+      "description": "Online store — products, categories, cart, orders",
+      "branch": "template/ecommerce",
+      "modules": [
+        { "modulePath": "modules/products",   "routePath": "app/(protected)/products",   "domainPath": "lib/domain/products" },
+        { "modulePath": "modules/categories", "routePath": "app/(protected)/categories", "domainPath": "lib/domain/categories" },
+        { "modulePath": "modules/cart",       "routePath": "app/(protected)/cart",       "domainPath": "lib/domain/cart" },
+        { "modulePath": "modules/orders",     "routePath": "app/(protected)/orders",     "domainPath": "lib/domain/orders" }
+      ],
+      "envVars": []
+    }
+  }
+}
