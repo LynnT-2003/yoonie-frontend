@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import {
   oauthProviders,
   oauthStartUrls,
@@ -20,6 +21,9 @@ export type LoginPageVm = {
 
 export function useLoginPageVm(): LoginPageVm {
   const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const nextParam = searchParams.get("next");
+
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
@@ -42,14 +46,14 @@ export function useLoginPageVm(): LoginPageVm {
       setError(null);
       setPending(true);
       try {
-        await login(email.trim(), password);
+        await login(email.trim(), password, nextParam);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Sign in failed");
       } finally {
         setPending(false);
       }
     },
-    [email, password, login]
+    [email, password, login, nextParam]
   );
 
   return {

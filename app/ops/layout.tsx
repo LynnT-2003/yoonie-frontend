@@ -1,5 +1,6 @@
 import * as React from "react";
-import { OpsPortalShell } from "@/components/ops/OpsPortalShell";
+import { ProtectedLayoutClient } from "@/modules/auth/ProtectedLayoutClient";
+import { OpsNavbar } from "@/modules/layout/OpsNavbar";
 
 export const metadata = {
   title: "Operations Hub | Yoonie",
@@ -8,5 +9,12 @@ export const metadata = {
 };
 
 export default function OpsLayout({ children }: { children: React.ReactNode }) {
-  return <OpsPortalShell>{children}</OpsPortalShell>;
+  return (
+    <ProtectedLayoutClient>
+      <div className="min-h-screen bg-[#F8F5EE] text-[#303A36] flex flex-col font-sans">
+        <OpsNavbar />
+        <main className="flex-1">{children}</main>
+      </div>
+    </ProtectedLayoutClient>
+  );
 }

@@ -1,119 +1,135 @@
-# System Architecture & Operational Flows
+# System Architecture & Operational Sequence Flows
 
-High-level architectural blueprint and sequence diagrams for the `yoonie-backend` hospitality operating system.
+Comprehensive sequence diagrams and operational workflows for the **Yoonie Unified Hospitality Operating System**, covering multi-tenant edge routing, authentication, protected layouts, inventory concurrency, morning dispatch, and housekeeping turnarounds.
 
 ---
 
-## 1. Architecture & Domain Decoupling
+## 1. Multi-Tenant Subdomain Routing (`proxy.ts`)
 
-The platform is designed around 7 bounded domain modules and 2 foundation modules, eliminating monolithic coupling.
+How Next.js 16 Edge Proxy resolves requests across tenant direct booking, central operator hub, and root platform.
 
 ```mermaid
-graph TD
-    subgraph Foundation ["Identity & Tenant Base"]
-        UserModule["UserModule<br/>(Guest CDP & Staff)"]
-        BranchModule["BranchModule<br/>(Property Settings & Tax Rules)"]
+sequenceDiagram
+    autonumber
+    actor Client as Browser / Mobile App
+    participant Edge as Next.js 16 proxy.ts
+    participant OpsPage as /ops/dispatch
+    participant StayPage as /stay/[slug]
+    participant LoginPage as /login
+    participant Backend as NestJS API (:8080)
+
+    alt 1. Central Operator Portal (ops.yoonie.si or ops.localhost:3000)
+        Client->>Edge: GET http://ops.localhost:3000/
+        Note over Edge: host starts with "ops." & pathname === "/"
+        Edge->>OpsPage: Rewrite to /ops/dispatch
+        OpsPage-->>Client: Render Ops Shell (Protected via ProtectedLayoutClient)
+    else 2. Operator Accessing Unauthenticated Route
+        Client->>Edge: GET http://ops.localhost:3000/login
+        Note over Edge: host starts with "ops." & pathname === "/login"
+        Edge->>LoginPage: Pass-through (NextResponse.next())
+        LoginPage-->>Client: Render Authoritative /login Page
+    else 3. Tenant Direct Booking ([tenant].yoonie.si or [tenant].localhost:3000)
+        Client->>Edge: GET http://riverside-bkk.localhost:3000/
+        Note over Edge: extract subdomain "riverside-bkk" & pathname === "/"
+        Edge->>StayPage: Rewrite to /stay/riverside-bkk
+        StayPage-->>Client: Render Sanctuary Booking Engine for Riverside BKK
+    else 4. API Proxy Requests
+        Client->>Edge: GET /api/v1/rooms?branchId=...
+        Note over Edge: next.config.ts reverse proxy rewrites /api/*
+        Edge->>Backend: Forward to http://localhost:8080/api/v1/rooms
+        Backend-->>Client: JSON Response (No CORS issues across subdomains)
     end
-
-    subgraph Catalogs ["Physical & Service Catalogs"]
-        RoomModule["RoomModule<br/>(Physical Keys & Housekeeping)"]
-        RestaurantModule["RestaurantModule<br/>(Tables, Shifts, Zones)"]
-        ServiceModule["ServiceModule<br/>(Tours, Wellness, Fleet Transfers)"]
-    end
-
-    subgraph TransactionalCore ["Real-Time Transactions"]
-        InventoryModule["InventoryModule<br/>(Atomic Slots & Concurrency Holds)"]
-        OrderModule["OrderModule<br/>(Composite Carts & Multi-Product Orders)"]
-    end
-
-    subgraph Operations ["Back-of-House Dispatch"]
-        DispatchModule["DispatchModule<br/>(Morning Run-Sheet & Prioritization Rules)"]
-    end
-
-    BranchModule --> RoomModule
-    BranchModule --> RestaurantModule
-    BranchModule --> ServiceModule
-    BranchModule --> InventoryModule
-
-    InventoryModule --> OrderModule
-    UserModule --> OrderModule
-
-    OrderModule --> DispatchModule
-    RoomModule --> DispatchModule
-    ServiceModule --> DispatchModule
 ```
 
-### Module Responsibilities
+---
 
-1. **`BranchModule`**: Multi-tenant property root. Stores IANA timezones (`Asia/Bangkok`), local currency (`THB`), check-in/out times, tax rates (VAT 7%, Service Charge 10%), and dispatch timing rules.
-2. **`UserModule`**: Unified profiles for guests and hotel staff. Stores guest CDP attributes (`lifetimeSpendThb`, `stayCount`, `lineUserId`, `phoneE164`, `vipScore`) alongside staff roles (`ADMIN`, `BRANCH_MGR`, `DISPATCHER`, `STAFF`).
-3. **`RoomModule`**: Manages physical keys (`101`, `102`) and operational cleanliness (`CLEAN`, `DIRTY`, `IN_PROGRESS`, `INSPECTED`). **Never computes availability**.
-4. **`RestaurantModule`**: F&B outlet configuration, table layouts, and meal shifts (`BREAKFAST`, `ALL_DAY`, `EVENING`).
-5. **`ServiceModule`**: Catalog for excursions, spa treatments, and airport transfers with capacity thresholds and minimum viable pax (`minViablePax`).
-6. **`InventoryModule`**: **The central sellable-capacity engine**. Manages time-slice inventory slots (`ROOM_NIGHT`, `DINING`, `SERVICE`) with engine-level atomic conditional increments (`$expr: { $lte: [{ $add: ['$held', '$booked', qty] }, '$capacity'] }`).
-7. **`OrderModule`**: Composite customer bookings spanning multiple dates and services in a single cart. Collects direct attribution (`utmSource`, `utmCampaign`, `channel`).
-8. **`DispatchModule`**: Back-of-house automated air-traffic controller. Evaluates live booking and flight data each morning at `05:30` to generate priority-ranked tasks for housekeeping, fleet drivers, and tour coordinators.
+## 2. Authentication, Token Lifecycle & ProtectedLayoutClient
+
+Complete authentication, session restoration, role-based redirection, and route protection.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Operator as Hotel Staff / Operator
+    participant View as LoginPageView
+    participant Vm as loginPageVm
+    participant Auth as AuthProvider
+    participant API as auth-api (loginRequest)
+    participant Backend as NestJS AuthController
+    participant Guard as ProtectedLayoutClient
+    participant Ops as OpsPage (/ops/dispatch)
+
+    Note over Operator,View: 1. Sign-In Flow
+    Operator->>View: Select "Kanya Srisuk" (Admin) & Submit
+    View->>Vm: onSubmit(e)
+    Vm->>Auth: login("kanya@riverside-bkk.example", "Password123!", nextParam)
+    Auth->>API: loginRequest({ email, password })
+    API->>Backend: POST /api/auth/login
+    Backend-->>API: { user, tokens: { accessToken, refreshToken } }
+    API-->>Auth: AuthResponse
+    Note over Auth: 1. Set in-memory tokenStore<br/>2. Write localStorage ("oneforall_session_v1")<br/>3. QueryClient cache user
+    Note over Auth: Role is "ADMIN" & host is "ops." ➔ target = "/ops/dispatch"
+    Auth->>Ops: router.push("/ops/dispatch")
+
+    Note over Operator,Guard: 2. Route Protection via ProtectedLayoutClient
+    Operator->>Ops: Navigate to /ops/dispatch
+    Ops->>Guard: <ProtectedLayoutClient><OpsNavbar/><DispatchView/></ProtectedLayoutClient>
+    Guard->>Guard: useRequireAuthVm() inspects { user, ready }
+    alt Authenticated Session Valid
+        Guard-->>Operator: Render OpsNavbar + Dispatch Run-Sheet
+    else Unauthenticated (ready && !user)
+        Guard->>View: router.replace("/login")
+    else User Suspended (user.isSuspended)
+        Guard-->>Operator: Render AccountSuspendedBanner + Read-only view
+    end
+```
 
 ---
 
-## 2. The 9 MongoDB Collections
+## 3. Direct Guest Multi-Product Booking & Atomic Inventory Hold
 
-| Collection | Model Class | Document Purpose | Concurrency / Mutation Strategy |
-| :--- | :--- | :--- | :--- |
-| `branches` | `Branch` | Single hotel property configuration & rules | Static property config |
-| `users` | `User` | Unified staff roles & guest CDP profiles | Direct updates; sparse unique index on phone/Line ID |
-| `rooms` | `Room` | Physical room keys, amenities, and cleaning status | Housekeeping status updates via staff patch |
-| `restaurants` | `Restaurant` | Dining outlets, physical tables, and meal shifts | Static outlet config |
-| `services` | `Service` | Tour, spa, and transfer product configurations | Static experience catalog |
-| `inventory_slots` | `InventorySlot` | Exact bookable capacity unit per date/timeslot | **Atomic `$inc`** on `held` and `booked` |
-| `inventory_holds` | `InventoryHold` | Temporary hold claimed during checkout | Managed via TTL indexes and periodic sweeper |
-| `orders` | `Order` | Composite multi-item reservation (Stay + Dining + Tours) | Optimistic concurrency (`__v`), derived status |
-| `operational_dispatches` | `OperationalDispatch` | Prioritized daily frontline tasks & run-sheets | Upserted idempotently on `dedupeKey` |
-
----
-
-## 3. End-to-End Sequence Diagrams
-
-### Flow 1: Direct Guest Multi-Product Booking Journey
-Guests select a room, dining shift, and airport transfer in one cart. Sellable inventory is held atomically during checkout and converted upon payment confirmation.
+Guests select a room, dinner shift, and airport transfer in one cart. Capacity is locked using atomic conditional increments.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Guest
-    participant Web as Booking Frontend / Widget
+    participant Web as Booking Frontend (/stay/riverside-bkk)
     participant Inv as InventoryController & Service
     participant Ord as OrderController & Service
-    participant DB as MongoDB (Slots & Holds)
+    participant DB as MongoDB (inventory_slots & inventory_holds)
 
-    Guest->>Web: Select dates, room type (STANDARD_KING), dinner shift, & transfer
-    Web->>Inv: GET /inventory/availability?branchId=...&roomType=STANDARD_KING&checkIn=...&checkOut=...
+    Guest->>Web: Select room (STANDARD_KING), dinner shift, & transfer
+    Web->>Inv: GET /api/inventory/availability?roomType=STANDARD_KING&checkIn=...&checkOut=...
     Inv-->>Web: { available: 18 }
 
     Guest->>Web: Proceed to checkout
-    Web->>Inv: POST /inventory/hold<br/>{branchId, cartId, lines: [{slotKey, qty}]}
-    Inv->>DB: Conditional update per slot (sorted by slotKey):<br/>$inc: { held: +qty } WHERE held + booked + qty <= capacity
-    DB-->>Inv: Holds secured
-    Inv-->>Web: InventoryHold { _id, cartId, status: "ACTIVE", expiresAt }
+    Web->>Inv: POST /api/inventory/hold<br/>{branchId, cartId, lines: [{slotKey, qty: 1}]}
+    Note over Inv,DB: Atomic conditional lock per slot:<br/>$inc: { held: +qty } WHERE held + booked + qty <= capacity
+    Inv->>DB: updateOne({ slotKey, $expr: { $lte: [{ $add: ['$held', '$booked', qty] }, '$capacity'] } }, { $inc: { held: qty } })
+    DB-->>Inv: Slot secured
+    Inv->>DB: insertOne(InventoryHold { cartId, status: "ACTIVE", expiresAt: now + 15m })
+    Inv-->>Web: InventoryHold { _id, expiresAt }
 
-    Guest->>Web: Enter guest details & submit payment
-    Web->>Ord: POST /orders<br/>{branchId, guest, lines, attribution: {utmSource: "google", channel: "DIRECT_WEB"}, holdId}
-    Ord->>DB: Insert Order doc (status: "PENDING")
-    Ord-->>Web: Order { _id, orderNumber: "TS-261020-A1B2C", status: "PENDING" }
+    Guest->>Web: Complete payment details
+    Web->>Ord: POST /api/orders { branchId, guest, lines, holdId, channel: "DIRECT_WEB" }
+    Ord->>DB: Insert Order (status: "PENDING")
+    Ord-->>Web: Order { orderNumber: "TS-261024-X9Y1Z", status: "PENDING" }
 
-    Web->>Ord: POST /orders/:id/confirm<br/>{paymentRef: "ch_stripe_123", paidThb: 6944.3}
+    Web->>Ord: POST /api/orders/:id/confirm { paymentRef: "ch_stripe_123", paidThb: 6944 }
     Ord->>Inv: confirm(holdId, orderId)
-    Inv->>DB: Atomic transition per slotKey:<br/>$inc: { held: -qty, booked: +qty }
-    Inv->>DB: Update hold status to "CONVERTED"
-    Ord->>DB: Update order status to "CONFIRMED", payment to "PAID"
-    Ord-->>Web: Order { orderNumber: "TS-261020-A1B2C", status: "CONFIRMED" }
-    Web-->>Guest: Instant Booking Confirmation & Itinerary
+    Note over Inv,DB: Convert Held to Booked:<br/>$inc: { held: -qty, booked: +qty }
+    Inv->>DB: Update inventory_slots and mark hold "CONVERTED"
+    Ord->>DB: Update order status to "CONFIRMED"
+    Ord-->>Web: Confirmed Itinerary
+    Web-->>Guest: Booking Complete & Voucher Generated
 ```
 
 ---
 
-### Flow 2: Cart Abandonment & Automated Sweeper
-If a customer leaves the checkout page without paying, the inventory hold automatically expires and capacity is restored to the open selling pool.
+## 4. Cart Abandonment & Automated Capacity Sweeper
+
+If a guest leaves during checkout, inventory is safely restored to the selling pool.
 
 ```mermaid
 sequenceDiagram
@@ -121,87 +137,123 @@ sequenceDiagram
     actor Guest
     participant Web as Browser
     participant Inv as InventoryModule
-    participant Sweep as Inventory Sweeper Job
+    participant Sweep as Background Sweeper Job (cron 1m)
     participant DB as MongoDB
 
-    Guest->>Web: Starts checkout (Hold created, expires in 15 mins)
-    Web->>Inv: POST /inventory/hold
+    Guest->>Web: Begins checkout (Hold created, expires in 15 mins)
+    Web->>Inv: POST /api/inventory/hold
     Inv->>DB: $inc: { held: +1 } on target slots
-    Note over Guest,Web: Guest abandons cart / closes browser tab
+    Note over Guest,Web: Guest closes browser tab / abandons cart
 
     loop Every 60 Seconds
         Sweep->>DB: find({ status: "ACTIVE", expiresAt: { $lt: now } })
-        DB-->>Sweep: Expired hold documents
-        Sweep->>DB: For each hold slotKey: $inc: { held: -qty }
-        Sweep->>DB: Update hold.status = "EXPIRED", purgeAt = now + 1hr
+        DB-->>Sweep: Expired holds list
+        Sweep->>DB: For each slotKey: $inc: { held: -qty }
+        Sweep->>DB: Update hold status = "EXPIRED", purgeAt = now + 1hr
     end
-    Note over DB: Sellable inventory is fully available for other guests.<br/>MongoDB TTL index automatically removes hold doc at purgeAt.
+    Note over DB: Capacity restored to open pool.<br/>MongoDB TTL index purges expired hold document at purgeAt.
 ```
 
 ---
 
-### Flow 3: 05:30 AM Morning Dispatch Run-Sheet Generation
-Every morning before frontline staff report for duty, the dispatch engine evaluates active bookings and logistics to produce prioritized task cards.
+## 5. 05:30 AM Morning Dispatch Run-Sheet Generation
+
+The automated air-traffic controller for frontline operations running at 05:30 Bangkok time (`Asia/Bangkok`).
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Cron as 05:30 AM Scheduler
+    participant Cron as 05:30 AM Bangkok Scheduler
     participant Dispatch as DispatchService
     participant Rules as dispatch-rules.ts
-    participant DB as MongoDB
+    participant DB as MongoDB (operational_dispatches)
+    participant StaffUI as Staff Mobile App / Ops Portal
 
-    Cron->>Dispatch: generateMorningRunSheet(branchId, serviceDate)
+    Cron->>Dispatch: generateMorningRunSheet(branchId, today)
     
-    par Query Active Context
-        Dispatch->>DB: Find dirty rooms & check-in orders for today
-        Dispatch->>DB: Find tour service slots departing today
+    par 1. Query Active Operations Context
+        Dispatch->>DB: Find dirty/turnaround rooms & check-in orders for today
+        Dispatch->>DB: Find departing tour excursion bookings
         Dispatch->>DB: Find arrival flight airport transfer bookings
     end
 
-    Note over Dispatch,Rules: 1. Evaluate Housekeeping Urgency
-    Dispatch->>Rules: priorityScore = calcHousekeepingPriority(guestArrivalEta, isVip)
-    Rules-->>Dispatch: High priority scores for early flight arrivals & VIPs
+    Note over Dispatch,Rules: Evaluate Housekeeping Urgency
+    Dispatch->>Rules: calcHousekeepingPriority(guestArrivalEta, isVip)
+    Rules-->>Dispatch: High priority score for VIPs & early arrivals (e.g. Room 101, ETA 11:30)
 
-    Note over Dispatch,Rules: 2. Evaluate Tour Yield & Consolidation
-    Dispatch->>Rules: checkConsolidation(bookedPax, minViablePax, fixedCostThb)
-    Rules-->>Dispatch: Flag departures below 40% threshold as "MERGE_OR_CANCEL"
+    Note over Dispatch,Rules: Evaluate Tour Yield & Consolidation
+    Dispatch->>Rules: checkConsolidation(bookedPax, minViablePax: 6, fixedCostThb: 4500)
+    Rules-->>Dispatch: Departure at 33% capacity ➔ Flag "MERGE_OR_CANCEL"
 
-    Note over Dispatch,Rules: 3. Generate Bilingual Driver Pickup Cards
-    Dispatch->>Rules: buildPickupCard(guestName, flightNumber, door, driver)
-    Rules-->>Dispatch: Card formatted in English and Thai
+    Note over Dispatch,Rules: Build Bilingual Driver Manifests
+    Dispatch->>Rules: buildPickupCard(guestName, flight, terminalDoor, driver)
+    Rules-->>Dispatch: Formatted English + Thai driver instructions
 
-    Dispatch->>DB: Upsert OperationalDispatch tasks (dedupeKey: idempotent)
-    Note over DB: Tasks ready on Housekeeping Board and Driver Mobile views.
+    Dispatch->>DB: Upsert operational_dispatches (idempotent dedupeKey)
+    Dispatch-->>StaffUI: Push notification & Live updates on Dispatch Run-Sheet
 ```
 
 ---
 
-### Flow 4: Housekeeping Front-Desk Zero Flow
-Rooms are cleaned in order of guest arrival logistics rather than numeric order.
+## 6. Front-Desk Zero Housekeeping Turnaround Lifecycle
+
+Room turnaround prioritized dynamically by incoming guest logistics.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Housekeeper
-    actor FrontDesk
-    participant App as Staff UI
-    participant Room as RoomController
-    participant DB as MongoDB
+    actor Housekeeper as Housekeeper (Mobile Staff App)
+    actor Supervisor as Floor Supervisor / Front Desk
+    participant API as RoomController (/api/v1/rooms)
+    participant DB as MongoDB (rooms & operational_dispatches)
 
-    Housekeeper->>App: View Housekeeping Board sorted by arrival ETA & VIP
-    App->>Room: GET /rooms/housekeeping?branchId=...
-    Room-->>App: { inspected: [], clean: [], inProgress: [], dirty: [Room 101 (ETA 14:00, VIP)] }
+    Note over Housekeeper: 1. Room Status: DIRTY
+    Housekeeper->>API: GET /api/v1/rooms/housekeeping?branchId=...
+    API->>DB: Query rooms sorted by cleaning priority score
+    API-->>Housekeeper: Room 101 (High Priority: VIP Early Arrival)
 
-    Housekeeper->>App: Start cleaning Room 101
-    App->>Room: PATCH /rooms/:id/cleaning { cleaningStatus: "IN_PROGRESS" }
-    Room->>DB: Update cleaningStatus = "IN_PROGRESS", cleaningUpdatedAt = now
+    Note over Housekeeper: 2. Start Cleaning
+    Housekeeper->>API: PATCH /api/v1/rooms/:id/cleaning { cleaningStatus: "IN_PROGRESS" }
+    API->>DB: Update room.cleaningStatus = "IN_PROGRESS", cleaningUpdatedAt = now
+    API-->>Housekeeper: 200 OK (Status updated)
 
-    Housekeeper->>App: Mark cleaning finished
-    App->>Room: PATCH /rooms/:id/cleaning { cleaningStatus: "CLEAN" }
-    
-    FrontDesk->>App: Inspect & sign off on room
-    App->>Room: PATCH /rooms/:id/cleaning { cleaningStatus: "INSPECTED" }
-    Room->>DB: Update cleaningStatus = "INSPECTED"
-    Note over FrontDesk,App: Room is now green for frictionless key handover upon guest arrival.
+    Note over Housekeeper: 3. Finish Cleaning
+    Housekeeper->>API: PATCH /api/v1/rooms/:id/cleaning { cleaningStatus: "CLEAN" }
+    API->>DB: Update room.cleaningStatus = "CLEAN"
+    API-->>Housekeeper: 200 OK
+
+    Note over Supervisor: 4. Supervisory Inspection
+    Supervisor->>API: PATCH /api/v1/rooms/:id/cleaning { cleaningStatus: "INSPECTED" }
+    API->>DB: Update room.cleaningStatus = "INSPECTED"
+    API-->>Supervisor: 200 OK
+    Note over Supervisor: Room is now green for frictionless key release.
+```
+
+---
+
+## 7. Staff Mobile App Real-Time Status Synchronization
+
+Frontline drivers and housekeepers updating operational dispatch tasks via mobile API.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Driver as Shuttle Driver (Mobile App)
+    participant MobileAPI as StaffController (/api/v1/staff)
+    participant DispatchAPI as DispatchController
+    participant DB as MongoDB (operational_dispatches)
+    participant OpsHub as Dispatch Run-Sheet (Web Ops Portal)
+
+    Driver->>MobileAPI: GET /api/v1/staff/tasks?date=today
+    MobileAPI->>DB: Query tasks assigned to Driver (Airport Pickups)
+    MobileAPI-->>Driver: [Task #D-101: Flight TG921, Guest: Eleanor Whitfield]
+
+    Driver->>MobileAPI: PATCH /api/v1/staff/tasks/D-101/status { status: "IN_TRANSIT" }
+    MobileAPI->>DB: Update operational_dispatches status = "IN_TRANSIT"
+    MobileAPI-->>Driver: 200 OK
+
+    OpsHub->>DispatchAPI: GET /api/v1/dispatch/daily?serviceDate=today
+    DispatchAPI->>DB: Query live dispatch run-sheet
+    DispatchAPI-->>OpsHub: Live Task Status: "IN_TRANSIT" (Van 01 departing BKK Door 4)
+    Note over OpsHub: Real-time operator dashboard reflects driver movement without reload.
 ```

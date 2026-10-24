@@ -97,12 +97,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (
       email: string,
       password: string,
-      redirectTo: string | null = "/account"
+      redirectTo?: string | null
     ) => {
       const auth = await loginRequest({ email, password });
       applyAuthResponse(auth);
-      if (redirectTo) {
-        router.push(redirectTo);
+
+      let target = redirectTo;
+      if (!target || target === "/") {
+        const isOpsHost =
+          typeof window !== "undefined" &&
+          window.location.hostname.startsWith("ops.");
+        const role = auth.user?.role || "";
+        const isOperatorRole = [
+          "ADMIN",
+          "BRANCH_MGR",
+          "DISPATCHER",
+          "HOUSEKEEPER",
+          "MAINTENANCE",
+          "STAFF",
+        ].includes(role);
+
+        if (isOpsHost || isOperatorRole) {
+          target = "/ops/dispatch";
+        } else {
+          target = "/account";
+        }
+      }
+
+      if (target) {
+        router.push(target);
       }
     },
     [applyAuthResponse, router]

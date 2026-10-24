@@ -1,7 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { CheckCircle2, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, Input } from "@/components/ui/form";
 import type { RegisterPageVm } from "@/modules/auth/viewModel/register/registerPageVm";
 
 function PasswordHint({ vm }: { vm: RegisterPageVm }) {
@@ -9,14 +14,14 @@ function PasswordHint({ vm }: { vm: RegisterPageVm }) {
   if (passwordFeedback.kind === "hidden") return null;
   if (passwordFeedback.kind === "invalid") {
     return (
-      <span className="text-xs text-red-600 dark:text-red-400 pt-2" role="status">
+      <span className="text-[11px] text-red-600 font-medium mt-1 block" role="status">
         {passwordFeedback.issues[0]}
       </span>
     );
   }
   return (
-    <span className="text-xs text-emerald-600 dark:text-emerald-400" role="status">
-      {/* Password meets requirements */}
+    <span className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1" role="status">
+      <CheckCircle2 className="size-3" /> Password meets security requirements
     </span>
   );
 }
@@ -26,14 +31,14 @@ function ConfirmHint({ vm }: { vm: RegisterPageVm }) {
   if (confirmFeedback.kind === "hidden") return null;
   if (confirmFeedback.kind === "mismatch") {
     return (
-      <span className="text-xs text-red-600 dark:text-red-400 pt-2" role="status">
+      <span className="text-[11px] text-red-600 font-medium mt-1 block" role="status">
         Passwords do not match.
       </span>
     );
   }
   return (
-    <span className="text-xs text-emerald-600 dark:text-emerald-400 pt-2" role="status">
-      Passwords match
+    <span className="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1" role="status">
+      <CheckCircle2 className="size-3" /> Passwords match
     </span>
   );
 }
@@ -42,112 +47,138 @@ export function RegisterPageView({ vm }: { vm: RegisterPageVm }) {
   const confirmInvalid = vm.confirmFeedback.kind === "mismatch";
 
   return (
-    <form
-      noValidate
-      onSubmit={vm.onSubmit}
-      className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
-    >
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Create account
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Registers via <code className="text-xs">POST /api/auth/register</code>.
+    <div className="min-h-screen bg-[#F8F5EE] flex flex-col justify-center items-center px-4 py-12 selection:bg-[#E8A45B]/30 font-sans">
+      <div className="w-full max-w-md space-y-6">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <Link href="/" className="inline-flex items-center gap-2 group">
+            <div className="size-14 rounded-2xl bg-[#28594E] flex items-center justify-center p-2 shadow-sm group-hover:scale-105 transition">
+              <img
+                src="/brand/mascot/yoonie-calm.png"
+                alt="Yoonie"
+                className="size-full object-contain"
+              />
+            </div>
+          </Link>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#28594E]">
+            Create your Yoonie Account
+          </h1>
+          <p className="text-xs text-[#7A8B84] font-medium max-w-sm mx-auto">
+            Direct guest bookings, composite itinerary carts, and personal preferences.
+          </p>
+        </div>
+
+        {/* Register Card */}
+        <Card className="p-6 sm:p-8 bg-white border-[#28594E]/15 shadow-xl rounded-3xl space-y-5">
+          {vm.error && (
+            <div className="p-3 rounded-2xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700 flex items-center gap-2">
+              <ShieldAlert className="size-4 shrink-0" />
+              {vm.error}
+            </div>
+          )}
+
+          <form noValidate onSubmit={vm.onSubmit} className="space-y-4">
+            <Field label="Full Name" htmlFor="register-name">
+              <Input
+                id="register-name"
+                name="displayName"
+                type="text"
+                autoComplete="name"
+                required
+                maxLength={64}
+                value={vm.displayName}
+                onChange={(e) => vm.setDisplayName(e.target.value)}
+                placeholder="Marcus Lindqvist"
+              />
+            </Field>
+
+            <Field label="Email Address" htmlFor="register-email">
+              <Input
+                id="register-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={vm.email}
+                onChange={(e) => vm.setEmail(e.target.value)}
+                placeholder="marcus@example.com"
+              />
+            </Field>
+
+            <div>
+              <Field label="Password" htmlFor="register-password">
+                <Input
+                  id="register-password"
+                  name="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  maxLength={64}
+                  value={vm.password}
+                  onChange={(e) => vm.setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </Field>
+              <PasswordHint vm={vm} />
+            </div>
+
+            <div>
+              <Field label="Confirm Password" htmlFor="register-confirm">
+                <Input
+                  id="register-confirm"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  maxLength={64}
+                  value={vm.confirmPassword}
+                  onChange={(e) => vm.setConfirmPassword(e.target.value)}
+                  aria-invalid={confirmInvalid}
+                  placeholder="••••••••"
+                />
+              </Field>
+              <ConfirmHint vm={vm} />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={vm.pending || !vm.canSubmit}
+              className="w-full h-11 rounded-xl bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-xs"
+            >
+              {vm.pending ? "Creating Account..." : "Create Account"}
+            </Button>
+          </form>
+
+          {/* Links */}
+          <div className="pt-2 text-center text-xs space-y-2 border-t border-[#28594E]/10">
+            <p className="text-[#7A8B84]">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="font-extrabold text-[#28594E] hover:underline"
+              >
+                Sign in
+              </Link>
+            </p>
+            <p className="text-[#7A8B84]">
+              Want to onboard a hotel?{" "}
+              <Link
+                href="/#workspaces"
+                className="font-bold text-[#E8A45B] hover:underline"
+              >
+                Register Hotel Workspace
+              </Link>
+            </p>
+          </div>
+        </Card>
+
+        {/* Return to Platform */}
+        <p className="text-center text-xs text-[#7A8B84]">
+          <Link href="/" className="hover:text-[#28594E] hover:underline">
+            ← Return to Yoonie Platform
+          </Link>
         </p>
       </div>
-
-      {vm.error ? (
-        <p
-          className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-950/40 dark:text-red-200"
-          role="alert"
-        >
-          {vm.error}
-        </p>
-      ) : null}
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-          Display name
-        </span>
-        <input
-          name="displayName"
-          type="text"
-          autoComplete="name"
-          required
-          maxLength={64}
-          value={vm.displayName}
-          onChange={(e) => vm.setDisplayName(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-          Email
-        </span>
-        <input
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-          value={vm.email}
-          onChange={(e) => vm.setEmail(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-          Password
-        </span>
-        <input
-          name="password"
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          maxLength={64}
-          value={vm.password}
-          onChange={(e) => vm.setPassword(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-        <PasswordHint vm={vm} />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-medium text-zinc-700 dark:text-zinc-300">
-          Confirm password
-        </span>
-        <input
-          name="confirmPassword"
-          type="password"
-          autoComplete="off"
-          spellCheck={false}
-          maxLength={64}
-          value={vm.confirmPassword}
-          onChange={(e) => vm.setConfirmPassword(e.target.value)}
-          aria-invalid={confirmInvalid}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-zinc-900 outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-        />
-        <ConfirmHint vm={vm} />
-      </label>
-
-      <Button
-        type="submit"
-        disabled={vm.pending || !vm.canSubmit}
-        className="mt-2 h-auto min-h-10 w-full py-2.5"
-      >
-        {vm.pending ? "Creating…" : "Create account"}
-      </Button>
-
-      <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
-        Already have an account?{" "}
-        <Link
-          href="/login"
-          className="font-medium text-zinc-900 underline-offset-4 hover:underline dark:text-zinc-100"
-        >
-          Sign in
-        </Link>
-      </p>
-    </form>
+    </div>
   );
 }
