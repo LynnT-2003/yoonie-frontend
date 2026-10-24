@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../providers/auth-provider";
 import { AppQueryProvider } from "../providers/query-provider";
 import { Navbar } from "@/modules/layout/Navbar";
-// REMOVE WHEN READY TO SHIP:
-// 1. Delete modules/scaffold/ScaffoldBanner.tsx
-// 2. Remove this import and the <ScaffoldBanner /> usage below
-import { ScaffoldBanner } from "@/modules/scaffold/ScaffoldBanner";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const displaySerif = Cormorant_Garamond({
+  variable: "--font-display-serif",
+  subsets: ["latin"],
+  weight: ["500", "600"],
   display: "swap",
 });
 
@@ -22,10 +24,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yulio · Frontend Kit Demo",
+  title: "Yoonie · Hospitality Operating System",
   description:
-    "Pemo for Yulio’s Frontend Kit: Yulio’s Next.js app for JWT, refresh rotation, and OAuth against the Nest API.",
+    "Direct booking engine, master guest CDP, and frontline dispatch operations for boutique hotels.",
 };
+
+import { OnboardingProvider } from "@/providers/onboarding-provider";
+import { YoonieSpotlightTour } from "@/components/onboarding/YoonieSpotlightTour";
 
 export default function RootLayout({
   children,
@@ -35,14 +40,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${geistSans.variable} ${geistMono.variable} ${geistSans.className} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${geistSans.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <ScaffoldBanner />
         <AppQueryProvider>
           <AuthProvider>
-            <Navbar />
-            <main className="flex flex-1 flex-col">{children}</main>
+            <OnboardingProvider>
+              <Navbar />
+              <main className="flex flex-1 flex-col">{children}</main>
+              <YoonieSpotlightTour />
+            </OnboardingProvider>
           </AuthProvider>
         </AppQueryProvider>
       </body>

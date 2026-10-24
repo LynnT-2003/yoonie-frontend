@@ -1,261 +1,122 @@
-# Next.js Clean Architecture & Multi-Provider Auth
+# Yoonie Frontend
 
-> Part of **[Yulio Labs](https://yuliolabs.com)** — scalable systems and developer tooling for your next product.
+The direct-channel booking engine, administrative management portal, and operational suite for **Yoonie — Unified Hospitality Operating System**.
 
-<a href="#quick-start">
-  <img src="./public/hero.png" alt="Yulio Next.js Frontend Starter Preview" width="800" />
-</a>
+This repository is built with **Next.js 16 (App Router)**, **React 18/19**, **Tailwind CSS v4**, **Radix UI / Shadcn Primitives**, and **TanStack React Query**, communicating with [`yoonie-backend`](../yoonie-backend) and Cloudflare R2 object storage.
 
-Companion frontend to the [Yulio NestJS Backend Starter](https://github.com/LynnT-2003/Yulio-NestJS-Backend-Starter).
-SPA-style App Router client with no BFF — the browser talks to the API directly via CORS.
+---
 
-- **Multi-provider OAuth**: Google, LINE, GitHub, Discord, Microsoft
-- **JWT + refresh token rotation**: Silent refresh on 401, single retry, automatic sign-out on expiry
-- **Clean architecture**: MVVM with strict layer separation — domain owns HTTP, views own nothing
-- **Stripe payments**: Checkout, billing portal, plan-gated pages out of the box
-- **Production-ready**: Based on real-world SaaS needs
+## Architecture & Product Modules
 
-## Table of contents
+```
+yoonie-frontend/
+├── app/
+│   ├── (auth)/             # Login, register, oauth callbacks
+│   ├── admin/              # Property management portal (CMS)
+│   ├── ops/
+│   │   ├── housekeeping/   # Front-desk zero digital board
+│   │   └── dispatch/       # Daily run-sheet & shuttle dispatch
+│   ├── layout.tsx          # Root layout with providers & spotlight tour
+│   └── page.tsx            # Guest direct-booking landing page
+├── modules/
+│   ├── admin/              # Admin CMS views, panels, and viewModels
+│   ├── home/               # Booking engine, catalog cards, & detail modals
+│   ├── ops/                # Operational dispatch & housekeeping boards
+│   └── layout/             # Navigation bars & brand headers
+├── components/
+│   ├── media/              # Cloudflare R2 image upload dropzone
+│   ├── mascot/             # Yoonie mascot character assets & emotions
+│   ├── onboarding/         # Bank-app style spotlight coachmark tour
+│   └── ui/                 # Shadcn & Radix design system components
+├── lib/
+│   ├── domain/             # API services & React Query mutation hooks
+│   └── types/              # Domain models (hospitality, storage, user)
+```
 
-- [Key Highlights](#key-highlights)
-- [Stack](#stack)
-- [Quick Start](#quick-start)
-- [Configuration](#configuration)
-- [Architecture](#architecture)
-- [Payment & Subscriptions](#payment--subscriptions)
-- [Admin User Management & Account Suspension](#admin-user-management--account-suspension)
-- [Templates](#templates)
-- [Routes](#routes)
-- [Scripts](#scripts)
-- [Vercel Deployment](#vercel-deployment)
-- [Roadmap](#roadmap)
-- [Support](#support)
+---
 
-## Key Highlights
+## Key Features & Capabilities
 
-**NetworkManager — the only HTTP layer**
+### 1. Direct-Channel Guest Booking Engine (`/`)
+- **Sanctuary Catalog**: Live room rates, real-time availability checks, and capacity badges.
+- **5-Star Detail Modals**: Guests can inspect high-resolution photography, room size (`sqm`), bed configurations, river/garden views, luxury amenity checklists, and cancellation terms.
+- **Composite Booking Cart**: Single-checkout cart combining room nights, dining reservations, airport transfers, and excursions.
+- **Atomic Inventory Holds**: 15-minute holding lock (`POST /api/inventory/hold`) preventing double-bookings while guests fill checkout details.
 
-- Singleton that unwraps the Nest `{ success, data, … }` envelope on every call
-- Attaches Bearer tokens automatically; retries once after silent refresh on 401
-- Never extend it per feature — add `lib/domain/<feature>/<feature>-api.ts` that calls `getRequest` / `postRequest` instead
+### 2. Admin Property CMS (`/admin`)
+- **Property Settings**: Brand logo and hero photography upload via Cloudflare R2, address, contact, tax rates, and checkout terms.
+- **Physical Room Inventory**: Room number, floor level, category, nightly rack rate, max occupancy, and interactive amenities tag editor.
+- **Dining Venues**: Meal shifts (breakfast, lunch, dinner slots), seating capacities, and table zone layout management.
+- **Experience Catalog**: Tours, boat excursions, spa services, and airport transfers with pickup points, departure schedules, and minimum-viable pax thresholds.
+- **Instant Photo Manager**: Direct attachment of high-resolution images to rooms, venues, and services with Cloudflare R2 cover-photo toggles and gallery deletion.
 
-**MVVM — routes stay thin**
+### 3. Housekeeping & Operational Dispatch (`/ops`)
+- **Front-Desk Zero Housekeeping (`/ops/housekeeping`)**: Real-time room status board (`DIRTY` ➔ `IN_PROGRESS` ➔ `CLEAN` ➔ `INSPECTED`).
+- **Airport & Tour Dispatch Run-Sheet (`/ops/dispatch`)**: Real-time vehicle manifests, driver assignments, flight numbers, airport terminal door assignments, and live status transitions.
 
-- One screen = one `*PageVm.ts` (state + handlers) + one `*PageView.tsx` (pure render)
-- Pages call `use…Vm()` and pass `vm` down — no logic in `app/`
-- Domain layer (`lib/domain/`) owns all HTTP calls — views never fetch directly
+### 4. Interactive Spotlight Coachmark Tour
+- Bank-application style element highlighting with smooth viewport scrolling and dark backdrop spotlighting.
+- Yoonie mascot interactive tips walking operators through property selection, inventory controls, and front-desk zero workflows.
 
-**Vercel-native**
+---
 
-- Push to main → live in 30 seconds
-- Single env var: `NEXT_PUBLIC_API_BASE_URL`
+## Technology Stack
 
-**Account suspension**
+| Layer | Technology |
+| :--- | :--- |
+| **Framework** | Next.js 16.2 (App Router with Turbopack) |
+| **UI Library** | React 18 / 19, Radix UI Primitives, Lucide Icons |
+| **Styling** | Tailwind CSS v4, Class Variance Authority (`cva`), `tailwind-merge` |
+| **State & Cache** | TanStack React Query v5 |
+| **Media Storage** | Cloudflare R2 via Presigned URLs & Multipart Upload API |
+| **Typography** | Inter & Outfit brand typography |
 
-- Suspended users stay signed in; blocked routes return 403
-- `AccountSuspendedBanner` renders in-app on protected routes
-- Session is never cleared on suspension — only on token expiry
+---
 
-**Stripe payment flow**
+## Getting Started
 
-- `/pricing` — plan cards with active-plan highlight and correct button states
-- `/pro-demo` — plan-gated page with blur gate for free users
-- Plan card on `/account` polls after Stripe redirect until webhook fires
+### 1. Prerequisites
+- **Node.js**: `v20.x` or `v22.x` (LTS recommended)
+- **Backend API**: Running on `http://localhost:8080` (see `yoonie-backend`)
 
-## Stack
+### 2. Environment Configuration
+Create or verify `.env.local`:
 
-| Layer      | Technology                           |
-| ---------- | ------------------------------------ |
-| Framework  | Next.js 15 (App Router)              |
-| Language   | TypeScript 5                         |
-| Styling    | Tailwind CSS + shadcn/ui             |
-| State      | React hooks + in-memory token store  |
-| HTTP       | Fetch via `NetworkManager` singleton |
-| Payments   | Stripe (server-side via Nest API)    |
-| Deployment | Vercel                               |
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
+```
 
-## Quick Start
-
+### 3. Install Dependencies
 ```bash
-cp .env.example .env.local
-# Set NEXT_PUBLIC_API_BASE_URL to your Nest origin
 npm install
+```
+
+### 4. Start Development Server
+```bash
 npm run dev
 ```
 
-Ensure the API's `ALLOWED_ORIGINS` includes `http://localhost:3000`.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Configuration
+---
 
-### Environment variables
+## Code Quality & Verification
 
-| Variable                   | Purpose                                                                      |
-| -------------------------- | ---------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE_URL` | API root — either `https://api.example.com` or `https://api.example.com/api` |
-
-### OAuth callback
-
-On the **Nest** deployment set:
-
-```
-FRONTEND_OAUTH_CALLBACK_URL=https://<your-next-host>/auth/callback
-```
-
-The API appends tokens in the `#fragment`. If unset, callbacks return JSON on the API host — use `/auth/oauth-import` to paste that JSON when testing locally.
-
-## Architecture
-
-### NetworkManager — stable contract
-
-**`lib/domain/api/NetworkManager.ts`** is the single place that:
-
-- Unwraps the Nest `{ success, statusCode, data, timestamp }` envelope
-- Attaches `Authorization: Bearer <token>` to authenticated calls
-- On 401: checks the error `message`, attempts one silent refresh via `POST /api/auth/refresh`, retries — or signs the user out if the token is unrecoverable
-
-```ts
-// Every feature module calls these — never fetch directly
-getRequest<T>(endpoint)
-postRequest<T, B>(endpoint, body)
-patchRequest<T, B>(endpoint, body)
-deleteRequest<T, B>(endpoint, body?)
-```
-
-New feature areas add `lib/domain/<feature>/<feature>-api.ts` — they call `getRequest` / `postRequest` and nothing else.
-
-### MVVM pattern
-
-| Layer                      | Role                                                  |
-| -------------------------- | ----------------------------------------------------- |
-| `app/**/page.tsx`          | Calls `use…Vm()`, renders `…View` with `vm={…}`       |
-| `modules/*/viewModel/*.ts` | Exports `FooPageVm` type + `useFooPageVm()` hook      |
-| `modules/*/view/*.tsx`     | Exports `FooPageView({ vm })` — pure render, no fetch |
-| `modules/*/components/`    | Dumb UI components scoped to the module               |
-| `lib/domain/*/`            | All HTTP — never imported by views directly           |
-
-Example:
-
-```tsx
-"use client";
-import { useAccountPageVm } from "@/modules/account/viewModel/accountPageVm";
-import { AccountPageView } from "@/modules/account/view/AccountPageView";
-
-export default function AccountPage() {
-  const vm = useAccountPageVm();
-  return <AccountPageView vm={vm} />;
-}
-```
-
-### Session model
-
-- **Memory**: `lib/domain/api/tokenStore.ts` — access token, refresh token, userId
-- **Persistence**: `localStorage` via `lib/domain/auth/session-storage.ts` — survives page reload
-- **Logout**: `POST /api/auth/logout` → clear both stores
-
-## Payment & Subscriptions
-
-Stripe is handled server-side on the Nest API. The frontend calls three endpoints and redirects the browser to Stripe-hosted pages.
-
-### Plan states
-
-| `plan`     | `planExpiresAt` | Meaning                          |
-| ---------- | --------------- | -------------------------------- |
-| `free`     | `null`          | No active subscription           |
-| `pro`      | future date     | Active monthly subscription      |
-| `pro`      | past date       | Lapsed — subscription expired    |
-| `lifetime` | `null`          | One-time purchase, never expires |
-
-### Domain layer
-
-**`lib/domain/payment/paymentApi.ts`** exports:
-
-| Export                                  | Calls                              |
-| --------------------------------------- | ---------------------------------- |
-| `getUserPlan()`                         | `GET /api/payment/plan`            |
-| `createCheckoutSession(body)`           | `POST /api/payment/checkout`       |
-| `createBillingPortalSession(returnUrl)` | `POST /api/payment/billing-portal` |
-| `PRICE_IDS.pro` / `PRICE_IDS.lifetime`  | Stripe price ID constants          |
-
-### Post-payment flow
-
-1. User clicks **Subscribe** or **Buy once** on `/pricing`
-2. Frontend calls `POST /payment/checkout` → receives `{ url }` → `window.location.href = url`
-3. User pays on Stripe's hosted page → redirected to `/account?payment=success`
-4. `PlanCard` polls `GET /payment/plan` every 2 s (up to 10 s) until webhook fires
-
-Test cards (Stripe test mode): `4242 4242 4242 4242` succeeds · `4000 0000 0000 0002` declines · `4000 0025 0000 3155` triggers 3D Secure. Any future expiry, any 3-digit CVC.
-
-## Admin User Management & Account Suspension
-
-Follows the Nest template's auth vs authorization model: suspended users remain signed in; the API returns `403 Forbidden` + `"Account suspended"` on protected routes.
-
-- **`AccountSuspendedBanner`** renders on all `(protected)` routes when `user.isSuspended`
-- **Admin** nav link and `/admin/moderation` require `role === "admin"` and `!user.isSuspended`
-- **`ApiError.isAccountSuspended`** is set for 401/403 with the suspension message — session is not cleared
-
-## Templates
-
-Four domain templates are available on separate branches. Each is MVVM-compliant, NetworkManager-wired, and ready to connect to its matching backend branch.
-
-| Template | Branch | Domain |
-| -------- | ------ | ------ |
-| Hotel | `template/hotel-v2` | Room browsing, booking, guest reviews |
-| CRM | `template/crm-v2` | Vehicle inventory, leads pipeline, appointments |
-| Ecommerce | `template/ecommerce-v2` | Product shop, cart, orders |
-| Attendance | `template/attendance-v2` | Employee clock-in/out, leave requests, admin dashboard |
-
-Each template branch has its own README with domain-specific routes, VM files, and backend pairing instructions.
-
-## Routes
-
-> These routes are for the **base template** (`main` branch). Each domain template has its own route set — see the README on the relevant template branch.
-
-| Path                 | Role                                                           |
-| -------------------- | -------------------------------------------------------------- |
-| `/`                  | Landing + CTAs                                                 |
-| `/login`             | Local sign-in + OAuth links                                    |
-| `/register`          | Local registration                                             |
-| `/pricing`           | **Protected** — plan selection and Stripe checkout             |
-| `/account`           | **Protected** — profile + plan card                            |
-| `/pro-demo`          | **Protected** — plan-gated demo page                           |
-| `/admin/moderation`  | **Protected** — admin only (`role: admin`, not suspended)      |
-| `/auth/callback`     | OAuth return when `FRONTEND_OAUTH_CALLBACK_URL` is set on Nest |
-| `/auth/oauth-import` | Paste OAuth JSON (local dev fallback)                          |
-
-## Scripts
+Run the test and verification suite before opening pull requests:
 
 ```bash
-npm run dev      # development server
-npm run build    # production build
-npm run start    # production server
+# Linting & code standards
+npm run lint
+
+# Production Next.js build verification
+npm run build
 ```
 
-## Vercel Deployment
+---
 
-1. Set `NEXT_PUBLIC_API_BASE_URL` in Vercel project settings
-2. Push to main → auto-deployed
+## Documentation Index
 
-Ensure `ALLOWED_ORIGINS` on the Nest API includes your Vercel domain.
-
-## Roadmap
-
-**Actively Maintained. Built in public. Production-first.**
-
-1. Admin-User Multi-Provider Authentication ✓
-2. Payment Gateway (Stripe) ✓
-3. Plan-gated pages ✓
-4. Email Automation with Nodemailer and Brevo
-5. Reusable Tailwind UI Components + Framer Animations
-6. 20+ DaisyUI Themes with Automatic Dark Mode
-7. OpenGraph & Meta tags for SEO
-8. Complete User Management and Analytics Dashboard
-9. Auditing and Moderation for Production SaaS
-
-## Support
-
-If this saves you weeks of work:
-
-- ⭐ Star the repo
-- 🚀 Use it in production
-- 🧠 Share with your team
-- 📍 Connect on [LinkedIn](https://www.linkedin.com/in/lynn-thit-nyi-nyi/) or [Instagram](https://instagram.com/lynn.yuan_)
+- [**`PRODUCT.md`**](./PRODUCT.md): Comprehensive hospitality operating system vision and target guest problems.
+- [**`docs/FRONTEND_API.md`**](./docs/FRONTEND_API.md): Backend API contract, request/response DTOs, and error code mappings.
+- [**`docs/SYSTEM_FLOWS.md`**](./docs/SYSTEM_FLOWS.md): Sequence diagrams for inventory locking, composite carts, and dispatch run-sheet generation.
+- [**`docs/DATA_MODEL.md`**](./docs/DATA_MODEL.md): Entity relationship schemas and housekeeping state machines.

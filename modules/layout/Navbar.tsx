@@ -2,12 +2,17 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
+import { useOnboarding } from "@/providers/onboarding-provider";
 
 export function Navbar() {
   const { user, ready, logout } = useAuth();
+  const { openTour } = useOnboarding();
   const [loggingOut, setLoggingOut] = React.useState(false);
+  const pathname = usePathname();
 
   const onLogout = React.useCallback(() => {
     setLoggingOut(true);
@@ -20,70 +25,87 @@ export function Navbar() {
     })();
   }, [logout]);
 
-  return (
-    <header className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/90 backdrop-blur dark:border-zinc-800/80 dark:bg-zinc-950/90">
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 group" id="nav-logo">
-          <div className="relative w-8 h-8 rounded-lg bg-linear-gradient(to bottom, #E3ECF6, #FFFFFF) flex items-center justify-center shadow-[0_2px_8px_rgba(59,130,246,0.3)] group-hover:shadow-[0_4px_16px_rgba(59,130,246,0.4)] transition-shadow duration-300">
-            <img src="/logo.jpeg" alt="Yulio" className="rounded-lg" />
-          </div>
-          <span className="font-semibold text-lg tracking-tight text-zinc-900 dark:text-zinc-50">
-            Yulio
-          </span>
-        </Link>
+  const navLinks = [
+    { href: "/", label: "Booking engine" },
+    { href: "/ops/housekeeping", label: "Housekeeping" },
+    { href: "/ops/dispatch", label: "Dispatch" },
+    { href: "/admin", label: "Content" },
+  ];
 
-        <nav className="flex items-center gap-6 text-sm">
+  return (
+    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-8">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5" id="nav-logo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/logos/yoonie-app-icon.svg" alt="" className="size-7 rounded-md" />
+            <span className="text-[15px] font-semibold tracking-tight text-foreground">yoonie</span>
+            <span className="hidden h-4 w-px bg-border sm:block" aria-hidden />
+            <span className="hidden truncate text-sm text-muted-foreground sm:block">BKK Riverside</span>
+          </Link>
+
+          <nav className="hidden h-14 items-center gap-1 md:flex" aria-label="Primary">
+            {navLinks.map((link) => {
+              const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`relative flex h-14 items-center px-3 text-sm transition-colors ${
+                    isActive
+                      ? "font-medium text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => openTour()}
+            className="hidden text-muted-foreground md:inline-flex"
+          >
+            <CircleHelp /> Guide
+          </Button>
+
           {!ready ? (
-            <span className="text-zinc-400">…</span>
+            <span className="h-8 w-20 animate-pulse rounded-md bg-subtle" />
           ) : user ? (
             <>
-              {user.role === "admin" && !user.isSuspended ? (
-                <Link
-                  href="/admin/moderation"
-                  className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-                >
-                  Admin
-                </Link>
-              ) : null}
-              <Link
-                href="/pricing"
-                className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                Plan
-              </Link>
               <Link
                 href="/account"
-                className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                className={`flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors hover:bg-muted ${
+                  pathname === "/account" ? "text-foreground" : "text-muted-foreground"
+                }`}
               >
-                Account
+                <span className="flex size-6 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground">
+                  {(user.displayName || "U").charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden max-w-32 truncate sm:inline">{user.displayName || "Account"}</span>
               </Link>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => void onLogout()}
-                disabled={loggingOut}
-                className="h-auto py-1.5"
-              >
-                {loggingOut ? "Logging out…" : "Log out"}
+              <Button type="button" variant="ghost" size="sm" onClick={() => void onLogout()} disabled={loggingOut}>
+                {loggingOut ? "Signing out…" : "Sign out"}
               </Button>
             </>
           ) : (
             <>
-              <Link
-                href="/login"
-                className="text-zinc-600 transition hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="/register"
-                className="rounded-lg bg-zinc-900 px-3 py-1.5 font-medium text-white dark:bg-zinc-100 dark:text-zinc-900"
-              >
-                Register
-              </Link>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Sign in</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/register">Create account</Link>
+              </Button>
             </>
           )}
-        </nav>
+        </div>
       </div>
     </header>
   );
