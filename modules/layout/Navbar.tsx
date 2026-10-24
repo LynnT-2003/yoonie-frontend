@@ -32,7 +32,12 @@ export function Navbar() {
     { href: "/admin", label: "Content" },
   ];
 
-  if (pathname === "/") {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/ops") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/stay")
+  ) {
     return null;
   }
 
