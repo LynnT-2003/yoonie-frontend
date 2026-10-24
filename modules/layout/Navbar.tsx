@@ -32,16 +32,25 @@ export function Navbar() {
     { href: "/admin", label: "Content" },
   ];
 
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/ops") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/stay") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register")
+  ) {
+    return null;
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-8">
           <Link href="/" className="flex shrink-0 items-center gap-2.5" id="nav-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/logos/yoonie-app-icon.svg" alt="" className="size-7 rounded-md" />
+            <img src="/brand/mascot/yoonie-calm.png" alt="" className="size-7 rounded-md object-contain" />
             <span className="text-[15px] font-semibold tracking-tight text-foreground">yoonie</span>
-            <span className="hidden h-4 w-px bg-border sm:block" aria-hidden />
-            <span className="hidden truncate text-sm text-muted-foreground sm:block">BKK Riverside</span>
           </Link>
 
           <nav className="hidden h-14 items-center gap-1 md:flex" aria-label="Primary">

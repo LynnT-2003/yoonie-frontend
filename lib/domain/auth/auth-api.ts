@@ -41,9 +41,6 @@ export const oauthProviders: {
   label: string;
   description: string;
 }[] = [
-  { id: "google", label: "Google", description: "Google OAuth 2.0" },
-  { id: "line", label: "LINE", description: "LINE Login" },
-  { id: "github", label: "GitHub", description: "GitHub OAuth" },
-  { id: "discord", label: "Discord", description: "Discord OAuth" },
-  { id: "microsoft", label: "Microsoft", description: "Microsoft Entra ID" },
+  { id: "google", label: "Google", description: "Google Account" },
+  { id: "line", label: "LINE", description: "LINE Account" },
 ];

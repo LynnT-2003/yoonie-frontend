@@ -1,13 +1,9 @@
 "use client";
 
-import { useHomePageVm } from "@/modules/home/viewModel/homePageVm";
-import { HomePageView } from "@/modules/home/view/HomePageView";
+import { usePlatformPageVm } from "@/modules/platform/viewModel/platformPageVm";
+import { PlatformPageView } from "@/modules/platform/view/PlatformPageView";
 
-export default function Home() {
-  const vm = useHomePageVm();
-  return (
-    <div className="flex flex-1 flex-col">
-      <HomePageView vm={vm} />
-    </div>
-  );
+export default function PlatformRootPage() {
+  const vm = usePlatformPageVm();
+  return <PlatformPageView vm={vm} />;
 }
