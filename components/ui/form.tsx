@@ -34,15 +34,23 @@ function InputAffix({
   ...props
 }: React.ComponentProps<"input"> & { prefix?: React.ReactNode; suffix?: React.ReactNode }) {
   return (
-    <div className="relative">
+    <div
+      className={cn(
+        "flex h-9 w-full items-center rounded-md border border-input bg-surface text-sm shadow-xs transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20 overflow-hidden",
+        className
+      )}
+    >
       {prefix ? (
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+        <span className="shrink-0 bg-muted/50 border-r border-input/60 px-3 py-1.5 text-xs font-mono text-muted-foreground select-none flex items-center h-full">
           {prefix}
         </span>
       ) : null}
-      <Input className={cn(prefix && "pl-7", suffix && "pr-12", "tabular-nums", className)} {...props} />
+      <input
+        className="flex-1 bg-transparent px-3 py-1 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none min-w-0 h-full"
+        {...props}
+      />
       {suffix ? (
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+        <span className="shrink-0 bg-muted/50 border-l border-input/60 px-3 py-1.5 text-xs font-mono text-muted-foreground select-none flex items-center h-full">
           {suffix}
         </span>
       ) : null}

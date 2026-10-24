@@ -9,7 +9,7 @@ class NetworkConfig {
         '[NetworkConfig] NEXT_PUBLIC_API_BASE_URL not set — using http://localhost:8080/api as placeholder. ' +
           'Set NEXT_PUBLIC_API_BASE_URL in .env.local to point at your backend.',
       );
-      this.baseURL = 'http://localhost:8080/api';
+      this.baseURL = '/api';
       return;
     }
     this.baseURL = raw.replace(/\/+$/, '');

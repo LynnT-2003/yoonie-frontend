@@ -184,11 +184,12 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rooms.map((room) => {
+              {rooms.map((room, idx) => {
                 const next = NEXT_CLEANING_STATUS[room.cleaningStatus];
+                const rowKey = room._id || room.roomType || `room-${idx}`;
                 return (
                   <TableRow
-                    key={room._id}
+                    key={rowKey}
                     className="cursor-pointer"
                     onClick={() => setSelectedRoomForDetails(room)}
                   >

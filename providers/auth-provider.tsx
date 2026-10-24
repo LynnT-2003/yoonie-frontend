@@ -24,7 +24,11 @@ export type AuthContextValue = {
   user: User | null;
   /** False until client has read localStorage and synced tokenStore. */
   ready: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    redirectTo?: string | null
+  ) => Promise<void>;
   register: (body: RegisterBody) => Promise<void>;
   /** After OAuth JSON paste or token refresh from elsewhere. */
   applyAuthResponse: (auth: AuthResponse) => void;
@@ -90,10 +94,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const login = React.useCallback(
-    async (email: string, password: string) => {
+    async (
+      email: string,
+      password: string,
+      redirectTo?: string | null
+    ) => {
       const auth = await loginRequest({ email, password });
       applyAuthResponse(auth);
-      router.push("/account");
+
+      let target = redirectTo;
+      if (!target || target === "/") {
+        const isOpsHost =
+          typeof window !== "undefined" &&
+          window.location.hostname.startsWith("ops.");
+        const role = auth.user?.role || "";
+        const isOperatorRole = [
+          "ADMIN",
+          "BRANCH_MGR",
+          "DISPATCHER",
+          "HOUSEKEEPER",
+          "MAINTENANCE",
+          "STAFF",
+        ].includes(role);
+
+        if (isOpsHost || isOperatorRole) {
+          target = "/ops/dispatch";
+        } else {
+          target = "/account";
+        }
+      }
+
+      if (target) {
+        router.push(target);
+      }
     },
     [applyAuthResponse, router]
   );
