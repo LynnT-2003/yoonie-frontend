@@ -63,8 +63,13 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     }
   };
 
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const getSubdomainUrl = (subdomain: string, path = "") => {
-    if (typeof window === "undefined") return `http://${subdomain}.localhost:3000${path}`;
+    if (!mounted || typeof window === "undefined") return `http://${subdomain}.localhost:3000${path}`;
     const host = window.location.host;
     const protocol = window.location.protocol;
     if (host.includes("localhost")) {
