@@ -223,3 +223,107 @@ export type OrderResponse = {
     paidThb: number;
   };
 };
+
+export type OccupancyStatus = "OCCUPIED" | "ARRIVING_TODAY" | "DEPARTING_TODAY" | "VACANT";
+
+export type CurrentBookingDetails = {
+  orderId: string;
+  guestId?: string;
+  guestName: string;
+  guestEmail?: string;
+  guestPhone?: string;
+  vipTier: string;
+  vipScore: number;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  pax: number;
+  attributionSource: string;
+  grandTotalThb: number;
+  flightNumber?: string;
+  flightEta?: string;
+  meetingDoor?: number;
+  status: string;
+};
+
+export type UpcomingBookingSummary = {
+  orderId: string;
+  guestName: string;
+  vipTier: string;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  status: string;
+};
+
+export type ActiveRoomDispatch = {
+  dispatchId: string;
+  priorityScore: number;
+  severity: string;
+  status: string;
+  title: string;
+  dueAt?: string;
+  targetReadyBy?: string;
+};
+
+export type LiveRoomItem = {
+  _id: string;
+  roomNumber: string;
+  floor: number;
+  roomType: RoomType;
+  baseRateThb: number;
+  maxOccupancy: number;
+  amenities: string[];
+  coverImage?: string;
+  cleaningStatus: RoomCleaningStatus;
+  cleaningUpdatedAt?: string;
+  cleaningUpdatedBy?: string;
+  occupancyStatus: OccupancyStatus;
+  currentBooking?: CurrentBookingDetails;
+  upcomingBookings: UpcomingBookingSummary[];
+  activeDispatch?: ActiveRoomDispatch;
+};
+
+export type TimelineBooking = {
+  orderId: string;
+  roomId: string;
+  roomNumber: string;
+  roomType: string;
+  guestName: string;
+  vipTier: string;
+  vipScore: number;
+  checkInDate: string;
+  checkOutDate: string;
+  nights: number;
+  status: string;
+  attribution: string;
+  flightNumber?: string;
+  flightEta?: string;
+  totalThb: number;
+};
+
+export type RoomOccupancySummary = {
+  totalKeys: number;
+  occupiedCount: number;
+  occupancyRate: number;
+  arrivingTodayCount: number;
+  departingTodayCount: number;
+  dirtyCount: number;
+  inProgressCount: number;
+  cleanCount: number;
+  inspectedCount: number;
+  directBookingRatio: number;
+};
+
+export type LiveOccupancyResponse = {
+  branchId: string;
+  branchName: string;
+  date: string;
+  summary: RoomOccupancySummary;
+  rooms: LiveRoomItem[];
+  timeline: TimelineBooking[];
+  dateRange: {
+    from: string;
+    to: string;
+  };
+};

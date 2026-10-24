@@ -4,7 +4,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CheckCircle2, Clock, LogOut } from "lucide-react";
+import { Building2, CheckCircle2, Clock, LayoutGrid, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -23,6 +23,12 @@ export function OpsNavbar() {
   }, [logout]);
 
   const navTabs = [
+    {
+      label: "Room Matrix & Tape Chart",
+      href: "/ops/rooms",
+      icon: LayoutGrid,
+      isActive: pathname.startsWith("/ops/rooms"),
+    },
     {
       label: "Dispatch Run-Sheet",
       href: "/ops/dispatch",
@@ -50,7 +56,7 @@ export function OpsNavbar() {
     <header className="sticky top-0 z-40 border-b border-[#28594E]/15 bg-white/95 backdrop-blur-md shadow-xs">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-6">
-          <Link href="/ops/dispatch" className="flex items-center gap-2.5">
+          <Link href="/ops/rooms" className="flex items-center gap-2.5">
             <img
               src="/brand/mascot/yoonie-calm.png"
               alt="Yoonie"

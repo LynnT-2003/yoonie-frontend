@@ -15,6 +15,7 @@ import type {
   DispatchTask,
   HoldResult,
   HousekeepingBoard,
+  LiveOccupancyResponse,
   OrderResponse,
   RestaurantItem,
   RoomCleaningStatus,
@@ -30,6 +31,10 @@ export const hospitalityKeys = {
   room: (roomId: string) => [...hospitalityKeys.all, "room", roomId] as const,
   housekeeping: (branchId: string) =>
     [...hospitalityKeys.all, "housekeeping", branchId] as const,
+  liveOccupancy: (
+    branchId: string,
+    params?: { date?: string; from?: string; to?: string }
+  ) => [...hospitalityKeys.all, "live-occupancy", branchId, params] as const,
   services: (branchId: string) =>
     [...hospitalityKeys.all, "services", branchId] as const,
   service: (serviceId: string) =>
@@ -494,5 +499,31 @@ export function useUpdateDispatchStatusMutation(branchId: string, serviceDate: s
         queryKey: hospitalityKeys.dispatch(branchId, serviceDate),
       });
     },
+  });
+}
+
+export async function getLiveRoomOccupancy(
+  branchId: string,
+  params?: { date?: string; from?: string; to?: string }
+): Promise<LiveOccupancyResponse> {
+  const query = new URLSearchParams();
+  if (branchId) query.set("branchId", branchId);
+  if (params?.date) query.set("date", params.date);
+  if (params?.from) query.set("from", params.from);
+  if (params?.to) query.set("to", params.to);
+  const qStr = query.toString();
+  return getRequest<LiveOccupancyResponse>(apiPath(`rooms/live-occupancy${qStr ? `?${qStr}` : ""}`));
+}
+
+export function useLiveRoomOccupancyQuery(
+  branchId: string,
+  params?: { date?: string; from?: string; to?: string },
+  options?: { refetchInterval?: number }
+) {
+  return useQuery({
+    queryKey: hospitalityKeys.liveOccupancy(branchId, params),
+    queryFn: () => getLiveRoomOccupancy(branchId, params),
+    enabled: Boolean(branchId),
+    refetchInterval: options?.refetchInterval ?? 10_000,
   });
 }

@@ -50,8 +50,8 @@ In Next.js 16, `middleware.ts` has been deprecated and superseded by `proxy.ts` 
 
 | Inbound Host | Path | Edge Rewrite / Action | Destination Route |
 | :--- | :--- | :--- | :--- |
-| `[slug].yoonie.si` or `[slug].localhost` | `/` | Rewrite | `/stay/[slug]` (Direct Hotel Booking) |
-| `[slug].yoonie.si` or `[slug].localhost` | `/rooms`, `/book` | Pass-through | Directly rendered with tenant context |
+| `[slug].yoonie.si` or `[slug].localhost` | `/` | Pass-through (`next()`) | Direct Hotel Booking at `/` via server `headers()` |
+| `[slug].yoonie.si` or `[slug].localhost` | `/account` | Pass-through (`next()`) | Guest account portal |
 | `ops.yoonie.si` or `ops.localhost` | `/` | Rewrite | `/ops/dispatch` (Operations Hub) |
 | `ops.yoonie.si` or `ops.localhost` | `/login`, `/register` | Pass-through (`next()`) | Authoritative Authentication Pages |
 | `ops.yoonie.si` or `ops.localhost` | `/ops/*`, `/admin/*` | Pass-through (`next()`) | Protected Operator Shell |
@@ -87,23 +87,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Tenant Subdomain Direct Booking: [slug].yoonie.si or [slug].localhost:3000
-  const cleanHost = host.split(":")[0];
-  const parts = cleanHost.split(".");
-  let subdomain: string | null = null;
-
-  if (cleanHost.endsWith("localhost") && parts.length > 1) {
-    subdomain = parts[0];
-  } else if (cleanHost.endsWith("yoonie.si") && parts.length > 2) {
-    subdomain = parts[0];
-  }
-
-  if (subdomain && subdomain !== "www" && subdomain !== "ops" && !pathname.startsWith("/stay")) {
-    if (pathname === "/") {
-      return NextResponse.rewrite(new URL(`/stay/${subdomain}`, request.url));
-    }
-  }
-
+  // 3. Tenant Direct Booking & Platform Root
+  // Handled natively at / in app/page.tsx via host header inspection.
+  // No artificial pathnames or internal folder rewrites.
   return NextResponse.next();
 }
 
