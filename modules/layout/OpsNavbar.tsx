@@ -4,13 +4,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Clock, Compass, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Building2, CircleHelp, Clock, Compass, LayoutGrid, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
+import { useOnboarding } from "@/providers/onboarding-provider";
 import { cn } from "@/lib/utils";
 
 export function OpsNavbar() {
   const { user, logout } = useAuth();
+  const { openTour } = useOnboarding();
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = React.useState(false);
 
@@ -106,6 +108,14 @@ export function OpsNavbar() {
             </div>
           )}
 
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => openTour()}
+            className="hidden text-muted-foreground md:inline-flex"
+          >
+            <CircleHelp /> Guide
+          </Button>
           <Button size="sm" variant="ghost" disabled={loggingOut} onClick={onLogout}>
             <LogOut />
             {loggingOut ? "Signing out…" : "Sign out"}
