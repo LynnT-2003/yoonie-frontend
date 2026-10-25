@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, Input } from "@/components/ui/form";
+import { Field, Input, NativeSelect } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 import {
   GuestRoomDetailsModal,
@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { GuestServiceDetailsModal } from "@/modules/home/components/GuestServiceDetailsModal";
 import type { ServiceItem } from "@/lib/types/hospitality";
-import type { CartItem, HomePageVm } from "@/modules/home/viewModel/homePageVm";
+import { serviceIssue, type CartItem, type HomePageVm } from "@/modules/home/viewModel/homePageVm";
 
 const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=80";
@@ -73,6 +73,8 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     cart,
     addRoomToCart,
     addServiceToCart,
+    updateService,
+    serviceIssues,
     addDiningToCart,
     removeFromCart,
     subtotal,
@@ -88,6 +90,8 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     bookingGuest,
     setBookingGuest,
     finalizeBooking,
+    isSubmitting,
+    bookingError,
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,
@@ -361,7 +365,13 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
               </p>
             ) : (
               <div className="flex flex-col gap-5 px-6 py-5">
-                <CartLines cart={cart} onRemove={removeFromCart} />
+                <CartLines
+                  cart={cart}
+                  onRemove={removeFromCart}
+                  onUpdateService={updateService}
+                  checkIn={checkIn}
+                  checkOut={checkOut}
+                />
                 <Totals subtotal={subtotal} serviceCharge={serviceCharge} vat={vat} grandTotal={grandTotal} />
                 {holdTimeLeft !== null ? (
                   <p
@@ -374,12 +384,17 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
                     <span className="tabular-nums">{formatTimer(holdTimeLeft)}</span>
                   </p>
                 ) : null}
+                {bookingError && !isCheckoutOpen ? (
+                  <p role="alert" className="text-[13px] text-destructive">
+                    {bookingError}
+                  </p>
+                ) : null}
                 {holdId ? (
                   <Button size="lg" className="w-full" onClick={() => setIsCheckoutOpen(true)}>
                     Continue to guest details
                   </Button>
                 ) : (
-                  <Button size="lg" className="w-full" onClick={() => void triggerHold()} disabled={isHolding}>
+                  <Button size="lg" className="w-full" onClick={() => void triggerHold()} disabled={isHolding || serviceIssues.length > 0}>
                     Hold rate for 15 minutes
                   </Button>
                 )}
@@ -406,7 +421,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
                   Continue
                 </Button>
               ) : (
-                <Button size="lg" onClick={() => void triggerHold()} disabled={isHolding}>
+                <Button size="lg" onClick={() => void triggerHold()} disabled={isHolding || serviceIssues.length > 0}>
                   Hold rate
                 </Button>
               )}
@@ -474,19 +489,29 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
 
               <div className="flex flex-col gap-4 rounded-md bg-subtle p-4 sm:self-start">
                 <h3 className="text-sm font-medium">Reservation</h3>
-                <CartLines cart={cart} onRemove={removeFromCart} compact />
+                <CartLines cart={cart} onRemove={removeFromCart} checkIn={checkIn} checkOut={checkOut} compact />
                 <Totals subtotal={subtotal} serviceCharge={serviceCharge} vat={vat} grandTotal={grandTotal} />
               </div>
             </div>
           </DialogBody>
 
+          {bookingError ? (
+            <p role="alert" className="px-6 text-sm text-destructive">
+              {bookingError}
+            </p>
+          ) : null}
           <DialogFooter className="justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
               <p className="text-lg font-medium tabular-nums">{formatThb(grandTotal)}</p>
             </div>
-            <Button size="lg" type="submit" form="guest-details-form" disabled={cart.length === 0}>
-              Confirm reservation
+            <Button
+              size="lg"
+              type="submit"
+              form="guest-details-form"
+              disabled={cart.length === 0 || isSubmitting}
+            >
+              {isSubmitting ? "Confirming…" : "Confirm reservation"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -505,23 +530,9 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
               </DialogTitle>
               <p className="mt-2 font-mono text-sm text-foreground">{confirmedOrderNumber}</p>
               <DialogDescription className="mx-auto mt-2 max-w-sm">
-                A confirmation has been sent to {bookingGuest.email}.
+                Thank you, {bookingGuest.fullName}. Keep this reference for check-in — payment is
+                taken at {hotelName} on arrival.
               </DialogDescription>
-            </div>
-
-            <div className="w-full rounded-md border border-border text-left">
-              <div className="flex items-center gap-2 border-b border-border px-4 py-2.5 text-[13px] font-medium">
-                <Plane className="size-3.5 text-muted-foreground" /> Airport pickup card
-                <span className="ml-auto text-xs font-normal text-muted-foreground">EN / TH</span>
-              </div>
-              <div className="space-y-1 px-4 py-3 text-[13px] leading-relaxed text-foreground">
-                <p>
-                  Welcome to {hotelName}, {bookingGuest.fullName}.
-                </p>
-                <p className="text-muted-foreground">Flight TG917 · Door 4, Level 1</p>
-                <p className="text-muted-foreground">Driver: Somchai Rattana · White minivan 1กก 1234</p>
-                <p className="pt-1 text-muted-foreground">ยินดีต้อนรับสู่กรุงเทพฯ คนขับรอรับท่านที่ประตู 4 ชั้น 1</p>
-              </div>
             </div>
           </DialogBody>
           <DialogFooter className="justify-center">
@@ -661,42 +672,151 @@ function AddOnCard({
 function CartLines({
   cart,
   onRemove,
+  onUpdateService,
+  checkIn,
+  checkOut,
   compact,
 }: {
   cart: CartItem[];
   onRemove: (id: string) => void;
+  onUpdateService?: HomePageVm["updateService"];
+  checkIn: string;
+  checkOut: string;
   compact?: boolean;
 }) {
   return (
     <ul className={cn("flex flex-col", compact ? "gap-2.5" : "gap-3")}>
       {cart.map((item) => (
-        <li key={item.id} className="flex items-start justify-between gap-3 text-sm">
-          <div className="min-w-0">
-            <p className="truncate text-foreground">{item.title}</p>
-            {!compact ? (
-              <p className="text-xs text-muted-foreground">
-                {item.kind === "ROOM"
-                  ? `${item.nights} ${item.nights === 1 ? "night" : "nights"} × ${formatThb(item.pricePerNight)}`
-                  : item.kind === "DINING"
-                  ? `${item.pax} guests · ${formatDate(item.diningDate)}`
-                  : `${item.pax} guests`}
-              </p>
-            ) : null}
+        <li key={item.id} className="flex flex-col gap-2 text-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-foreground">{item.title}</p>
+              {!compact || item.kind === "SERVICE" ? (
+                <p className="text-xs text-muted-foreground">{lineSummary(item)}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className="tabular-nums text-foreground">{formatThb(item.totalPrice)}</span>
+              <button
+                type="button"
+                onClick={() => onRemove(item.id)}
+                className="rounded p-0.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                aria-label={`Remove ${item.title}`}
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span className="tabular-nums text-foreground">{formatThb(item.totalPrice)}</span>
-            <button
-              type="button"
-              onClick={() => onRemove(item.id)}
-              className="rounded p-0.5 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              aria-label={`Remove ${item.title}`}
-            >
-              <X className="size-3.5" />
-            </button>
-          </div>
+          {item.kind === "SERVICE" && !compact && onUpdateService ? (
+            <ServiceSchedule item={item} onChange={onUpdateService} checkIn={checkIn} checkOut={checkOut} />
+          ) : null}
         </li>
       ))}
     </ul>
+  );
+}
+
+function lineSummary(item: CartItem) {
+  if (item.kind === "ROOM") {
+    return `${item.nights} ${item.nights === 1 ? "night" : "nights"} × ${formatThb(item.pricePerNight)}`;
+  }
+  if (item.kind === "DINING") return `${item.pax} guests · ${formatDate(item.diningDate)}`;
+  const who = item.perGuest ? `${item.pax} × ${formatThb(item.price)}` : "per vehicle";
+  if (item.serviceKind === "AIRPORT_TRANSFER") {
+    return item.flightNumber && item.time
+      ? `${item.flightNumber.toUpperCase()} lands ${formatDate(item.date)} ${item.time} · ${who}`
+      : `Arrival pickup · ${who}`;
+  }
+  return item.time ? `${formatDate(item.date)} ${item.time} · ${who}` : who;
+}
+
+/** Inline scheduling for a service: flight and landing time for transfers, day and slot otherwise. */
+function ServiceSchedule({
+  item,
+  onChange,
+  checkIn,
+  checkOut,
+}: {
+  item: Extract<CartItem, { kind: "SERVICE" }>;
+  onChange: HomePageVm["updateService"];
+  checkIn: string;
+  checkOut: string;
+}) {
+  const issue = serviceIssue(item, checkIn, checkOut);
+  const days: string[] = [];
+  for (let d = checkIn; d <= checkOut; ) {
+    days.push(d);
+    const next = new Date(`${d}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    d = next.toISOString().slice(0, 10);
+  }
+  const ctl = "h-8 text-[13px]";
+
+  return (
+    <div className="flex flex-col gap-1.5 rounded-md bg-subtle p-2.5">
+      {item.serviceKind === "AIRPORT_TRANSFER" ? (
+        <div className="grid grid-cols-2 gap-2">
+          <Input
+            className={ctl}
+            placeholder="Flight, e.g. TG 917"
+            aria-label={`${item.title} flight number`}
+            value={item.flightNumber}
+            onChange={(e) => onChange(item.id, { flightNumber: e.target.value })}
+          />
+          <Input
+            className={ctl}
+            type="time"
+            aria-label={`${item.title} landing time on ${formatDate(item.date)}`}
+            value={item.time}
+            onChange={(e) => onChange(item.id, { time: e.target.value })}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-2">
+          <NativeSelect
+            className={ctl}
+            aria-label={`${item.title} date`}
+            value={item.date}
+            onChange={(e) => onChange(item.id, { date: e.target.value })}
+          >
+            {days.map((d) => (
+              <option key={d} value={d}>
+                {formatDate(d)}
+              </option>
+            ))}
+          </NativeSelect>
+          {item.timeOptions.length ? (
+            <NativeSelect
+              className={ctl}
+              aria-label={`${item.title} time`}
+              value={item.time}
+              onChange={(e) => onChange(item.id, { time: e.target.value })}
+            >
+              <option value="">Time</option>
+              {item.timeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </NativeSelect>
+          ) : (
+            <Input
+              className={ctl}
+              type="time"
+              aria-label={`${item.title} time`}
+              value={item.time}
+              onChange={(e) => onChange(item.id, { time: e.target.value })}
+            />
+          )}
+        </div>
+      )}
+      <p className={cn("text-xs", issue ? "text-warning" : "text-muted-foreground")}>
+        {issue ??
+          (item.serviceKind === "AIRPORT_TRANSFER"
+            ? `Your driver meets you on ${formatDate(item.date)} when you land.`
+            : `Booked for ${item.pax} ${item.pax === 1 ? "guest" : "guests"}.`)}
+      </p>
+    </div>
   );
 }
 

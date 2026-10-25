@@ -1,9 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useHousekeepingPageVm } from "@/modules/ops/housekeeping/viewModel/housekeepingPageVm";
-import { HousekeepingPageView } from "@/modules/ops/housekeeping/view/HousekeepingPageView";
-
+/** Housekeeping work lives in Dispatch now; keep old links and bookmarks working. */
 export default function HousekeepingPage() {
-  const vm = useHousekeepingPageVm();
-  return <HousekeepingPageView vm={vm} />;
+  redirect("/ops/dispatch?lane=rooms");
 }

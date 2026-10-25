@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import { useAuth } from "@/providers/auth-provider";
+import { useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/lib/domain/api/ApiError";
 import {
+  createHold,
+  createOrder,
+  hospitalityKeys,
+  releaseHold,
   useBranchesQuery,
   useRestaurantsQuery,
   useRoomsQuery,
@@ -32,11 +38,18 @@ export type CartItem =
       kind: "SERVICE";
       title: string;
       serviceId: string;
-      serviceKind: string;
+      serviceKind: ServiceItem["kind"];
+      /** price per unit; transfers are one unit per vehicle, tours and spa one per guest */
       price: number;
+      perGuest: boolean;
       pax: number;
       totalPrice: number;
-      flightNumber?: string;
+      /** hotel-local date and HH:mm; for transfers this is the flight's landing time */
+      date: string;
+      time: string;
+      /** fixed departures / start times offered by the service, empty means any time */
+      timeOptions: string[];
+      flightNumber: string;
     }
   | {
       id: string;
@@ -50,7 +63,35 @@ export type CartItem =
       diningDate: string;
     };
 
+/** Business date in the hotel's timezone (all branches are Bangkok today). */
+function hotelDate(offsetDays = 0): string {
+  const now = new Date(Date.now() + offsetDays * 86_400_000);
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(now);
+}
+
+/** Order lines need a concrete start; dining times are confirmed by the restaurant. */
+const hotelMidday = (date: string) => new Date(`${date}T12:00:00+07:00`).toISOString();
+
+const hotelDateTime = (date: string, time: string) => new Date(`${date}T${time}:00+07:00`).toISOString();
+
+/** What a service still needs before it can be held, or null when it's ready. */
+export function serviceIssue(
+  item: Extract<CartItem, { kind: "SERVICE" }>,
+  checkIn: string,
+  checkOut: string
+): string | null {
+  if (item.serviceKind === "AIRPORT_TRANSFER") {
+    if (!item.flightNumber.trim()) return "Add your arrival flight number";
+    if (!item.time) return "Add your landing time";
+    return null;
+  }
+  if (!item.date || item.date < checkIn || item.date > checkOut) return "Pick a date during your stay";
+  if (!item.time) return "Pick a time";
+  return null;
+}
+
 export function useHomePageVm(branchCode?: string) {
+  const queryClient = useQueryClient();
   const { user, ready } = useAuth();
   const branchesQuery = useBranchesQuery();
   const activeBranch: Branch | undefined = React.useMemo(() => {
@@ -153,13 +194,16 @@ export function useHomePageVm(branchCode?: string) {
   }, [rooms]);
 
   // Search parameters
-  const [checkIn, setCheckIn] = React.useState("2026-10-20");
-  const [checkOut, setCheckOut] = React.useState("2026-10-22");
+  const [checkIn, setCheckIn] = React.useState(() => hotelDate(0));
+  const [checkOut, setCheckOut] = React.useState(() => hotelDate(2));
   const [adults, setAdults] = React.useState(2);
 
   // Cart state
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [holdId, setHoldId] = React.useState<string | null>(null);
+  const [holdToken, setHoldToken] = React.useState<string | null>(null);
+  const [bookingError, setBookingError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [holdExpiresAt, setHoldExpiresAt] = React.useState<Date | null>(null);
   const [holdTimeLeft, setHoldTimeLeft] = React.useState<number | null>(null);
   const [isHolding, setIsHolding] = React.useState(false);
@@ -182,12 +226,11 @@ export function useHomePageVm(branchCode?: string) {
   }, []);
 
   const [bookingGuest, setBookingGuest] = React.useState({
-    fullName: user?.displayName || "Sarah Jenkins",
-    email: user?.email || "sarah.j@example.com",
-    phoneE164: "+66812345678",
-    lineUserId: "U9876543210abcdef",
-    flightNumber: "TG917",
-    preferredLanguage: "en",
+    fullName: user?.displayName || "",
+    email: user?.email || "",
+    phoneE164: "",
+    lineUserId: "",
+    preferredLanguage: "en" as "en" | "th",
   });
 
   // Calculate nights
@@ -251,7 +294,10 @@ export function useHomePageVm(branchCode?: string) {
     }
   };
 
-  const addServiceToCart = (service: ServiceItem, flightNum?: string) => {
+  const addServiceToCart = (service: ServiceItem) => {
+    const perGuest = service.kind !== "AIRPORT_TRANSFER";
+    const timeOptions = service.tour?.departureTimes ?? service.wellness?.startTimes ?? [];
+    const pax = adults;
     const newItem: CartItem = {
       id: `service-${service._id}-${Date.now()}`,
       kind: "SERVICE",
@@ -259,12 +305,56 @@ export function useHomePageVm(branchCode?: string) {
       serviceId: service._id,
       serviceKind: service.kind,
       price: service.basePriceThb,
-      pax: 2,
-      totalPrice: service.basePriceThb * (service.kind === "AIRPORT_TRANSFER" ? 1 : 2),
-      flightNumber: flightNum || "TG917",
+      perGuest,
+      pax,
+      totalPrice: service.basePriceThb * (perGuest ? pax : 1),
+      // transfers meet the arrival flight on check-in day; guests can move other services
+      date: checkIn,
+      time: timeOptions.length === 1 ? timeOptions[0] : "",
+      timeOptions,
+      flightNumber: "",
     };
     setCart((prev) => [...prev, newItem]);
+    // a new item invalidates any hold taken for the previous cart
+    setHoldId(null);
+    setHoldExpiresAt(null);
   };
+
+  const updateService = (
+    id: string,
+    patch: Partial<Pick<Extract<CartItem, { kind: "SERVICE" }>, "date" | "time" | "flightNumber">>
+  ) => {
+    setCart((prev) =>
+      prev.map((item) => (item.id === id && item.kind === "SERVICE" ? { ...item, ...patch } : item))
+    );
+    // the hold was taken for the old time slot; the guest re-holds with the new one
+    setHoldId(null);
+    setHoldExpiresAt(null);
+  };
+
+  // Keep service guest counts and transfer dates in step with the stay being booked.
+  React.useEffect(() => {
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.kind !== "SERVICE") return item;
+        const pax = adults;
+        const date =
+          item.serviceKind === "AIRPORT_TRANSFER" || item.date < checkIn || item.date > checkOut
+            ? checkIn
+            : item.date;
+        if (pax === item.pax && date === item.date) return item;
+        return { ...item, pax, date, totalPrice: item.price * (item.perGuest ? pax : 1) };
+      })
+    );
+  }, [adults, checkIn, checkOut]);
+
+  const serviceIssues = React.useMemo(
+    () =>
+      cart.flatMap((item) =>
+        item.kind === "SERVICE" && serviceIssue(item, checkIn, checkOut) ? [item.id] : []
+      ),
+    [cart, checkIn, checkOut]
+  );
 
   const addDiningToCart = (restaurant: RestaurantItem, shiftCode: string, shiftName: string) => {
     const newItem: CartItem = {
@@ -285,34 +375,148 @@ export function useHomePageVm(branchCode?: string) {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const errorMessage = (err: unknown) =>
+    err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+
   const triggerHold = async () => {
     if (cart.length === 0) return;
     setIsHolding(true);
+    setBookingError(null);
     try {
-      const expires = new Date(Date.now() + 15 * 60 * 1000);
-      setHoldId(`hold-${Date.now()}`);
-      setHoldExpiresAt(expires);
+      const stays = cart.flatMap((item) =>
+        item.kind === "ROOM"
+          ? [{ roomType: item.roomType, checkInDate: item.checkIn, checkOutDate: item.checkOut }]
+          : []
+      );
+      if (stays.length === 0) {
+        setBookingError("Add a room to your reservation first.");
+        return;
+      }
+      if (serviceIssues.length) {
+        setBookingError("Complete the details for your services first.");
+        return;
+      }
+      const services = cart.flatMap((item) =>
+        item.kind === "SERVICE"
+          ? [{ serviceId: item.serviceId, startsAt: hotelDateTime(item.date, item.time), pax: item.pax }]
+          : []
+      );
+      const hold = await createHold({
+        branchId,
+        cartId: `cart_${crypto.randomUUID()}`,
+        stays,
+        services,
+        ttlMinutes: 15,
+      });
+      setHoldId(hold._id);
+      setHoldToken(hold.holdToken ?? null);
+      setHoldExpiresAt(new Date(hold.expiresAt));
+    } catch (err) {
+      setBookingError(errorMessage(err));
     } finally {
       setIsHolding(false);
     }
   };
 
   const finalizeBooking = async () => {
-    const mockOrderNumber = `TS-${new Date().toISOString().slice(2, 10).replace(/-/g, "")}-${Math.random()
-      .toString(36)
-      .substring(2, 7)
-      .toUpperCase()}`;
-    setConfirmedOrderNumber(mockOrderNumber);
-    setIsConfirmed(true);
-    setIsCheckoutOpen(false);
+    if (!holdId) return;
+    setIsSubmitting(true);
+    setBookingError(null);
+    try {
+      const lines = cart.map((item) => {
+        if (item.kind === "ROOM") {
+          return {
+            kind: "STAY",
+            title: `${item.title} · ${item.nights} ${item.nights === 1 ? "night" : "nights"}`,
+            unitPriceThb: item.totalPrice,
+            startsAt: hotelMidday(item.checkIn),
+            businessDate: item.checkIn,
+            stay: {
+              roomType: item.roomType,
+              checkInDate: item.checkIn,
+              checkOutDate: item.checkOut,
+              nights: item.nights,
+              adults,
+            },
+          };
+        }
+        if (item.kind === "SERVICE") {
+          const startsAt = hotelDateTime(item.date, item.time);
+          return {
+            kind: "SERVICE",
+            title: item.title,
+            unitPriceThb: item.price,
+            startsAt,
+            businessDate: item.date,
+            service: {
+              serviceId: item.serviceId,
+              serviceName: item.title,
+              serviceKind: item.serviceKind,
+              pax: item.pax,
+              ...(item.serviceKind === "AIRPORT_TRANSFER" && {
+                flight: {
+                  number: item.flightNumber.trim().toUpperCase(),
+                  direction: "ARRIVAL",
+                  scheduledAt: startsAt,
+                },
+              }),
+            },
+          };
+        }
+        const restaurant = restaurantsQuery.data?.find((r) => r._id === item.restaurantId);
+        return {
+          kind: "DINING",
+          title: item.title,
+          unitPriceThb: item.totalPrice,
+          startsAt: hotelMidday(item.diningDate),
+          businessDate: item.diningDate,
+          dining: {
+            restaurantId: item.restaurantId,
+            restaurantName: restaurant?.name ?? item.title,
+            shiftCode: item.shiftCode,
+            partySize: item.pax,
+          },
+        };
+      });
+
+      const { order } = await createOrder({
+        branchId,
+        holdId,
+        guest: {
+          fullName: bookingGuest.fullName.trim(),
+          email: bookingGuest.email.trim() || undefined,
+          phoneE164: bookingGuest.phoneE164.replace(/[\s-]/g, "") || undefined,
+          lineUserId: bookingGuest.lineUserId.trim() || undefined,
+          preferredLanguage: bookingGuest.preferredLanguage,
+        },
+        lines,
+        attribution: { channel: "DIRECT_WEB" },
+      });
+
+      // The hold is now booked stock; stop the countdown and refresh anything showing rooms.
+      setHoldExpiresAt(null);
+      void queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
+      setConfirmedOrderNumber(order.orderNumber);
+      setIsConfirmed(true);
+      setIsCheckoutOpen(false);
+    } catch (err) {
+      setBookingError(errorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetBooking = () => {
+    if (holdId && !isConfirmed) {
+      void releaseHold(holdId, holdToken ?? undefined).catch(() => undefined);
+    }
     setCart([]);
     setHoldId(null);
+    setHoldToken(null);
     setHoldExpiresAt(null);
     setIsConfirmed(false);
     setConfirmedOrderNumber(null);
+    setBookingError(null);
   };
 
   return {
@@ -334,6 +538,8 @@ export function useHomePageVm(branchCode?: string) {
     cart,
     addRoomToCart,
     addServiceToCart,
+    updateService,
+    serviceIssues,
     addDiningToCart,
     removeFromCart,
     subtotal,
@@ -349,6 +555,8 @@ export function useHomePageVm(branchCode?: string) {
     bookingGuest,
     setBookingGuest,
     finalizeBooking,
+    isSubmitting,
+    bookingError,
     isConfirmed,
     confirmedOrderNumber,
     resetBooking,

@@ -27,7 +27,6 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Booking engine" },
-    { href: "/ops/housekeeping", label: "Housekeeping" },
     { href: "/ops/dispatch", label: "Dispatch" },
     { href: "/admin", label: "Content" },
   ];
@@ -36,7 +35,6 @@ export function Navbar() {
     pathname === "/" ||
     pathname.startsWith("/ops") ||
     pathname.startsWith("/admin") ||
-    pathname.startsWith("/stay") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register")
   ) {
