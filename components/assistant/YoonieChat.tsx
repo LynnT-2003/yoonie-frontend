@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 type Message = { role: "user" | "yoonie"; text: string; failed?: boolean };
 
 /** **bold** and line breaks only: the assistants answer in light markdown. */
-function Rich({ text }: { text: string }) {
+export function Rich({ text }: { text: string }) {
   return (
     <>
       {text.split("\n").map((line, i) => (

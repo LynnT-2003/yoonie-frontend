@@ -2,7 +2,11 @@ import { postRequest } from "../api/NetworkManager";
 import { apiPath } from "../../config/api-path";
 
 type AssistantReply = { reply: string };
-type AssistantBody = { sessionId: string; message: string };
+
+export type AssistantPage = "rooms" | "guests" | "services" | "dispatch" | "property" | "other";
+/** Where the staff member is, so Yoonie answers about that page (and the room they have open). */
+export type AssistantContext = { page: AssistantPage; roomNumber?: string; date?: string };
+type AssistantBody = { sessionId: string; message: string; context?: AssistantContext };
 
 /** Guest concierge on the booking site: no login. */
 export const askGuestYoonie = (body: AssistantBody) =>
