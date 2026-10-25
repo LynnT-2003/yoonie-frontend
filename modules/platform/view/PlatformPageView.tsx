@@ -76,7 +76,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
       const port = host.split(":")[1] || "3000";
       return `${protocol}//${subdomain}.localhost:${port}${path}`;
     }
-    return `${protocol}//${subdomain}.yoonie.si${path}`;
+    const parts = host.split(":")[0].split(".");
+    const rootDomain = parts.length > 1 ? parts.slice(-2).join(".") : "yoonie.app";
+    return `${protocol}//${subdomain}.${rootDomain}${path}`;
   };
 
   return (
