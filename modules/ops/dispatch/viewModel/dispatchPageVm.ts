@@ -144,6 +144,8 @@ export function useDispatchPageVm() {
   return {
     branch,
     myId,
+    /** cancelling a departure loses revenue and means refunds: managers only */
+    canCancelTour: user?.role !== "DISPATCHER",
     date,
     setDate,
     today,

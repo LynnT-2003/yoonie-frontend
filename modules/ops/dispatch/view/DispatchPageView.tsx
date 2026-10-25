@@ -613,7 +613,13 @@ function NextAction({
       <Button size="sm" variant="outline" disabled={pending} onClick={() => onAsk("MERGE")}>
         Merge
       </Button>
-      <Button size="sm" variant="destructive" disabled={pending} onClick={() => onAsk("CANCEL")}>
+      <Button
+        size="sm"
+        variant="destructive"
+        disabled={pending || !vm.canCancelTour}
+        title={vm.canCancelTour ? undefined : "Needs a manager"}
+        onClick={() => onAsk("CANCEL")}
+      >
         Cancel
       </Button>
     </div>
