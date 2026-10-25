@@ -27,7 +27,6 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Booking engine" },
-    { href: "/ops/housekeeping", label: "Housekeeping" },
     { href: "/ops/dispatch", label: "Dispatch" },
     { href: "/admin", label: "Content" },
   ];

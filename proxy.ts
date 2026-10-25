@@ -15,11 +15,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Clean up legacy/stale ?next=%2F query parameter
+  if (pathname === "/login" && request.nextUrl.searchParams.get("next") === "/") {
+    const cleanUrl = request.nextUrl.clone();
+    cleanUrl.searchParams.delete("next");
+    return NextResponse.redirect(cleanUrl);
+  }
+
   // 1. Central Operator Portal: ops.yoonie.si or ops.localhost:3000
-  // Rewrites root path / to the 05:30 operational dispatch run-sheet
+  // Rewrites root path / to the live rooms overview
   if (host.startsWith("ops.")) {
     if (pathname === "/") {
-      return NextResponse.rewrite(new URL("/ops/dispatch", request.url));
+      return NextResponse.rewrite(new URL("/ops/rooms", request.url));
     }
     return NextResponse.next();
   }

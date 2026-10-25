@@ -26,7 +26,6 @@ import { ImageUploadDropzone } from "@/components/media/ImageUploadDropzone";
 import {
   useRoomsQuery,
   useCreateRoomMutation,
-  useUpdateRoomCleaningMutation,
 } from "@/lib/domain/hospitality/hospitality-api";
 import { RoomDetailsModal } from "./RoomDetailsModal";
 import {
@@ -36,17 +35,10 @@ import {
   RowThumb,
   formatThb,
 } from "./adminLabels";
-import type { RoomCleaningStatus, RoomItem, RoomType } from "@/lib/types/hospitality";
+import type { RoomItem, RoomType } from "@/lib/types/hospitality";
 
 type RoomInventoryPanelProps = {
   branchId: string;
-};
-
-const NEXT_CLEANING_STATUS: Record<RoomCleaningStatus, RoomCleaningStatus> = {
-  DIRTY: "IN_PROGRESS",
-  IN_PROGRESS: "CLEAN",
-  CLEAN: "INSPECTED",
-  INSPECTED: "DIRTY",
 };
 
 export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
@@ -71,7 +63,6 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
   );
 
   const createRoomMutation = useCreateRoomMutation(branchId);
-  const updateCleaningMutation = useUpdateRoomCleaningMutation(branchId);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,18 +85,6 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
       void refetch();
     } catch (err) {
       console.error("Create room error:", err);
-    }
-  };
-
-  const handleCleaningToggle = async (roomId: string, current: RoomCleaningStatus) => {
-    try {
-      await updateCleaningMutation.mutateAsync({
-        roomId,
-        status: NEXT_CLEANING_STATUS[current],
-      });
-      void refetch();
-    } catch (err) {
-      console.error("Update cleaning error:", err);
     }
   };
 
@@ -185,7 +164,6 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
             </TableHeader>
             <TableBody>
               {rooms.map((room, idx) => {
-                const next = NEXT_CLEANING_STATUS[room.cleaningStatus];
                 const rowKey = room._id || room.roomType || `room-${idx}`;
                 return (
                   <TableRow
@@ -213,18 +191,8 @@ export function RoomInventoryPanel({ branchId }: RoomInventoryPanelProps) {
                       {formatThb(room.baseRateThb || 2200)}
                     </TableCell>
                     <TableCell>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void handleCleaningToggle(room._id, room.cleaningStatus);
-                        }}
-                        disabled={updateCleaningMutation.isPending}
-                        title={`Mark as ${CLEANING_STATUS_OPTIONS.find((o) => o.value === next)?.label.toLowerCase()}`}
-                        className="rounded-full transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/20"
-                      >
-                        <CleaningStatusBadge status={room.cleaningStatus} />
-                      </button>
+                      {/* read-only: cleaning status changes through Dispatch, never from setup */}
+                      <CleaningStatusBadge status={room.cleaningStatus} />
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
