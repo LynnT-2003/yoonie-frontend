@@ -4,11 +4,18 @@ import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { MascotMood } from "@/components/mascot/YoonieMascot";
 
+/**
+ * Two separate tours: guests see the booking engine, staff see the ops board once signed in.
+ * A tour never navigates outside its own audience, so it never runs into the login wall.
+ */
+export type TourAudience = "guest" | "ops";
+
 export type SpotlightStep = {
   id: string;
+  audience: TourAudience;
   pageRoute: string;
   targetId: string;
-  badge: string;
+  label: string;
   title: string;
   mascotMood: MascotMood;
   speech: string;
@@ -20,7 +27,8 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "stay-search",
     pageRoute: "/",
     targetId: "tour-stay-search",
-    badge: "1/7 · Direct Booking",
+    audience: "guest",
+    label: "Direct Booking",
     title: "Stay Search & Dates",
     mascotMood: "calm",
     speech:
@@ -31,7 +39,8 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "room-catalog",
     pageRoute: "/",
     targetId: "tour-room-catalog",
-    badge: "2/7 · Atomic Inventory",
+    audience: "guest",
+    label: "Atomic Inventory",
     title: "Direct Sanctuary Catalog",
     mascotMood: "checking",
     speech:
@@ -42,18 +51,20 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "experience-addons",
     pageRoute: "/",
     targetId: "tour-experiences",
-    badge: "3/7 · Composite Cart",
+    audience: "guest",
+    label: "Composite Cart",
     title: "Experiences & Dining Add-Ons",
     mascotMood: "happy",
     speech:
       "Here! Yoonie lets guests bundle airport minivans, Chao Phraya Sunset Cruises, and riverside dining into the exact same reservation checkout.",
-    actionHint: "Click 'Next' to see the live room board.",
+    actionHint: "That's the guest side. Click 'Finish Tour' to try a booking yourself.",
   },
   {
     id: "rooms-board",
     pageRoute: "/ops/rooms",
     targetId: "tour-rooms-board",
-    badge: "4/7 · Live Rooms",
+    audience: "ops",
+    label: "Live Rooms",
     title: "Every Key at a Glance",
     mascotMood: "thinking",
     speech:
@@ -64,7 +75,8 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "dispatch-header",
     pageRoute: "/ops/dispatch",
     targetId: "tour-dispatch-header",
-    badge: "5/7 · Today's Runway",
+    audience: "ops",
+    label: "Today's Runway",
     title: "Every Deadline on One Line",
     mascotMood: "checking",
     speech:
@@ -75,7 +87,8 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "dispatch-inbox",
     pageRoute: "/ops/dispatch",
     targetId: "tour-dispatch-inbox",
-    badge: "6/7 · One Queue",
+    audience: "ops",
+    label: "One Queue",
     title: "Rooms, Pickups and Tours in Order",
     mascotMood: "worried",
     speech:
@@ -86,7 +99,8 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     id: "dispatch-inspect",
     pageRoute: "/ops/dispatch",
     targetId: "tour-dispatch-inspect",
-    badge: "7/7 · Sign-off",
+    audience: "ops",
+    label: "Sign-off",
     title: "Inspect and Release",
     mascotMood: "happy",
     speech:
@@ -95,8 +109,36 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
   },
 ];
 
+const DONE_KEY: Record<TourAudience, string> = {
+  guest: "onboardingComplete:guest",
+  ops: "onboardingComplete:ops",
+};
+
+const readDone = (audience: TourAudience) => {
+  try {
+    // the old single flag meant the guest tour had been seen
+    return Boolean(
+      localStorage.getItem(DONE_KEY[audience]) ||
+        (audience === "guest" && localStorage.getItem("onboardingComplete"))
+    );
+  } catch {
+    return true; // storage blocked: never nag
+  }
+};
+
+/** Which tour belongs on this page: the booking engine, the ops board, or none (login, admin, account…). */
+function audienceFor(pathname: string): TourAudience | null {
+  if (pathname.startsWith("/ops")) return "ops";
+  if (pathname !== "/") return null;
+  // ops.<domain>/ is the rooms board (proxy rewrite); everywhere else / is the booking engine
+  return typeof window !== "undefined" && window.location.hostname.startsWith("ops.") ? "ops" : "guest";
+}
+
 type OnboardingContextValue = {
   isOpen: boolean;
+  /** this page's tour, or null where there is none */
+  audience: TourAudience | null;
+  steps: SpotlightStep[];
   currentStepIndex: number;
   currentStep: SpotlightStep;
   totalSteps: number;
@@ -112,47 +154,66 @@ const OnboardingContext = React.createContext<OnboardingContextValue | null>(nul
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [audience, setAudience] = React.useState<TourAudience | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentStepIndex, setCurrentStepIndex] = React.useState(0);
 
-  // Initialize from localStorage if onboarding has not been completed
+  // follow the page: entering the booking engine or the ops board picks that tour,
+  // and opens it once if this browser hasn't finished it
+  const audienceRef = React.useRef<TourAudience | null>(null);
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const completed = localStorage.getItem("onboardingComplete");
-      if (!completed) {
-        setIsOpen(true);
-      }
-    }
-  }, []);
+    const next = audienceFor(pathname);
+    if (next === audienceRef.current) return;
+    audienceRef.current = next;
+    setAudience(next);
+    setCurrentStepIndex(0);
+    const open = Boolean(next && !readDone(next));
+    setIsOpen(open);
+    // start where step 1 lives (staff land on Dispatch after login; the ops tour starts on Rooms)
+    const first = SPOTLIGHT_STEPS.find((s) => s.audience === next);
+    const here = pathname === "/" && next === "ops" ? "/ops/rooms" : pathname;
+    if (open && first && first.pageRoute !== here) router.push(first.pageRoute);
+  }, [pathname, router]);
 
-  const currentStep = SPOTLIGHT_STEPS[currentStepIndex] || SPOTLIGHT_STEPS[0];
+  const steps = React.useMemo(
+    () => SPOTLIGHT_STEPS.filter((s) => s.audience === (audience ?? "guest")),
+    [audience]
+  );
+  const currentStep = steps[currentStepIndex] ?? steps[0];
 
   const navigateToStep = React.useCallback(
     (stepIdx: number) => {
-      const targetStep = SPOTLIGHT_STEPS[stepIdx];
+      const targetStep = steps[stepIdx];
       if (!targetStep) return;
       setCurrentStepIndex(stepIdx);
-      if (pathname !== targetStep.pageRoute) {
+      // on ops.<domain>, "/" already shows the rooms board
+      const here = pathname === "/" && audience === "ops" ? "/ops/rooms" : pathname;
+      if (here !== targetStep.pageRoute) {
         router.push(targetStep.pageRoute);
       }
     },
-    [pathname, router]
+    [steps, pathname, audience, router]
   );
 
   const openTour = (stepIndex = 0) => {
+    if (!audience) return;
     setIsOpen(true);
     navigateToStep(stepIndex);
   };
 
   const closeTour = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("onboardingComplete", "true");
+    if (audience) {
+      try {
+        localStorage.setItem(DONE_KEY[audience], "true");
+      } catch {
+        // storage blocked: the tour just shows again next visit
+      }
     }
     setIsOpen(false);
   };
 
   const nextStep = () => {
-    if (currentStepIndex < SPOTLIGHT_STEPS.length - 1) {
+    if (currentStepIndex < steps.length - 1) {
       navigateToStep(currentStepIndex + 1);
     } else {
       closeTour();
@@ -166,7 +227,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   };
 
   const goToStep = (index: number) => {
-    if (index >= 0 && index < SPOTLIGHT_STEPS.length) {
+    if (index >= 0 && index < steps.length) {
       navigateToStep(index);
     }
   };
@@ -174,10 +235,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   return (
     <OnboardingContext.Provider
       value={{
-        isOpen,
+        isOpen: isOpen && audience !== null,
+        audience,
+        steps,
         currentStepIndex,
         currentStep,
-        totalSteps: SPOTLIGHT_STEPS.length,
+        totalSteps: steps.length,
         openTour,
         closeTour,
         nextStep,

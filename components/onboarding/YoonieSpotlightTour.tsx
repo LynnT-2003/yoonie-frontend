@@ -4,11 +4,12 @@ import * as React from "react";
 import { ArrowLeft, ArrowRight, Check, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
-import { useOnboarding, SPOTLIGHT_STEPS } from "@/providers/onboarding-provider";
+import { useOnboarding } from "@/providers/onboarding-provider";
 
 export function YoonieSpotlightTour() {
   const {
     isOpen,
+    steps,
     currentStepIndex,
     currentStep,
     totalSteps,
@@ -195,7 +196,7 @@ export function YoonieSpotlightTour() {
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8A45B]/20 text-[#303A36] dark:text-[#E8A45B] text-[11px] font-extrabold uppercase tracking-wider">
             <Sparkles className="size-3 text-[#E8A45B]" />
-            {currentStep.badge}
+            {currentStepIndex + 1}/{totalSteps} · {currentStep.label}
           </div>
 
           <button
@@ -233,7 +234,7 @@ export function YoonieSpotlightTour() {
         <div className="pt-2 border-t border-[#E5DBD0] dark:border-[#2D3D36] flex items-center justify-between gap-3">
           {/* Step indicator dots */}
           <div className="flex items-center gap-1.5">
-            {SPOTLIGHT_STEPS.map((s, idx) => (
+            {steps.map((s, idx) => (
               <button
                 key={s.id}
                 type="button"
