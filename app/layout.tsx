@@ -31,6 +31,7 @@ export const metadata: Metadata = {
 
 import { OnboardingProvider } from "@/providers/onboarding-provider";
 import { YoonieSpotlightTour } from "@/components/onboarding/YoonieSpotlightTour";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -49,6 +50,7 @@ export default function RootLayout({
               <Navbar />
               <main className="flex flex-1 flex-col">{children}</main>
               <YoonieSpotlightTour />
+              <Toaster />
             </OnboardingProvider>
           </AuthProvider>
         </AppQueryProvider>

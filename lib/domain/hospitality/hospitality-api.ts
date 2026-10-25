@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deleteRequest,
   getRequest,
@@ -8,14 +8,23 @@ import {
 } from "../api/NetworkManager";
 import { apiPath } from "../../config/api-path";
 import type {
+  AssignTaskResult,
+  PickupStage,
+  PickupStepResult,
+  RoomTransitionResult,
   AvailabilityResult,
   Branch,
   CreateHoldBody,
-  DispatchStatus,
   DispatchTask,
   HoldResult,
   HousekeepingBoard,
+  GuestsBoard,
+  LiveOccupancyResponse,
+  ServicesBoard,
   OrderResponse,
+  PaymentMethod,
+  RosterMember,
+  TourDecision,
   RestaurantItem,
   RoomCleaningStatus,
   RoomItem,
@@ -30,6 +39,10 @@ export const hospitalityKeys = {
   room: (roomId: string) => [...hospitalityKeys.all, "room", roomId] as const,
   housekeeping: (branchId: string) =>
     [...hospitalityKeys.all, "housekeeping", branchId] as const,
+  liveOccupancy: (
+    branchId: string,
+    params?: { date?: string; from?: string; to?: string }
+  ) => [...hospitalityKeys.all, "live-occupancy", branchId, params] as const,
   services: (branchId: string) =>
     [...hospitalityKeys.all, "services", branchId] as const,
   service: (serviceId: string) =>
@@ -195,29 +208,27 @@ export function useUpdateRoomMutation(branchId: string) {
   });
 }
 
-export async function updateRoomCleaning(
+/**
+ * The one way to change a room's cleaning status: the room and its turnaround task move
+ * together on the server. Sending a room back to DIRTY needs a reason.
+ */
+export async function transitionRoom(
   roomId: string,
-  cleaningStatus: RoomCleaningStatus
-): Promise<RoomItem> {
-  return postRequest<RoomItem, { toStatus: RoomCleaningStatus }>(
+  toStatus: RoomCleaningStatus,
+  reason?: string
+): Promise<RoomTransitionResult> {
+  return postRequest<RoomTransitionResult, { toStatus: RoomCleaningStatus; reason?: string }>(
     apiPath(`staff/rooms/${roomId}/transition`),
-    { toStatus: cleaningStatus }
+    { toStatus, ...(reason ? { reason } : {}) }
   );
 }
 
-export function useUpdateRoomCleaningMutation(branchId: string) {
+export function useRoomTransitionMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ roomId, status }: { roomId: string; status: RoomCleaningStatus }) =>
-      updateRoomCleaning(roomId, status),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: hospitalityKeys.housekeeping(branchId),
-      });
-      void queryClient.invalidateQueries({
-        queryKey: hospitalityKeys.rooms(branchId),
-      });
-    },
+    mutationFn: ({ roomId, toStatus, reason }: { roomId: string; toStatus: RoomCleaningStatus; reason?: string }) =>
+      transitionRoom(roomId, toStatus, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: hospitalityKeys.all }),
   });
 }
 
@@ -434,8 +445,10 @@ export async function releaseHold(holdId: string, holdToken?: string): Promise<{
 
 // ─── Orders & Confirmation ───────────────────────────────────────────────────
 
-export async function createOrder(body: Record<string, unknown>): Promise<OrderResponse> {
-  return postRequest<OrderResponse, Record<string, unknown>>(apiPath("orders"), body, {
+export async function createOrder(
+  body: Record<string, unknown>
+): Promise<{ order: OrderResponse; orderToken: string }> {
+  return postRequest<{ order: OrderResponse; orderToken: string }, Record<string, unknown>>(apiPath("orders"), body, {
     isPublic: true,
   });
 }
@@ -474,25 +487,156 @@ export function useDispatchTasksQuery(branchId: string, serviceDate: string) {
   });
 }
 
-export async function updateDispatchStatus(
-  taskId: string,
-  status: DispatchStatus
-): Promise<DispatchTask> {
-  return patchRequest<DispatchTask, { status: DispatchStatus }>(
-    apiPath(`dispatch/${taskId}/status`),
-    { status }
-  );
-}
+// Task actions. Turnaround status is never set here: rooms move through transitionRoom.
 
-export function useUpdateDispatchStatusMutation(branchId: string, serviceDate: string) {
+function useTaskAction<V, R>(fn: (vars: V) => Promise<R>) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ taskId, status }: { taskId: string; status: DispatchStatus }) =>
-      updateDispatchStatus(taskId, status),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: hospitalityKeys.dispatch(branchId, serviceDate),
-      });
-    },
+    mutationFn: fn,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: hospitalityKeys.all }),
+  });
+}
+
+export const useClaimTaskMutation = () =>
+  useTaskAction((taskId: string) => postRequest<DispatchTask, object>(apiPath(`dispatch/${taskId}/claim`), {}));
+
+export const useAssignTaskMutation = () =>
+  useTaskAction(({ taskId, assigneeUserId }: { taskId: string; assigneeUserId: string | null }) =>
+    patchRequest<AssignTaskResult, { assigneeUserId: string | null }>(apiPath(`dispatch/${taskId}/assign`), {
+      assigneeUserId,
+    })
+  );
+
+/** Record a pickup step for a driver who phoned it in; normally the driver taps it in the app. */
+export const usePickupStepMutation = () =>
+  useTaskAction(({ taskId, stage, note }: { taskId: string; stage: PickupStage; note?: string }) =>
+    postRequest<PickupStepResult, { stage: PickupStage; note?: string }>(apiPath(`staff/pickups/${taskId}/step`), {
+      stage,
+      ...(note ? { note } : {}),
+    })
+  );
+
+/** The desk's answer to a driver's problem report. */
+export const useResolvePickupIssueMutation = () =>
+  useTaskAction(
+    ({ taskId, resolution, note }: { taskId: string; resolution: "KEEP_WAITING" | "NO_SHOW"; note?: string }) =>
+      postRequest<AssignTaskResult, { resolution: string; note?: string }>(apiPath(`dispatch/${taskId}/pickup-issue`), {
+        resolution,
+        ...(note ? { note } : {}),
+      })
+  );
+
+export const useTourDecisionMutation = () =>
+  useTaskAction(({ taskId, decision, note }: { taskId: string; decision: TourDecision; note?: string }) =>
+    postRequest<DispatchTask, { decision: TourDecision; note?: string }>(apiPath(`dispatch/${taskId}/decision`), {
+      decision,
+      ...(note ? { note } : {}),
+    })
+  );
+
+export function useStaffRosterQuery(branchId: string) {
+  return useQuery({
+    queryKey: [...hospitalityKeys.all, "roster", branchId] as const,
+    queryFn: () => getRequest<RosterMember[]>(apiPath(`staff/roster?branchId=${encodeURIComponent(branchId)}`)),
+    enabled: Boolean(branchId),
+    staleTime: 5 * 60_000,
+  });
+}
+
+export async function getLiveRoomOccupancy(
+  branchId: string,
+  params?: { date?: string; from?: string; to?: string }
+): Promise<LiveOccupancyResponse> {
+  const query = new URLSearchParams();
+  if (branchId) query.set("branchId", branchId);
+  if (params?.date) query.set("date", params.date);
+  if (params?.from) query.set("from", params.from);
+  if (params?.to) query.set("to", params.to);
+  const qStr = query.toString();
+  return getRequest<LiveOccupancyResponse>(apiPath(`rooms/live-occupancy${qStr ? `?${qStr}` : ""}`));
+}
+
+export function useLiveRoomOccupancyQuery(
+  branchId: string,
+  params?: { date?: string; from?: string; to?: string },
+  options?: { refetchInterval?: number }
+) {
+  return useQuery({
+    queryKey: hospitalityKeys.liveOccupancy(branchId, params),
+    queryFn: () => getLiveRoomOccupancy(branchId, params),
+    enabled: Boolean(branchId),
+    refetchInterval: options?.refetchInterval ?? 10_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+// ─── Ops boards ──────────────────────────────────────────────────────────────
+
+export function useServicesBoardQuery(branchId: string, date: string) {
+  return useQuery({
+    queryKey: [...hospitalityKeys.all, "ops-services", branchId, date] as const,
+    queryFn: () =>
+      getRequest<ServicesBoard>(
+        apiPath(`ops-board/services?branchId=${encodeURIComponent(branchId)}&date=${encodeURIComponent(date)}`)
+      ),
+    enabled: Boolean(branchId && date),
+    refetchInterval: 15_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useGuestsBoardQuery(branchId: string, date: string) {
+  return useQuery({
+    queryKey: [...hospitalityKeys.all, "ops-guests", branchId, date] as const,
+    queryFn: () =>
+      getRequest<GuestsBoard>(
+        apiPath(`ops-board/guests?branchId=${encodeURIComponent(branchId)}&date=${encodeURIComponent(date)}`)
+      ),
+    enabled: Boolean(branchId && date),
+    refetchInterval: 15_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+// ─── Front-desk actions ──────────────────────────────────────────────────────
+
+/** Every ops board reads the same orders, so any change refreshes them all. */
+function useInvalidateHospitality() {
+  const queryClient = useQueryClient();
+  return () => queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
+}
+
+export function useRecordPaymentMutation() {
+  const invalidate = useInvalidateHospitality();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      ...body
+    }: {
+      orderId: string;
+      amountThb: number;
+      method: PaymentMethod;
+      reference?: string;
+    }) => postRequest<OrderResponse, typeof body>(apiPath(`orders/${orderId}/payments`), body),
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateFlightMutation() {
+  const invalidate = useInvalidateHospitality();
+  return useMutation({
+    mutationFn: ({
+      orderId,
+      lineId,
+      ...body
+    }: {
+      orderId: string;
+      lineId: string;
+      number: string;
+      landingAt: string;
+      meetingDoor?: number;
+    }) =>
+      patchRequest<OrderResponse, typeof body>(apiPath(`orders/${orderId}/lines/${lineId}/flight`), body),
+    onSuccess: invalidate,
   });
 }

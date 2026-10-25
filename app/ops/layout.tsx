@@ -11,7 +11,7 @@ export const metadata = {
 export default function OpsLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedLayoutClient>
-      <div className="min-h-screen bg-[#F8F5EE] text-[#303A36] flex flex-col font-sans">
+      <div className="flex min-h-screen flex-col bg-background text-foreground">
         <OpsNavbar />
         <main className="flex-1">{children}</main>
       </div>

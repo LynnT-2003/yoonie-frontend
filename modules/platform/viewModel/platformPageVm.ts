@@ -124,7 +124,7 @@ export function usePlatformPageVm() {
         name: form.hotelName,
         code: branch.code,
         slug,
-        guestUrl: `/stay/${branch.code}`,
+        guestUrl: `/`,
         opsUrl: `/ops/dispatch`,
       });
       setWizardStep(4);

@@ -56,7 +56,7 @@ Yoonie inspects incoming `Host` headers at the edge to provide seamless multi-te
 | Host / Subdomain | Target Experience | Edge Action |
 | :--- | :--- | :--- |
 | **`ops.yoonie.si`** / **`ops.localhost:3000`** | Central Operations Hub (`/ops/dispatch`) | Rewrites `/` to `/ops/dispatch`. Auth pages (`/login`, `/register`) pass through to single branded login. |
-| **`[slug].yoonie.si`** / **`[slug].localhost:3000`** | Tenant Direct Booking Engine (`/stay/[slug]`) | Rewrites `/` to `/stay/[slug]` for direct guest reservations without OTA commissions. |
+| **`[slug].yoonie.si`** / **`[slug].localhost:3000`** | Tenant Direct Booking Engine (`/`) | Resolved directly at `/` for the tenant property. No artificial pathnames or URL prefixes. |
 | **`yoonie.si`** / **`localhost:3000`** | Platform Root | Platform landing page, property directory, and hotel workspace onboarding. |
 | **`/api/*`** (All domains) | NestJS Backend API | Next.js reverse proxy rewrite to `http://localhost:8080/api/*` eliminating cross-origin preflight overhead. |
 

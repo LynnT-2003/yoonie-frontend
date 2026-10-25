@@ -14,7 +14,7 @@ sequenceDiagram
     actor Client as Browser / Mobile App
     participant Edge as Next.js 16 proxy.ts
     participant OpsPage as /ops/dispatch
-    participant StayPage as /stay/[slug]
+    participant TenantPage as / (Tenant Booking Engine)
     participant LoginPage as /login
     participant Backend as NestJS API (:8080)
 
@@ -30,9 +30,9 @@ sequenceDiagram
         LoginPage-->>Client: Render Authoritative /login Page
     else 3. Tenant Direct Booking ([tenant].yoonie.si or [tenant].localhost:3000)
         Client->>Edge: GET http://riverside-bkk.localhost:3000/
-        Note over Edge: extract subdomain "riverside-bkk" & pathname === "/"
-        Edge->>StayPage: Rewrite to /stay/riverside-bkk
-        StayPage-->>Client: Render Sanctuary Booking Engine for Riverside BKK
+        Note over Edge: host is tenant subdomain, pass-through to /
+        Edge->>TenantPage: Resolve directly at / via server headers()
+        TenantPage-->>Client: Render Hotel Booking Engine for Riverside BKK (Zero /stay path)
     else 4. API Proxy Requests
         Client->>Edge: GET /api/v1/rooms?branchId=...
         Note over Edge: next.config.ts reverse proxy rewrites /api/*
@@ -94,7 +94,7 @@ Guests select a room, dinner shift, and airport transfer in one cart. Capacity i
 sequenceDiagram
     autonumber
     actor Guest
-    participant Web as Booking Frontend (/stay/riverside-bkk)
+    participant Web as Booking Frontend (riverside-bkk.localhost:3000)
     participant Inv as InventoryController & Service
     participant Ord as OrderController & Service
     participant DB as MongoDB (inventory_slots & inventory_holds)
