@@ -8,6 +8,7 @@ import { Building2, CircleHelp, Clock, Compass, LayoutGrid, LogOut, Users } from
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
 import { useOnboarding } from "@/providers/onboarding-provider";
+import { StaffYoonie } from "@/components/assistant/StaffYoonie";
 import { cn } from "@/lib/utils";
 
 export function OpsNavbar() {
@@ -108,6 +109,7 @@ export function OpsNavbar() {
             </div>
           )}
 
+          <StaffYoonie />
           <Button
             size="sm"
             variant="ghost"

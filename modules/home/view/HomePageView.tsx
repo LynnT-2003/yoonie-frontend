@@ -28,6 +28,7 @@ import {
 import { GuestServiceDetailsModal } from "@/modules/home/components/GuestServiceDetailsModal";
 import type { ServiceItem } from "@/lib/types/hospitality";
 import { serviceIssue, type CartItem, type HomePageVm } from "@/modules/home/viewModel/homePageVm";
+import { GuestYoonie } from "@/components/assistant/GuestYoonie";
 
 const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=80";
@@ -108,6 +109,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
 
   return (
     <div className={cn("bg-background text-foreground", cart.length > 0 ? "pb-28 lg:pb-24" : "pb-24")}>
+      <GuestYoonie hotelName={hotelName} className={cart.length > 0 ? "bottom-28 lg:bottom-24" : undefined} />
       {/* ─── Hero ──────────────────────────────────────────────────────────────── */}
       <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden bg-foreground">
         {/* eslint-disable-next-line @next/next/no-img-element */}
