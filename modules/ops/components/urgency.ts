@@ -41,6 +41,11 @@ export function taskDeadline(t: DispatchTask): string | undefined {
 
 export function taskUrgency(t: DispatchTask, now: number): { urgency: Urgency; minutesLeft: number | null } {
   if (t.status === "DONE" || t.status === "DISMISSED") return { urgency: "DONE", minutesLeft: null };
+  // a pickup's promise is "driver at the door by landing": once they're there, the clock stops
+  const stage = t.pickup?.stage;
+  if (stage === "AT_AIRPORT" || stage === "GUEST_ON_BOARD" || stage === "DROPPED_OFF") {
+    return { urgency: "ON_TRACK", minutesLeft: null };
+  }
   const deadline = taskDeadline(t);
   if (!deadline) return { urgency: "NO_DEADLINE", minutesLeft: null };
   const minutesLeft = minutesUntil(deadline, now);
