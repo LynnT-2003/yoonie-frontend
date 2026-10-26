@@ -94,17 +94,18 @@ export function useHomePageVm(branchCode?: string) {
   const queryClient = useQueryClient();
   const { user, ready } = useAuth();
   const branchesQuery = useBranchesQuery();
+  const isTenantMode = Boolean(branchCode);
   const activeBranch: Branch | undefined = React.useMemo(() => {
     if (!branchesQuery.data || branchesQuery.data.length === 0) return undefined;
     if (branchCode) {
-      const match = branchesQuery.data.find(
+      return branchesQuery.data.find(
         (b) => b.code.toLowerCase() === branchCode.toLowerCase()
       );
-      if (match) return match;
     }
     return branchesQuery.data[0];
   }, [branchesQuery.data, branchCode]);
-  const branchId = activeBranch?._id || "665a1b2c3d4e5f6a7b8c9d0e";
+  const isNotFound = isTenantMode && !branchesQuery.isLoading && !activeBranch;
+  const branchId = activeBranch?._id || "";
 
   const roomsQuery = useRoomsQuery(branchId);
   const rooms = React.useMemo(() => roomsQuery.data || [], [roomsQuery.data]);
@@ -167,31 +168,44 @@ export function useHomePageVm(branchCode?: string) {
       },
     };
 
-    if (rooms.length > 0) {
-      rooms.forEach((r) => {
-        if (specs[r.roomType]) {
-          if (r.coverImage) {
-            specs[r.roomType].image = r.coverImage;
-          } else if (r.images && r.images.length > 0) {
-            specs[r.roomType].image = r.images[0];
-          }
-          if (r.baseRateThb) {
-            specs[r.roomType].pricePerNight = r.baseRateThb;
-          }
-          if (r.amenities && r.amenities.length > 0) {
-            specs[r.roomType].features = r.amenities.map((a) =>
-              a.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
-            );
-          }
-          if (r.maxOccupancy) {
-            specs[r.roomType].capacity = `${r.maxOccupancy} Guests`;
-          }
-        }
-      });
+    if (!activeBranch || rooms.length === 0) {
+      return [];
     }
 
-    return Object.values(specs);
-  }, [rooms]);
+    const activeTypes = Array.from(new Set(rooms.map((r) => r.roomType)));
+    return activeTypes.map((type) => {
+      const matchingRooms = rooms.filter((r) => r.roomType === type);
+      const firstRoom = matchingRooms[0];
+      const template = specs[type] || {
+        type,
+        title: type.replace(/_/g, " "),
+        tagline: "Spacious private accommodation",
+        pricePerNight: firstRoom?.baseRateThb || 2000,
+        capacity: `${firstRoom?.maxOccupancy || 2} Guests`,
+        features: firstRoom?.amenities || ["King Bed", "High-speed WiFi"],
+        image: firstRoom?.coverImage || firstRoom?.images?.[0] || specs.STANDARD_KING.image,
+      };
+
+      const customSpec = { ...template };
+      if (firstRoom?.coverImage) {
+        customSpec.image = firstRoom.coverImage;
+      } else if (firstRoom?.images && firstRoom.images.length > 0) {
+        customSpec.image = firstRoom.images[0];
+      }
+      if (firstRoom?.baseRateThb) {
+        customSpec.pricePerNight = firstRoom.baseRateThb;
+      }
+      if (firstRoom?.amenities && firstRoom.amenities.length > 0) {
+        customSpec.features = firstRoom.amenities.map((a) =>
+          a.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase())
+        );
+      }
+      if (firstRoom?.maxOccupancy) {
+        customSpec.capacity = `${firstRoom.maxOccupancy} Guests`;
+      }
+      return customSpec;
+    });
+  }, [activeBranch, rooms]);
 
   // Search parameters
   const [checkIn, setCheckIn] = React.useState(() => hotelDate(0));
@@ -520,6 +534,9 @@ export function useHomePageVm(branchCode?: string) {
   };
 
   return {
+    isNotFound,
+    isTenantMode,
+    branchCode,
     user,
     ready,
     activeBranch,

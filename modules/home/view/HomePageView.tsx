@@ -29,6 +29,7 @@ import { GuestServiceDetailsModal } from "@/modules/home/components/GuestService
 import type { ServiceItem } from "@/lib/types/hospitality";
 import { serviceIssue, type CartItem, type HomePageVm } from "@/modules/home/viewModel/homePageVm";
 import { GuestYoonie } from "@/components/assistant/GuestYoonie";
+import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 
 const HERO_FALLBACK =
   "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=80";
@@ -56,6 +57,39 @@ const formatTimer = (seconds: number) => {
 export function HomePageView({ vm }: { vm: HomePageVm }) {
   const [selectedRoomForModal, setSelectedRoomForModal] =
     React.useState<RoomCatalogItem | null>(null);
+
+  if (vm.isNotFound) {
+    return (
+      <main className="min-h-screen bg-[#F5EBDD] flex flex-col items-center justify-center px-4 py-20 text-center">
+        <div className="max-w-md w-full p-8 rounded-3xl bg-white/80 dark:bg-[#202C27]/80 backdrop-blur-xl border border-[#28594E]/15 shadow-xl flex flex-col items-center">
+          <YoonieMascot mood="worried" size="lg" />
+          <h1 className="mt-6 font-extrabold text-2xl text-[#28594E] tracking-tight">
+            Hotel Not Found
+          </h1>
+          <p className="mt-2 text-xs text-[#7A8B84] leading-relaxed">
+            We couldn&apos;t find an active hotel property matching{" "}
+            <span className="font-mono font-semibold text-[#28594E]">{vm.branchCode}.yoonie.app</span>.
+            The property may have been moved or hasn&apos;t been registered yet.
+          </p>
+          <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5 w-full">
+            <Button
+              asChild
+              className="w-full bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs rounded-xl"
+            >
+              <a href="https://yoonie.app">Visit Yoonie Platform</a>
+            </Button>
+            <Button
+              variant="outline"
+              asChild
+              className="w-full border-[#28594E]/20 text-[#28594E] font-bold text-xs rounded-xl"
+            >
+              <a href="https://yoonie.app/#workspaces">Create Hotel Workspace</a>
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
   const [selectedServiceForModal, setSelectedServiceForModal] =
     React.useState<ServiceItem | null>(null);
 
@@ -204,7 +238,26 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
             />
 
             <div className="mt-8 flex flex-col gap-6">
-              {roomCatalog.map((room) => {
+              {roomCatalog.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border border-dashed border-[#28594E]/20 bg-white/40">
+                  <YoonieMascot mood="calm" size="md" />
+                  <h3 className="mt-4 font-bold text-lg text-[#28594E]">
+                    Rooms Opening Soon
+                  </h3>
+                  <p className="mt-1 text-xs text-[#7A8B84] max-w-sm">
+                    {activeBranch?.name || "The property"} is currently setting up room inventory. Direct reservations will be live shortly.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="mt-4 text-xs font-bold border-[#28594E]/20 text-[#28594E]"
+                  >
+                    <a href="/login">Property Owner Sign In →</a>
+                  </Button>
+                </div>
+              ) : (
+                roomCatalog.map((room) => {
                 const isSelected = cart.some((i) => i.kind === "ROOM" && i.roomType === room.type);
                 return (
                   <article
@@ -282,7 +335,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
                     </div>
                   </article>
                 );
-              })}
+              }))}
             </div>
           </section>
 

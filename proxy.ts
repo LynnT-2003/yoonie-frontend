@@ -22,7 +22,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(cleanUrl);
   }
 
-  // 1. Central Operator Portal: ops.yoonie.si or ops.localhost:3000
+  // 1. Central Operator Portal: ops.yoonie.app or ops.localhost:3000
   // Rewrites root path / to the live rooms overview
   if (host.startsWith("ops.")) {
     if (pathname === "/") {
