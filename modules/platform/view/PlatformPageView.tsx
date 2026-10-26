@@ -68,8 +68,21 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     setMounted(true);
   }, []);
 
+  const getRootDomain = () => {
+    if (typeof window === "undefined") return "yoonie.app";
+    const host = window.location.host;
+    if (host.includes("localhost")) {
+      const port = host.split(":")[1] || "3000";
+      return `localhost:${port}`;
+    }
+    const parts = host.split(":")[0].split(".");
+    return parts.length > 1 ? parts.slice(-2).join(".") : "yoonie.app";
+  };
+
+  const activeRootDomain = mounted ? getRootDomain() : "yoonie.app";
+
   const getSubdomainUrl = (subdomain: string, path = "") => {
-    if (!mounted || typeof window === "undefined") return `http://${subdomain}.localhost:3000${path}`;
+    if (typeof window === "undefined") return `https://${subdomain}.yoonie.app${path}`;
     const host = window.location.host;
     const protocol = window.location.protocol;
     if (host.includes("localhost")) {
@@ -201,11 +214,11 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               <div className="flex flex-wrap items-center gap-5 pt-4 text-xs font-semibold text-[#7A8B84]">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="size-4 text-[#28594E]" />
-                  Dedicated Subdomains (<code className="font-mono text-[#28594E]">[tenant].localhost:3000</code>)
+                  Dedicated Subdomains (<code className="font-mono text-[#28594E]">[tenant].{activeRootDomain}</code>)
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="size-4 text-[#28594E]" />
-                  Central Operator Hub (<code className="font-mono text-[#28594E]">ops.localhost:3000</code>)
+                  Central Operator Hub (<code className="font-mono text-[#28594E]">ops.{activeRootDomain}</code>)
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="size-4 text-[#28594E]" />
@@ -350,7 +363,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         )}
                       </div>
                       <span className="px-2.5 py-1 rounded-md bg-[#28594E]/10 text-[11px] font-mono font-bold text-[#28594E]">
-                        {codeSlug}.localhost:3000
+                        {codeSlug}.{activeRootDomain}
                       </span>
                     </div>
 
@@ -838,7 +851,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E]"
                     >
                       <a href={getSubdomainUrl(createdWorkspace.slug)} target="_blank" rel="noopener noreferrer">
-                        Open {createdWorkspace.slug}.localhost:3000 <ExternalLink className="size-3 ml-1" />
+                        Open {createdWorkspace.slug}.{activeRootDomain} <ExternalLink className="size-3 ml-1" />
                       </a>
                     </Button>
                   </div>

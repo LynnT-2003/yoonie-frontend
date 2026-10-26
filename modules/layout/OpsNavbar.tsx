@@ -4,15 +4,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CircleHelp, Clock, Compass, LayoutGrid, LogOut, Users } from "lucide-react";
+import { Building2, CircleHelp, Clock, Compass, LayoutGrid, LogOut, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
 import { useOnboarding } from "@/providers/onboarding-provider";
+import { Kbd, useYoonie } from "@/components/assistant/YooniePalette";
 import { cn } from "@/lib/utils";
 
 export function OpsNavbar() {
   const { user, logout } = useAuth();
   const { openTour } = useOnboarding();
+  const yoonie = useYoonie();
   const pathname = usePathname();
   const [loggingOut, setLoggingOut] = React.useState(false);
 
@@ -108,6 +110,18 @@ export function OpsNavbar() {
             </div>
           )}
 
+          <button
+            type="button"
+            onClick={() => yoonie?.open()}
+            className="hidden h-8 items-center gap-2 rounded-lg border border-border bg-surface pl-2.5 pr-1.5 text-[13px] text-muted-foreground shadow-xs transition-colors hover:border-primary/40 hover:text-foreground md:inline-flex"
+          >
+            <Sparkles className="size-3.5 text-primary" />
+            Ask Yoonie
+            <span className="ml-3 inline-flex gap-0.5">
+              <Kbd>⌘</Kbd>
+              <Kbd>K</Kbd>
+            </span>
+          </button>
           <Button
             size="sm"
             variant="ghost"

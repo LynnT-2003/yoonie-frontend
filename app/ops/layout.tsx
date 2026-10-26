@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ProtectedLayoutClient } from "@/modules/auth/ProtectedLayoutClient";
 import { OpsNavbar } from "@/modules/layout/OpsNavbar";
+import { YoonieProvider } from "@/components/assistant/YooniePalette";
 
 export const metadata = {
   title: "Operations Hub | Yoonie",
@@ -11,10 +12,12 @@ export const metadata = {
 export default function OpsLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedLayoutClient>
-      <div className="flex min-h-screen flex-col bg-background text-foreground">
-        <OpsNavbar />
-        <main className="flex-1">{children}</main>
-      </div>
+      <YoonieProvider>
+        <div className="flex min-h-screen flex-col bg-background text-foreground">
+          <OpsNavbar />
+          <main className="flex-1">{children}</main>
+        </div>
+      </YoonieProvider>
     </ProtectedLayoutClient>
   );
 }

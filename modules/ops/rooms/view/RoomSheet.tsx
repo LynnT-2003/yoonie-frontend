@@ -19,6 +19,7 @@ import { Folio } from "@/modules/ops/components/Folio";
 import { ReasonForm } from "@/modules/ops/components/ReasonForm";
 import { clock } from "@/modules/ops/components/urgency";
 import { FlightEditor } from "@/modules/ops/components/FrontDesk";
+import { useYoonieFocus } from "@/components/assistant/YooniePalette";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -176,6 +177,7 @@ function RoomSheetBody({
 }) {
   const cleaning = CLEANING_STATUS[room.cleaningStatus];
   const occupancy = OCCUPANCY_STATUS[room.occupancyStatus];
+  useYoonieFocus(room.roomNumber);
   const task = room.activeDispatch;
   const [reporting, setReporting] = React.useState(false);
 
