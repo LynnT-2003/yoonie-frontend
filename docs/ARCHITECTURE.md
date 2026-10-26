@@ -15,7 +15,7 @@ Yoonie is composed of four decoupled subsystems operating across a multi-tenant 
                                                   │
                   ┌───────────────────────────────┼───────────────────────────────┐
                   ▼                               ▼                               ▼
-       [tenant].yoonie.si                  ops.yoonie.si                      yoonie.si
+       [tenant].yoonie.app                  ops.yoonie.app                      yoonie.app
      (Direct Guest Booking)              (Operator Portal)             (Platform & Onboarding)
                   │                               │                               │
                   └───────────────────────────────┼───────────────────────────────┘
@@ -50,12 +50,12 @@ In Next.js 16, `middleware.ts` has been deprecated and superseded by `proxy.ts` 
 
 | Inbound Host | Path | Edge Rewrite / Action | Destination Route |
 | :--- | :--- | :--- | :--- |
-| `[slug].yoonie.si` or `[slug].localhost` | `/` | Pass-through (`next()`) | Direct Hotel Booking at `/` via server `headers()` |
-| `[slug].yoonie.si` or `[slug].localhost` | `/account` | Pass-through (`next()`) | Guest account portal |
-| `ops.yoonie.si` or `ops.localhost` | `/` | Rewrite | `/ops/dispatch` (Operations Hub) |
-| `ops.yoonie.si` or `ops.localhost` | `/login`, `/register` | Pass-through (`next()`) | Authoritative Authentication Pages |
-| `ops.yoonie.si` or `ops.localhost` | `/ops/*`, `/admin/*` | Pass-through (`next()`) | Protected Operator Shell |
-| `yoonie.si` or `localhost` | `/` | Pass-through (`next()`) | Platform Homepage & Property Directory |
+| `[slug].yoonie.app` or `[slug].localhost` | `/` | Pass-through (`next()`) | Direct Hotel Booking at `/` via server `headers()` |
+| `[slug].yoonie.app` or `[slug].localhost` | `/account` | Pass-through (`next()`) | Guest account portal |
+| `ops.yoonie.app` or `ops.localhost` | `/` | Rewrite | `/ops/dispatch` (Operations Hub) |
+| `ops.yoonie.app` or `ops.localhost` | `/login`, `/register` | Pass-through (`next()`) | Authoritative Authentication Pages |
+| `ops.yoonie.app` or `ops.localhost` | `/ops/*`, `/admin/*` | Pass-through (`next()`) | Protected Operator Shell |
+| `yoonie.app` or `localhost` | `/` | Pass-through (`next()`) | Platform Homepage & Property Directory |
 | Any Domain | `/api/:path*` | Next.js Reverse Proxy | `http://localhost:8080/api/:path*` (Same-Origin) |
 
 ### Implementation in `proxy.ts`
@@ -79,7 +79,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2. Central Operator Portal: ops.yoonie.si or ops.localhost:3000
+  // 2. Central Operator Portal: ops.yoonie.app or ops.localhost:3000
   if (host.startsWith("ops.")) {
     if (pathname === "/") {
       return NextResponse.rewrite(new URL("/ops/dispatch", request.url));

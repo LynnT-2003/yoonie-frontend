@@ -18,7 +18,7 @@ sequenceDiagram
     participant LoginPage as /login
     participant Backend as NestJS API (:8080)
 
-    alt 1. Central Operator Portal (ops.yoonie.si or ops.localhost:3000)
+    alt 1. Central Operator Portal (ops.yoonie.app or ops.localhost:3000)
         Client->>Edge: GET http://ops.localhost:3000/
         Note over Edge: host starts with "ops." & pathname === "/"
         Edge->>OpsPage: Rewrite to /ops/dispatch
@@ -28,7 +28,7 @@ sequenceDiagram
         Note over Edge: host starts with "ops." & pathname === "/login"
         Edge->>LoginPage: Pass-through (NextResponse.next())
         LoginPage-->>Client: Render Authoritative /login Page
-    else 3. Tenant Direct Booking ([tenant].yoonie.si or [tenant].localhost:3000)
+    else 3. Tenant Direct Booking ([tenant].yoonie.app or [tenant].localhost:3000)
         Client->>Edge: GET http://riverside-bkk.localhost:3000/
         Note over Edge: host is tenant subdomain, pass-through to /
         Edge->>TenantPage: Resolve directly at / via server headers()

@@ -25,7 +25,7 @@ Comprehensive technical, operational, and architectural documentation index for 
                                                   │
                   ┌───────────────────────────────┼───────────────────────────────┐
                   ▼                               ▼                               ▼
-       [tenant].yoonie.si                  ops.yoonie.si                      yoonie.si
+       [tenant].yoonie.app                  ops.yoonie.app                      yoonie.app
      (Direct Guest Booking)              (Operator Portal)             (Platform & Onboarding)
                   │                               │                               │
                   └───────────────────────────────┼───────────────────────────────┘
@@ -56,11 +56,11 @@ Comprehensive technical, operational, and architectural documentation index for 
 
 | Subdomain | Environment | Routing Mechanism | Target Experience |
 | :--- | :--- | :--- | :--- |
-| **`ops.yoonie.si`** | Production | `proxy.ts` Edge Rewrite | **Central Operator Portal**: 05:30 Dispatch Run-Sheet, Housekeeping Board, Property CMS |
+| **`ops.yoonie.app`** | Production | `proxy.ts` Edge Rewrite | **Central Operator Portal**: 05:30 Dispatch Run-Sheet, Housekeeping Board, Property CMS |
 | **`ops.localhost:3000`** | Local Dev | `proxy.ts` Edge Rewrite | Local operator development hub |
-| **`[slug].yoonie.si`** | Production | `proxy.ts` Edge Rewrite | **Tenant Direct Booking Engine**: Direct room reservations, F&B dining shifts, airport transfers |
+| **`[slug].yoonie.app`** | Production | `proxy.ts` Edge Rewrite | **Tenant Direct Booking Engine**: Direct room reservations, F&B dining shifts, airport transfers |
 | **`[slug].localhost:3000`**| Local Dev | `proxy.ts` Edge Rewrite | Local tenant direct booking preview |
-| **`yoonie.si`** | Production | Default Next.js App | **Platform Showcase**: Multi-property directory & hotel owner workspace onboarding |
+| **`yoonie.app`** | Production | Default Next.js App | **Platform Showcase**: Multi-property directory & hotel owner workspace onboarding |
 | **`localhost:3000`** | Local Dev | Default Next.js App | Platform root development |
 
 ---
@@ -72,7 +72,7 @@ Comprehensive technical, operational, and architectural documentation index for 
 - Atomic 15-minute holding locks (`POST /api/inventory/hold`) protecting bookable inventory from overbooking during guest checkout.
 - Automated background sweeper running every 60 seconds to release abandoned carts.
 
-### 2. Back-of-House Operations (`ops.yoonie.si`)
+### 2. Back-of-House Operations (`ops.yoonie.app`)
 - **Protected Layout Architecture**: Enforced through `ProtectedLayoutClient`, ensuring unauthenticated users are redirected cleanly to `/login`.
 - **05:30 Morning Dispatch Run-Sheet**: Automated air-traffic control evaluating room logistics, airport flight arrival doors, and tour minimum viable capacity thresholds (`minViablePax`).
 - **Front-Desk Zero Housekeeping**: Dynamically prioritized cleaning board (`DIRTY` ➔ `IN_PROGRESS` ➔ `CLEAN` ➔ `INSPECTED`) ensuring rooms for early arriving VIP guests are turned around first.

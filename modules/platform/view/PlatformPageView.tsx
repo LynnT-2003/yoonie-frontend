@@ -3,7 +3,11 @@
 
 import * as React from "react";
 import {
+  AlertTriangle,
   ArrowRight,
+  Bed,
+  Car,
+  Check,
   CheckCircle2,
   Clock,
   Compass,
@@ -17,6 +21,7 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -40,6 +45,17 @@ import {
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 import type { PlatformPageVm } from "../viewModel/platformPageVm";
 
+const AVAILABLE_AMENITIES = [
+  "High-Speed WiFi",
+  "Air Conditioning",
+  "King Bed",
+  "Private Balcony",
+  "Deep Soaking Tub",
+  "Ocean View",
+  "Breakfast Included",
+  "Mini Bar",
+];
+
 export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
   const {
     branches,
@@ -52,8 +68,34 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     handleHotelNameChange,
     handleLaunchWorkspace,
     isLaunching,
+    onboardingError,
     createdWorkspace,
     resetWizard,
+
+    // Guided Setup
+    guidedRoom,
+    setGuidedRoom,
+    selectRoomPreset,
+    toggleRoomAmenity,
+    handleCreateGuidedRoom,
+    isCreatingRoom,
+    guidedRoomError,
+    createdRooms,
+
+    guidedService,
+    setGuidedService,
+    selectServicePreset,
+    handleCreateGuidedService,
+    isCreatingService,
+    guidedServiceError,
+    createdServices,
+
+    skipWarning,
+    setSkipWarning,
+    triggerSkipRoom,
+    confirmSkipRoom,
+    triggerSkipService,
+    confirmSkipService,
   } = vm;
 
   const scrollTo = (id: string) => {
@@ -98,294 +140,196 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     <div className="min-h-screen bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth">
       {/* ─── Top Platform Navigation ────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-[#28594E]/10 bg-[#F5EBDD]/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <img
               src="/brand/mascot/yoonie-calm.png"
-              alt="Yoonie Mascot Logo"
-              className="size-9 object-contain shrink-0 drop-shadow-xs"
+              alt="Yoonie"
+              className="size-8 object-contain"
             />
-            <div>
-              <span className="font-extrabold text-xl tracking-tight text-[#28594E]">
-                yoonie<span className="text-[#E8A45B]">.si</span>
-              </span>
-              <span className="hidden sm:inline-block ml-2 text-[10px] font-bold uppercase tracking-wider text-[#7A8B84]">
-                Hospitality OS
-              </span>
-            </div>
+            <span className="font-extrabold text-xl tracking-tight text-[#28594E]">
+              yoonie
+            </span>
+            <span className="hidden sm:inline-flex rounded-full bg-[#28594E]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#28594E]">
+              Hospitality Multi-Tenant OS
+            </span>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-xs font-bold text-[#303A36]/80">
+          <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[#7A8B84]">
             <button
               onClick={() => scrollTo("features")}
-              className="hover:text-[#28594E] transition cursor-pointer"
+              className="hover:text-[#28594E] transition-colors"
             >
-              Platform Features
+              Why Yoonie
             </button>
             <button
-              onClick={() => scrollTo("dispatch")}
-              className="hover:text-[#28594E] transition cursor-pointer"
+              onClick={() => scrollTo("properties")}
+              className="hover:text-[#28594E] transition-colors"
             >
-              05:30 Dispatch Hub
+              Live Properties
             </button>
             <button
-              onClick={() => scrollTo("workspaces")}
-              className="hover:text-[#28594E] transition cursor-pointer"
+              onClick={() => scrollTo("pricing")}
+              className="hover:text-[#28594E] transition-colors"
             >
-              Active Properties
+              Pricing
             </button>
-            <button
-              onClick={() => scrollTo("economics")}
-              className="hover:text-[#28594E] transition cursor-pointer"
+            <a
+              href={getSubdomainUrl("ops")}
+              className="hover:text-[#28594E] transition-colors flex items-center gap-1"
             >
-              Direct ROI vs OTAs
-            </button>
+              <Lock className="size-3" /> Ops Portal
+            </a>
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <Button
-              variant="outline"
               size="sm"
+              variant="outline"
               asChild
-              className="border-[#28594E]/20 bg-white/50 text-[#28594E] hover:bg-white font-bold text-xs"
+              className="hidden sm:inline-flex text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5"
             >
-              <a href={getSubdomainUrl("ops", "/login")}>
-                <Lock className="size-3.5 mr-1 text-[#E8A45B]" />
-                Sign In to Ops Hub
-              </a>
+              <a href={getSubdomainUrl("ops")}>Sign In</a>
             </Button>
             <Button
               size="sm"
-              onClick={() => {
-                setWizardStep(1);
-                setIsWizardOpen(true);
-              }}
-              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-xs"
+              onClick={() => setIsWizardOpen(true)}
+              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-sm shadow-[#28594E]/20"
             >
-              <Plus className="size-3.5 mr-1 text-[#E8A45B]" />
-              Create Hotel Workspace
+              Launch Your Hotel
             </Button>
           </div>
         </div>
       </header>
 
       {/* ─── Hero Section ───────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#28594E]/10 border border-[#28594E]/15 text-xs font-bold text-[#28594E]">
-                <Sparkles className="size-3.5 text-[#E8A45B]" />
-                Autonomous Hospitality Operating System
-              </div>
+      <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-5xl text-center space-y-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#28594E]/15 bg-white/60 px-3.5 py-1 text-xs font-semibold text-[#28594E] backdrop-blur-sm shadow-sm">
+            <Sparkles className="size-3.5 text-[#E8A45B]" />
+            <span>0% Commission Direct Guest Bookings</span>
+            <span className="text-[#7A8B84]">·</span>
+            <span className="text-[#7A8B84]">Zero OTA Dependence</span>
+          </div>
 
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-[#28594E] leading-[1.08]">
-                every booking, <span className="italic font-serif text-[#E8A45B]">closed.</span>
-              </h1>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-[#28594E] leading-[1.1]">
+            The complete operating system for independent hotels.
+          </h1>
 
-              <p className="text-base sm:text-lg text-[#303A36]/80 max-w-2xl leading-relaxed">
-                Empower your independent boutique hotel with a unified direct-channel booking engine
-                and synchronized frontline dispatch. Own your guest contacts, eliminate 15–25% OTA
-                commissions, and orchestrate drivers and housekeeping from one native source of truth.
-              </p>
+          <p className="mx-auto max-w-2xl text-base sm:text-lg text-[#7A8B84] leading-relaxed">
+            Give every property its own branded direct booking engine, front-of-house
+            guest concierge, and automated 05:30 operational dispatch run-sheets.
+          </p>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                <Button
-                  size="lg"
-                  onClick={() => {
-                    setWizardStep(1);
-                    setIsWizardOpen(true);
-                  }}
-                  className="h-12 px-6 rounded-xl bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-sm shadow-md cursor-pointer"
-                >
-                  Create Hotel Workspace
-                  <ArrowRight className="size-4 ml-2" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => scrollTo("workspaces")}
-                  className="h-12 px-6 rounded-xl border-[#28594E]/20 bg-white/60 text-[#28594E] hover:bg-white font-bold text-sm cursor-pointer"
-                >
-                  Explore Running Properties
-                </Button>
-              </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Button
+              size="lg"
+              onClick={() => setIsWizardOpen(true)}
+              className="w-full sm:w-auto bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-sm px-8 shadow-md shadow-[#28594E]/20"
+            >
+              <Plus className="size-4 mr-2" /> Create Hotel Workspace
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => scrollTo("properties")}
+              className="w-full sm:w-auto border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5 font-bold text-sm px-6"
+            >
+              Explore Live Properties
+            </Button>
+          </div>
 
-              <div className="flex flex-wrap items-center gap-5 pt-4 text-xs font-semibold text-[#7A8B84]">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-[#28594E]" />
-                  Dedicated Subdomains (<code className="font-mono text-[#28594E]">[tenant].{activeRootDomain}</code>)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-[#28594E]" />
-                  Central Operator Hub (<code className="font-mono text-[#28594E]">ops.{activeRootDomain}</code>)
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="size-4 text-[#28594E]" />
-                  Offline Staff Mobile App
-                </span>
-              </div>
-            </div>
-
-            {/* Hero Interactive Preview Card */}
-            <div className="lg:col-span-5">
-              <div className="rounded-3xl bg-white/90 p-6 sm:p-8 shadow-xl border border-[#28594E]/10 backdrop-blur-xs relative overflow-hidden">
-                <div className="flex items-center justify-between pb-4 border-b border-[#28594E]/10">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src="/brand/mascot/yoonie-happy.png"
-                      alt="Yoonie Happy"
-                      className="size-11 object-contain shrink-0"
-                    />
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8A45B] block">
-                        Multi-Tenant Topology
-                      </span>
-                      <h3 className="font-bold text-base text-[#28594E]">
-                        Unified Hospitality Cloud
-                      </h3>
-                    </div>
-                  </div>
-                  <span className="px-2 py-0.5 rounded-full bg-[#28594E]/10 text-[10px] font-bold text-[#28594E]">
-                    ONLINE
-                  </span>
-                </div>
-
-                <div className="space-y-3 mt-4 text-xs">
-                  <a
-                    href={getSubdomainUrl("sedona")}
-                    className="p-3.5 rounded-xl bg-[#F5EBDD]/60 hover:bg-[#F5EBDD] border border-[#28594E]/10 flex items-center justify-between transition group"
-                  >
-                    <div>
-                      <span className="font-bold text-[#28594E] flex items-center gap-1.5 group-hover:text-[#E8A45B] transition">
-                        <Globe className="size-3.5 text-[#28594E]" /> Sedona Guest Digital Front Door
-                      </span>
-                      <span className="font-mono text-[11px] text-[#7A8B84] block mt-0.5">
-                        {getSubdomainUrl("sedona")}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-bold text-[#28594E] bg-white px-2 py-1 rounded-md border border-[#28594E]/10">
-                      Isolated
-                    </span>
-                  </a>
-
-                  <a
-                    href={getSubdomainUrl("ops")}
-                    className="p-3.5 rounded-xl bg-[#F5EBDD]/60 hover:bg-[#F5EBDD] border border-[#28594E]/10 flex items-center justify-between transition group"
-                  >
-                    <div>
-                      <span className="font-bold text-[#28594E] flex items-center gap-1.5 group-hover:text-[#E8A45B] transition">
-                        <Lock className="size-3.5 text-[#E8A45B]" /> Central Operator Portal
-                      </span>
-                      <span className="font-mono text-[11px] text-[#7A8B84] block mt-0.5">
-                        {getSubdomainUrl("ops")}
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-bold text-[#E8A45B] bg-white px-2 py-1 rounded-md border border-[#28594E]/10">
-                      Owner RBAC
-                    </span>
-                  </a>
-
-                  <div className="p-3.5 rounded-xl bg-[#F5EBDD]/60 border border-[#28594E]/10 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#28594E] flex items-center gap-1.5">
-                        <Plane className="size-3.5 text-blue-600" /> Frontline Staff Mobile App
-                      </span>
-                      <span className="font-mono text-[11px] text-[#7A8B84] block mt-0.5">
-                        yoonie-mobile-staff (Port 8081)
-                      </span>
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-700 bg-white px-2 py-1 rounded-md border border-[#28594E]/10">
-                      Offline-First
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-4 border-t border-[#28594E]/10 flex items-center justify-between text-xs">
-                  <span className="text-[#7A8B84]">Ready to launch your hotel?</span>
-                  <button
-                    onClick={() => {
-                      setWizardStep(1);
-                      setIsWizardOpen(true);
-                    }}
-                    className="font-bold text-[#28594E] hover:text-[#E8A45B] transition flex items-center gap-1 cursor-pointer"
-                  >
-                    Start 5-min Onboarding <ArrowRight className="size-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="pt-8 flex items-center justify-center gap-6 text-xs text-[#7A8B84]">
+            <span className="flex items-center gap-1.5">
+              <ShieldCheck className="size-4 text-[#28594E]" /> Multi-Tenant Subdomain
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="size-4 text-[#28594E]" /> 05:30 Daily Dispatch Run-Sheet
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Users className="size-4 text-[#28594E]" /> Unified Guest CDP
+            </span>
           </div>
         </div>
       </section>
 
-      {/* ─── Running Workspaces / Properties Section ────────────────────────── */}
-      <section id="workspaces" className="py-20 bg-white border-y border-[#28594E]/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+      {/* ─── Live Properties Section ────────────────────────────────────────── */}
+      <section id="properties" className="border-t border-[#28594E]/10 bg-white/50 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
-                Client Showcase
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
+                Active Subdomains
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#28594E] mt-1">
-                Featured Boutique Properties
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#28594E]">
+                Boutique Properties Powered by Yoonie
               </h2>
-              <p className="text-xs text-[#7A8B84] mt-1">
-                Discover independent luxury hotels and riverfront sanctuaries running direct-booking on Yoonie.
-              </p>
             </div>
             <Button
-              onClick={() => {
-                setWizardStep(1);
-                setIsWizardOpen(true);
-              }}
-              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs cursor-pointer"
+              size="sm"
+              variant="outline"
+              onClick={() => setIsWizardOpen(true)}
+              className="text-xs font-bold border-[#28594E]/20 text-[#28594E]"
             >
-              <Plus className="size-3.5 mr-1.5 text-[#E8A45B]" /> Create Your Hotel Workspace
+              + Provision New Hotel
             </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {branches.map((b) => {
-              const codeSlug = b.code.toLowerCase();
+              const slug = b.code.toLowerCase();
+              const guestUrl = getSubdomainUrl(slug);
               return (
                 <Card
                   key={b._id}
-                  className="overflow-hidden border-[#28594E]/15 bg-[#F5EBDD]/40 hover:bg-[#F5EBDD]/70 transition-all duration-200 shadow-xs flex flex-col justify-between"
+                  className="overflow-hidden border-[#28594E]/15 bg-white hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
                 >
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="size-11 rounded-xl bg-[#28594E] flex items-center justify-center text-[#F5EBDD] font-bold text-lg overflow-hidden shrink-0">
-                        {b.logoUrl ? (
-                          <img src={b.logoUrl} alt={b.name} className="size-full object-cover" />
-                        ) : (
-                          b.code.charAt(0)
-                        )}
-                      </div>
-                      <span className="px-2.5 py-1 rounded-md bg-[#28594E]/10 text-[11px] font-mono font-bold text-[#28594E]">
-                        {codeSlug}.{activeRootDomain}
-                      </span>
+                  <div className="relative aspect-[16/10] bg-[#F5EBDD] overflow-hidden">
+                    <img
+                      src={b.heroImageUrl || "/brand/mascot/yoonie-calm.png"}
+                      alt={b.name}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute top-3 left-3 rounded-full bg-[#28594E]/80 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-[#F5EBDD]">
+                      {(b.address as any)?.city || "Bangkok"}, {(b.address as any)?.countryCode || "TH"}
                     </div>
-
-                    <h3 className="font-bold text-base text-[#28594E] mt-3">
-                      {b.name}
-                    </h3>
-                    <p className="text-xs text-[#7A8B84] mt-1">
-                      {b.address?.city || "Bangkok"}, {b.address?.countryCode || "Thailand"} · Currency: {b.currency}
-                    </p>
                   </div>
 
-                  <div className="border-t border-[#28594E]/10 bg-white/70 p-3.5 flex items-center justify-between gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      asChild
-                      className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/10"
-                    >
-                      <a href={getSubdomainUrl(codeSlug)} target="_blank" rel="noopener noreferrer">
-                        <Globe className="size-3 mr-1 text-[#28594E]" /> Visit Direct Booking Site
-                      </a>
-                    </Button>
+                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-xs text-[#7A8B84] mb-1">
+                        <span className="font-mono text-[11px]">{b.code}</span>
+                        <span>{b.currency} · {b.timezone.split("/")[1] || b.timezone}</span>
+                      </div>
+                      <h3 className="font-extrabold text-lg text-[#28594E] line-clamp-1">
+                        {b.name}
+                      </h3>
+                      <p className="text-xs text-[#7A8B84] mt-1 font-mono break-all">
+                        {slug}.{activeRootDomain}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-[#28594E]/10 flex items-center justify-between gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                        className="flex-1 text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5"
+                      >
+                        <a href={guestUrl} target="_blank" rel="noopener noreferrer">
+                          Direct Booking <ExternalLink className="size-3 ml-1" />
+                        </a>
+                      </Button>
+                      <Button
+                        size="sm"
+                        asChild
+                        className="flex-1 text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD]"
+                      >
+                        <a href={getSubdomainUrl("ops")}>
+                          Ops Hub <ArrowRight className="size-3 ml-1" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               );
@@ -394,223 +338,175 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
         </div>
       </section>
 
-      {/* ─── Features Section ────────────────────────────────────────────────── */}
-      <section id="features" className="py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
-              Native Bounded Contexts
+      {/* ─── Platform Architecture / Value Props ────────────────────────────── */}
+      <section id="features" className="py-20 border-t border-[#28594E]/10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
+              Triple-Surface Architecture
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#28594E] mt-1">
-              One Shared Inventory Model. Zero Fragmented PMS.
+            <h2 className="text-3xl font-extrabold text-[#28594E]">
+              Built for Operators, Loved by Guests
             </h2>
-            <p className="text-sm text-[#303A36]/80 mt-2">
-              Rooms, dining seats, and excursion capacity all book against atomic inventory slots,
-              flowing straight into daily frontline dispatch.
+            <p className="text-xs sm:text-sm text-[#7A8B84]">
+              Three interconnected surfaces powered by a unified hotel data model.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="rounded-3xl bg-white p-7 border border-[#28594E]/10 shadow-xs space-y-4">
-              <span className="size-10 rounded-xl bg-[#28594E]/10 text-[#28594E] flex items-center justify-center font-bold">
-                1
-              </span>
-              <h3 className="font-bold text-lg text-[#28594E]">Direct-Channel Composite Cart</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Guests book room-nights, private airport transfers, spa treatments, and dining tables
-                in a single seamless checkout. Eliminates 15–25% OTA commissions.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white p-7 border border-[#28594E]/10 shadow-xs space-y-4">
-              <span className="size-10 rounded-xl bg-[#E8A45B]/15 text-[#E8A45B] flex items-center justify-center font-bold">
-                2
-              </span>
-              <h3 className="font-bold text-lg text-[#28594E]">05:30 Daily Dispatch Hub</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Automated air-traffic controller. Evaluates tour capacity economics before departure,
-                prioritizes housekeeping turnaround by guest arrival ETA, and prepares driver cards.
-              </p>
-            </div>
-
-            <div className="rounded-3xl bg-white p-7 border border-[#28594E]/10 shadow-xs space-y-4">
-              <span className="size-10 rounded-xl bg-[#28594E]/10 text-[#28594E] flex items-center justify-center font-bold">
-                3
-              </span>
-              <h3 className="font-bold text-lg text-[#28594E]">Frontline Staff Mobile App</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Drivers receive flight arrivals and terminal doors; housekeepers receive clean/dirty
-                queues. Operates offline with local SQLite caching for dead zones.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── 05:30 Dispatch Engine Section ───────────────────────────────────── */}
-      <section id="dispatch" className="py-20 bg-[#28594E] text-[#F5EBDD]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-[#E8A45B]">
-                <Clock className="size-3.5" /> Scheduled Operations Job
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#28594E]/10 text-[#28594E]">
+                <Globe className="size-5" />
               </div>
-              <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
-                The 05:30 Daily Dispatch Engine
-              </h2>
-              <p className="text-sm text-[#F5EBDD]/80 leading-relaxed">
-                Every morning at 05:30, Yoonie inspects incoming arrivals, scheduled experiences, and
-                housekeeping states across the property to generate prioritized operational tickets.
-              </p>
-
-              <div className="space-y-4 pt-2 text-xs">
-                <div className="p-4 rounded-2xl bg-white/10 border border-white/10 flex items-start gap-3">
-                  <Plane className="size-5 text-[#E8A45B] shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm">Airport Transit Pickups</h4>
-                    <p className="text-white/70 mt-1">
-                      Generates bilingual EN/TH driver cards, assigns vehicle plates, and tracks live flight ETAs.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white/10 border border-white/10 flex items-start gap-3">
-                  <ShieldCheck className="size-5 text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm">Arrival-Driven Housekeeping Priority</h4>
-                    <p className="text-white/70 mt-1">
-                      Cleans rooms by guest arrival time and VIP tier — not numerical room order.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-white/10 border border-white/10 flex items-start gap-3">
-                  <Compass className="size-5 text-[#E8A45B] shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-bold text-sm">Tour Yield Consolidation</h4>
-                    <p className="text-white/70 mt-1">
-                      Flags scheduled excursions below minimum viable pax, calculates projected losses, and alerts dispatchers.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="lg:col-span-6">
-              <div className="rounded-3xl bg-white text-[#303A36] p-7 shadow-2xl border border-white/20">
-                <div className="flex items-center justify-between pb-4 border-b border-zinc-200">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="/brand/mascot/yoonie-checking-booking.png"
-                      alt="Checking Booking"
-                      className="size-9 object-contain"
-                    />
-                    <div>
-                      <span className="text-xs font-mono font-bold text-[#28594E]">
-                        RUN-SHEET DEMO
-                      </span>
-                      <h4 className="font-bold text-sm">Today&apos;s Active Tickets</h4>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E8A45B]/20 text-[#303A36]">
-                    05:30 ACTIVE
-                  </span>
-                </div>
-
-                <div className="space-y-3 mt-4 text-xs">
-                  <div className="p-3 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#28594E]">Flight TG917 Pickup (Gate 4)</span>
-                      <span className="block text-[11px] text-zinc-500">Guest: Sarah Jenkins · ETA 14:15</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 font-bold text-[10px]">
-                      DRIVER DISPATCH
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#28594E]">Turn Room 304 (VIP Diamond)</span>
-                      <span className="block text-[11px] text-zinc-500">Check-in rush: target ready by 12:30</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-[#E8A45B]/20 text-[#303A36] font-bold text-[10px]">
-                      HOUSEKEEPING
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-[#28594E]">Sunset Canal Tour (2/12 Booked)</span>
-                      <span className="block text-[11px] text-red-600 font-semibold">Projected Loss: ฿4,500</span>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-red-100 text-red-700 font-bold text-[10px]">
-                      MERGE OR CANCEL
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-zinc-100 flex items-center justify-between">
-                  <span className="text-xs text-zinc-500">Live on Ops Portal</span>
-                  <Button size="sm" asChild className="bg-[#28594E] text-[#F5EBDD] font-bold text-xs">
-                    <a href={getSubdomainUrl("ops")}>
-                      Open Full Dispatch Board <ArrowRight className="size-3 ml-1" />
-                    </a>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Direct ROI vs OTAs Section ─────────────────────────────────────── */}
-      <section id="economics" className="py-20 bg-[#F5EBDD]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
-              Financial Economics
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#28594E] mt-1">
-              Why Boutique Hotels Choose Yoonie vs OTAs
-            </h2>
-            <p className="text-sm text-[#303A36]/80 mt-2">
-              Independent luxury resorts lose 15–25% of top-line revenue to Booking.com, Agoda, and Viator
-              while losing contact ownership.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="p-7 bg-white border-[#28594E]/10 space-y-4 shadow-xs">
-              <div className="size-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
-                <Percent className="size-5" />
-              </div>
-              <h3 className="font-bold text-lg text-[#28594E]">15–25% Margin Protection</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Direct booking converts prospective visitors into guests without middleman fees, saving
-                hundreds of thousands of Baht in annual commissions.
+              <h3 className="font-extrabold text-base text-[#28594E]">
+                1. Tenant Direct Booking
+              </h3>
+              <p className="text-xs text-[#7A8B84] leading-relaxed">
+                Every hotel gets its own dedicated subdomain ([hotel].yoonie.app).
+                Guests book rooms, dining shifts, and airport transfers directly without
+                OTA commissions.
               </p>
             </Card>
 
-            <Card className="p-7 bg-white border-[#28594E]/10 space-y-4 shadow-xs">
-              <div className="size-11 rounded-xl bg-[#28594E]/10 text-[#28594E] flex items-center justify-center">
+            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#E8A45B]/15 text-[#E8A45B]">
+                <Clock className="size-5" />
+              </div>
+              <h3 className="font-extrabold text-base text-[#28594E]">
+                2. 05:30 Daily Dispatch Hub
+              </h3>
+              <p className="text-xs text-[#7A8B84] leading-relaxed">
+                Centralized operations console at ops.yoonie.app. Every morning at 05:30,
+                daily run-sheets synthesize room turnovers, transfers, and dining reservations
+                into actionable frontline staff tasks.
+              </p>
+            </Card>
+
+            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-[#28594E]/10 text-[#28594E]">
                 <Users className="size-5" />
               </div>
-              <h3 className="font-bold text-lg text-[#28594E]">Master Guest CDP</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Own real guest emails, phone numbers, WhatsApp opt-ins, and lifetime spend history
-                instead of masked anonymous OTA relays.
+              <h3 className="font-extrabold text-base text-[#28594E]">
+                3. Unified Guest CDP
+              </h3>
+              <p className="text-xs text-[#7A8B84] leading-relaxed">
+                Cross-service guest profiles keep memory of guest preferences, room notes,
+                dietary restrictions, and lifetime value across multiple stays.
               </p>
             </Card>
+          </div>
+        </div>
+      </section>
 
-            <Card className="p-7 bg-white border-[#28594E]/10 space-y-4 shadow-xs">
-              <div className="size-11 rounded-xl bg-[#E8A45B]/15 text-[#E8A45B] flex items-center justify-center">
-                <TrendingUp className="size-5" />
+      {/* ─── Pricing Section ────────────────────────────────────────────────── */}
+      <section id="pricing" className="py-20 border-t border-[#28594E]/10 bg-white/40">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
+              Transparent Pricing
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#28594E]">
+              Zero Commissions. Flat Monthly Fee.
+            </h2>
+            <p className="text-xs sm:text-sm text-[#7A8B84]">
+              Stop giving 18% to 25% of your gross booking value to online travel agencies.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            <Card className="p-6 bg-white border-[#28594E]/15 space-y-5">
+              <div>
+                <span className="text-xs font-bold text-[#7A8B84]">Boutique</span>
+                <div className="text-3xl font-extrabold text-[#28594E] mt-1">
+                  $99<span className="text-xs text-[#7A8B84] font-normal"> / mo</span>
+                </div>
+                <p className="text-xs text-[#7A8B84] mt-1">
+                  Up to 20 rooms & suites. Full direct booking engine.
+                </p>
               </div>
-              <h3 className="font-bold text-lg text-[#28594E]">Attribution Proof</h3>
-              <p className="text-xs text-[#303A36]/80 leading-relaxed">
-                Every reservation captures campaign UTM tags and channels, proving exact ROI on your
-                marketing and social spend.
-              </p>
+              <ul className="text-xs space-y-2.5 text-[#303A36]">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> Custom [slug].yoonie.app
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> 0% Commission direct bookings
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> 05:30 Daily Dispatch board
+                </li>
+              </ul>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsWizardOpen(true)}
+                className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E]"
+              >
+                Start 14-Day Trial
+              </Button>
+            </Card>
+
+            <Card className="p-6 bg-[#28594E] text-[#F5EBDD] border-[#28594E] space-y-5 shadow-xl relative">
+              <div className="absolute -top-3 right-4 rounded-full bg-[#E8A45B] px-3 py-0.5 text-[10px] font-extrabold text-[#303A36] uppercase tracking-wider">
+                Most Popular
+              </div>
+              <div>
+                <span className="text-xs font-bold text-[#F5EBDD]/70">Resort & Villas</span>
+                <div className="text-3xl font-extrabold text-[#F5EBDD] mt-1">
+                  $199<span className="text-xs text-[#F5EBDD]/70 font-normal"> / mo</span>
+                </div>
+                <p className="text-xs text-[#F5EBDD]/70 mt-1">
+                  Up to 60 keys, dining shifts & tour dispatch.
+                </p>
+              </div>
+              <ul className="text-xs space-y-2.5 text-[#F5EBDD]/90">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Custom CNAME domain support
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Frontline WhatsApp/LINE bots
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Guest CDP & lifetime metrics
+                </li>
+              </ul>
+              <Button
+                size="sm"
+                onClick={() => setIsWizardOpen(true)}
+                className="w-full text-xs font-bold bg-[#E8A45B] hover:bg-[#d6924b] text-[#303A36]"
+              >
+                Launch Property
+              </Button>
+            </Card>
+
+            <Card className="p-6 bg-white border-[#28594E]/15 space-y-5">
+              <div>
+                <span className="text-xs font-bold text-[#7A8B84]">Hotel Group</span>
+                <div className="text-3xl font-extrabold text-[#28594E] mt-1">
+                  $399<span className="text-xs text-[#7A8B84] font-normal"> / mo</span>
+                </div>
+                <p className="text-xs text-[#7A8B84] mt-1">
+                  Unlimited properties, central management & API access.
+                </p>
+              </div>
+              <ul className="text-xs space-y-2.5 text-[#303A36]">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> Multi-property dashboard
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> Custom PMS & POS webhooks
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-[#28594E]" /> Dedicated account concierge
+                </li>
+              </ul>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setIsWizardOpen(true)}
+                className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E]"
+              >
+                Contact Sales
+              </Button>
             </Card>
           </div>
         </div>
@@ -621,7 +517,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#7A8B84]">
           <div className="flex items-center gap-2 font-bold text-[#28594E]">
             <img src="/brand/mascot/yoonie-calm.png" alt="Yoonie" className="size-6 object-contain" />
-            <span>yoonie.si</span>
+            <span>yoonie.app</span>
             <span>·</span>
             <span>every booking, closed.</span>
           </div>
@@ -633,11 +529,17 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
 
       {/* ─── Onboarding Wizard Dialog: "Create Hotel Workspace" ──────────────── */}
       <Dialog open={isWizardOpen} onOpenChange={setIsWizardOpen}>
-        <DialogContent size="lg" className="bg-[#F5EBDD] border-[#28594E]/15">
+        <DialogContent size="lg" className="bg-[#F5EBDD] border-[#28594E]/15 max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8A45B] bg-[#E8A45B]/15 px-2 py-0.5 rounded-full">
-                {wizardStep === 4 ? "Provisioned" : `Step ${wizardStep} of 3`}
+                {wizardStep <= 3
+                  ? `Step ${wizardStep} of 3 · Setup`
+                  : wizardStep === 4
+                  ? "Guided Inventory · Step 1 of 2"
+                  : wizardStep === 5
+                  ? "Guided Experiences · Step 2 of 2"
+                  : "Workspace Provisioned 🚀"}
               </span>
             </div>
             <DialogTitle className="font-extrabold text-2xl text-[#28594E]">
@@ -647,7 +549,11 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 ? "Operational Details & Location"
                 : wizardStep === 3
                 ? "Owner Account Credentials"
-                : "Workspace Ready!"}
+                : wizardStep === 4
+                ? "Add Your First Room Suite"
+                : wizardStep === 5
+                ? "Add Guest Experiences & Tours"
+                : `${createdWorkspace?.name || "Workspace"} is Live!`}
             </DialogTitle>
             <DialogDescription className="text-xs text-[#7A8B84]">
               {wizardStep === 1
@@ -655,12 +561,17 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 : wizardStep === 2
                 ? "Configure your currency, timezone, and official contact channels."
                 : wizardStep === 3
-                ? "Create your owner sign-in to manage the hotel in ops.yoonie.si."
-                : "Your hotel direct-channel booking engine and ops portal are live."}
+                ? "Create your owner sign-in to manage the hotel in ops.yoonie.app."
+                : wizardStep === 4
+                ? "Pick an Apple-inspired suite preset or customize your first bookable room."
+                : wizardStep === 5
+                ? "Offer seamless airport transfers, island cruises, or wellness packages."
+                : "Your hotel direct-channel booking engine and ops portal are fully provisioned."}
             </DialogDescription>
           </DialogHeader>
 
           <DialogBody className="space-y-4 pt-2">
+            {/* STEP 1: Hotel Name & Subdomain */}
             {wizardStep === 1 && (
               <div className="space-y-4">
                 <Field label="Hotel Name" htmlFor="hotel-name">
@@ -681,7 +592,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   <InputAffix
                     id="hotel-slug"
                     prefix="https://"
-                    suffix=".yoonie.si"
+                    suffix=".yoonie.app"
                     value={form.slug}
                     onChange={(e) =>
                       setForm({
@@ -707,6 +618,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               </div>
             )}
 
+            {/* STEP 2: Location & Operations */}
             {wizardStep === 2 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
@@ -732,7 +644,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Currency" htmlFor="hotel-currency">
+                  <Field label="Operating Currency" htmlFor="hotel-currency">
                     <Select
                       value={form.currency}
                       onValueChange={(val) => setForm({ ...form, currency: val })}
@@ -789,6 +701,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               </div>
             )}
 
+            {/* STEP 3: Owner Account */}
             {wizardStep === 3 && (
               <div className="space-y-4">
                 <Field label="Owner / General Manager Name" htmlFor="owner-name">
@@ -796,16 +709,18 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     id="owner-name"
                     value={form.ownerName}
                     onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+                    placeholder="e.g. Lynn Tan"
                     required
                   />
                 </Field>
 
-                <Field label="Work Email (for ops.yoonie.si login)" htmlFor="owner-email">
+                <Field label="Work Email (for ops.yoonie.app login)" htmlFor="owner-email">
                   <Input
                     id="owner-email"
                     type="email"
                     value={form.ownerEmail}
                     onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })}
+                    placeholder="e.g. lynn@yourhotel.com"
                     required
                   />
                 </Field>
@@ -816,33 +731,410 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     type="password"
                     value={form.ownerPassword}
                     onChange={(e) => setForm({ ...form, ownerPassword: e.target.value })}
+                    placeholder="Create a secure password"
                     required
                   />
                 </Field>
+
+                {/* Mascot Error Callout on Failure */}
+                {onboardingError && (
+                  <div className="p-4 rounded-2xl bg-red-50/90 border border-red-200 text-red-950 flex items-start gap-3 shadow-sm">
+                    <YoonieMascot mood="worried" size="sm" />
+                    <div className="space-y-1 text-xs">
+                      <span className="font-bold block text-red-800">
+                        Workspace Provisioning Failed
+                      </span>
+                      <p className="text-red-700">{onboardingError}</p>
+                      <p className="text-[11px] text-red-600/90 pt-1">
+                        Please check if the subdomain or email is already taken.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {wizardStep === 4 && createdWorkspace && (
-              <div className="p-6 rounded-2xl bg-white border border-[#28594E]/15 text-center space-y-4">
-                <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-[#28594E]/10 text-[#28594E]">
-                  <CheckCircle2 className="size-8" />
-                </div>
+            {/* STEP 4: Guided Step 1 - Add First Room Suite */}
+            {wizardStep === 4 && (
+              <div className="space-y-5">
                 <div>
-                  <h3 className="font-extrabold text-xl text-[#28594E]">
-                    {createdWorkspace.name} is Live!
-                  </h3>
-                  <p className="text-xs text-[#7A8B84] mt-1">
-                    Your hotel workspace is provisioned. Here are your two operational access points:
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
+                    Instant Inventory Presets
+                  </span>
+                  <p className="text-xs text-[#7A8B84] mt-0.5">
+                    Select a curated suite preset or customize the fields below.
                   </p>
                 </div>
 
+                {/* Apple-style Preset Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Preset 1: Standard King */}
+                  <div
+                    onClick={() => selectRoomPreset("STANDARD_KING")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedRoom.roomType === "STANDARD_KING"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Bed className="size-4" />
+                      </div>
+                      {guidedRoom.roomType === "STANDARD_KING" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">Standard King</h4>
+                      <p className="text-[11px] text-[#7A8B84]">1 King Bed · 32 sqm</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 2,800 <span className="text-[10px] font-normal text-[#7A8B84]">/ night</span>
+                    </div>
+                  </div>
+
+                  {/* Preset 2: Deluxe Balcony */}
+                  <div
+                    onClick={() => selectRoomPreset("DELUXE_BALCONY")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedRoom.roomType === "DELUXE_BALCONY"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Waves className="size-4" />
+                      </div>
+                      {guidedRoom.roomType === "DELUXE_BALCONY" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">Deluxe Balcony</h4>
+                      <p className="text-[11px] text-[#7A8B84]">Balcony & Tub · 48 sqm</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 4,500 <span className="text-[10px] font-normal text-[#7A8B84]">/ night</span>
+                    </div>
+                  </div>
+
+                  {/* Preset 3: Pool Villa */}
+                  <div
+                    onClick={() => selectRoomPreset("POOL_VILLA")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedRoom.roomType === "POOL_VILLA"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Sparkles className="size-4" />
+                      </div>
+                      {guidedRoom.roomType === "POOL_VILLA" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">Pool Villa</h4>
+                      <p className="text-[11px] text-[#7A8B84]">Plunge Pool · 85 sqm</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 9,200 <span className="text-[10px] font-normal text-[#7A8B84]">/ night</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customized Attributes */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Field label="Room Number / Identifier" htmlFor="room-number">
+                    <Input
+                      id="room-number"
+                      value={guidedRoom.roomNumber}
+                      onChange={(e) =>
+                        setGuidedRoom((prev) => ({ ...prev, roomNumber: e.target.value }))
+                      }
+                      placeholder="e.g. 101 or Villa A"
+                      required
+                    />
+                  </Field>
+
+                  <Field label="Base Nightly Rate (THB)" htmlFor="room-rate">
+                    <Input
+                      id="room-rate"
+                      type="number"
+                      value={guidedRoom.baseRateThb}
+                      onChange={(e) =>
+                        setGuidedRoom((prev) => ({
+                          ...prev,
+                          baseRateThb: Number(e.target.value) || 0,
+                        }))
+                      }
+                      placeholder="e.g. 2800"
+                      required
+                    />
+                  </Field>
+
+                  <Field label="Max Occupancy" htmlFor="room-occupancy">
+                    <Input
+                      id="room-occupancy"
+                      type="number"
+                      min={1}
+                      max={8}
+                      value={guidedRoom.maxOccupancy}
+                      onChange={(e) =>
+                        setGuidedRoom((prev) => ({
+                          ...prev,
+                          maxOccupancy: Number(e.target.value) || 1,
+                        }))
+                      }
+                      required
+                    />
+                  </Field>
+                </div>
+
+                {/* Amenities Selection Pills */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-[#28594E]">
+                    Suite Amenities & Features
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {AVAILABLE_AMENITIES.map((amenity) => {
+                      const active = guidedRoom.amenities.includes(amenity);
+                      return (
+                        <button
+                          key={amenity}
+                          type="button"
+                          onClick={() => toggleRoomAmenity(amenity)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-[#28594E] text-[#F5EBDD] shadow-sm"
+                              : "bg-white/70 text-[#28594E] border border-[#28594E]/15 hover:bg-white"
+                          }`}
+                        >
+                          {amenity} {active && "✓"}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Error Callout if any */}
+                {guidedRoomError && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
+                    <YoonieMascot mood="worried" size="sm" />
+                    <div className="space-y-1 text-xs">
+                      <span className="font-bold block text-amber-800">Room Creation Issue</span>
+                      <p className="text-amber-700">{guidedRoomError}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 5: Guided Step 2 - Add First Experience / Tour */}
+            {wizardStep === 5 && (
+              <div className="space-y-5">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
+                    Guest Experience & Tour Presets
+                  </span>
+                  <p className="text-xs text-[#7A8B84] mt-0.5">
+                    Upsell transfers and local adventures alongside room reservations.
+                  </p>
+                </div>
+
+                {/* Apple-style Preset Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Preset 1: VIP Transfer */}
+                  <div
+                    onClick={() => selectServicePreset("TRANSFER")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedService.type === "TRANSFER"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Car className="size-4" />
+                      </div>
+                      {guidedService.type === "TRANSFER" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">VIP Airport Pickup</h4>
+                      <p className="text-[11px] text-[#7A8B84]">Mercedes / Alphard chauffeured</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 1,200 <span className="text-[10px] font-normal text-[#7A8B84]">/ trip</span>
+                    </div>
+                  </div>
+
+                  {/* Preset 2: Sunset Cruise */}
+                  <div
+                    onClick={() => selectServicePreset("TOUR")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedService.type === "TOUR"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Waves className="size-4" />
+                      </div>
+                      {guidedService.type === "TOUR" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">Sunset Longtail Tour</h4>
+                      <p className="text-[11px] text-[#7A8B84]">Private scenic canal voyage</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 2,500 <span className="text-[10px] font-normal text-[#7A8B84]">/ excursion</span>
+                    </div>
+                  </div>
+
+                  {/* Preset 3: Herbal Spa */}
+                  <div
+                    onClick={() => selectServicePreset("WELLNESS")}
+                    className={`cursor-pointer rounded-2xl p-4 border transition-all text-left space-y-2 ${
+                      guidedService.type === "WELLNESS"
+                        ? "bg-white border-[#28594E] ring-2 ring-[#28594E]/20 shadow-sm"
+                        : "bg-white/60 border-[#28594E]/15 hover:bg-white/90"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
+                        <Sparkles className="size-4" />
+                      </div>
+                      {guidedService.type === "WELLNESS" && (
+                        <div className="size-5 rounded-full bg-[#28594E] text-[#F5EBDD] flex items-center justify-center">
+                          <Check className="size-3" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-xs text-[#28594E]">Thai Herbal Massage</h4>
+                      <p className="text-[11px] text-[#7A8B84]">90-min aromatic compress</p>
+                    </div>
+                    <div className="pt-1 text-xs font-bold text-[#E8A45B]">
+                      ฿ 1,800 <span className="text-[10px] font-normal text-[#7A8B84]">/ session</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom Experience Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Field label="Service / Experience Title" htmlFor="service-name">
+                    <Input
+                      id="service-name"
+                      value={guidedService.name}
+                      onChange={(e) =>
+                        setGuidedService((prev) => ({ ...prev, name: e.target.value }))
+                      }
+                      placeholder="e.g. VIP Airport Transfer"
+                      required
+                    />
+                  </Field>
+
+                  <Field label="Price (THB)" htmlFor="service-price">
+                    <Input
+                      id="service-price"
+                      type="number"
+                      value={guidedService.basePriceThb}
+                      onChange={(e) =>
+                        setGuidedService((prev) => ({
+                          ...prev,
+                          basePriceThb: Number(e.target.value) || 0,
+                        }))
+                      }
+                      required
+                    />
+                  </Field>
+                </div>
+
+                {/* Error Callout if any */}
+                {guidedServiceError && (
+                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
+                    <YoonieMascot mood="worried" size="sm" />
+                    <div className="space-y-1 text-xs">
+                      <span className="font-bold block text-amber-800">
+                        Experience Creation Issue
+                      </span>
+                      <p className="text-amber-700">{guidedServiceError}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* STEP 6: Workspace Live Celebration */}
+            {wizardStep === 6 && createdWorkspace && (
+              <div className="p-6 rounded-3xl bg-white border border-[#28594E]/15 text-center space-y-5">
+                <div className="mx-auto flex justify-center">
+                  <YoonieMascot
+                    mood="happy"
+                    size="md"
+                    message="Congratulations! Your hotel workspace is live and bookable!"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="font-extrabold text-2xl text-[#28594E]">
+                    {createdWorkspace.name} is Ready for Guests!
+                  </h3>
+                  <p className="text-xs text-[#7A8B84] mt-1 max-w-md mx-auto">
+                    Your hotel workspace is provisioned with real inventory. Here are your two operational access points:
+                  </p>
+                </div>
+
+                {/* Inventory badges */}
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
+                  {createdRooms.length > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                      <CheckCircle2 className="size-3.5 text-emerald-600" /> Room {createdRooms[0].roomNumber} ({createdRooms[0].roomType}) created
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[11px]">
+                      ⚠️ No rooms created yet (guests will see &ldquo;Rooms Opening Soon&rdquo;)
+                    </span>
+                  )}
+
+                  {createdServices.length > 0 ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">
+                      <CheckCircle2 className="size-3.5 text-emerald-600" /> {createdServices[0].name} experience added
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-[11px]">
+                      No tours added yet
+                    </span>
+                  )}
+                </div>
+
+                {/* Dual Access Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left pt-2">
-                  <div className="p-4 rounded-xl bg-[#F5EBDD]/60 border border-[#28594E]/10 space-y-2">
+                  <div className="p-4 rounded-2xl bg-[#F5EBDD]/60 border border-[#28594E]/10 space-y-2">
                     <span className="font-bold text-xs text-[#28594E] flex items-center gap-1.5">
-                      <Globe className="size-3.5" /> Guest Subdomain
+                      <Globe className="size-3.5" /> Guest Direct Website
                     </span>
                     <p className="text-[11px] text-[#7A8B84]">
-                      Send guests here to book rooms, dining & tours directly.
+                      Direct booking engine without OTA commissions.
                     </p>
                     <Button
                       size="sm"
@@ -856,19 +1148,19 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     </Button>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-[#F5EBDD]/60 border border-[#28594E]/10 space-y-2">
+                  <div className="p-4 rounded-2xl bg-[#F5EBDD]/60 border border-[#28594E]/10 space-y-2">
                     <span className="font-bold text-xs text-[#28594E] flex items-center gap-1.5">
                       <Lock className="size-3.5 text-[#E8A45B]" /> Central Ops Portal
                     </span>
                     <p className="text-[11px] text-[#7A8B84]">
-                      Add rooms, rates, dining, and manage the 05:30 dispatch hub.
+                      Manage rooms, dispatch run-sheets, and bookings.
                     </p>
                     <Button
                       size="sm"
                       asChild
                       className="w-full text-xs font-bold bg-[#28594E] text-[#F5EBDD]"
                     >
-                      <a href={getSubdomainUrl("ops")}>
+                      <a href={getSubdomainUrl("ops", "/ops/rooms")}>
                         Enter Ops Hub <ArrowRight className="size-3 ml-1" />
                       </a>
                     </Button>
@@ -879,45 +1171,161 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
           </DialogBody>
 
           <DialogFooter className="justify-between pt-2">
-            {wizardStep < 4 ? (
+            {wizardStep === 1 && (
               <>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    if (wizardStep > 1) setWizardStep((wizardStep - 1) as 1 | 2 | 3);
-                    else resetWizard();
-                  }}
+                  onClick={resetWizard}
                   className="text-xs font-bold text-[#7A8B84]"
                 >
-                  {wizardStep === 1 ? "Cancel" : "Back"}
+                  Cancel
                 </Button>
-
                 <Button
-                  onClick={() => {
-                    if (wizardStep < 3) setWizardStep((wizardStep + 1) as 1 | 2 | 3);
-                    else handleLaunchWorkspace();
-                  }}
-                  disabled={isLaunching}
+                  onClick={() => setWizardStep(2)}
+                  disabled={!form.hotelName || !form.slug}
                   className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs"
                 >
-                  {isLaunching
-                    ? "Provisioning..."
-                    : wizardStep === 3
-                    ? "Launch Workspace 🚀"
-                    : "Continue"}
+                  Continue
                 </Button>
               </>
-            ) : (
+            )}
+
+            {wizardStep === 2 && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setWizardStep(1)}
+                  className="text-xs font-bold text-[#7A8B84]"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => setWizardStep(3)}
+                  disabled={!form.city || !form.country || !form.contactEmail}
+                  className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs"
+                >
+                  Continue
+                </Button>
+              </>
+            )}
+
+            {wizardStep === 3 && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={() => setWizardStep(2)}
+                  className="text-xs font-bold text-[#7A8B84]"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleLaunchWorkspace}
+                  disabled={isLaunching || !form.ownerEmail || !form.ownerPassword}
+                  className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs"
+                >
+                  {isLaunching ? "Provisioning..." : "Launch Workspace 🚀"}
+                </Button>
+              </>
+            )}
+
+            {wizardStep === 4 && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={triggerSkipRoom}
+                  className="text-xs font-semibold text-[#7A8B84] hover:text-[#28594E]"
+                >
+                  Skip for now
+                </Button>
+                <Button
+                  onClick={handleCreateGuidedRoom}
+                  disabled={isCreatingRoom || !guidedRoom.roomNumber}
+                  className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs"
+                >
+                  {isCreatingRoom ? "Saving Suite..." : "Save Suite & Next →"}
+                </Button>
+              </>
+            )}
+
+            {wizardStep === 5 && (
+              <>
+                <Button
+                  variant="ghost"
+                  onClick={triggerSkipService}
+                  className="text-xs font-semibold text-[#7A8B84] hover:text-[#28594E]"
+                >
+                  Skip for now
+                </Button>
+                <Button
+                  onClick={handleCreateGuidedService}
+                  disabled={isCreatingService || !guidedService.name}
+                  className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs"
+                >
+                  {isCreatingService ? "Saving Experience..." : "Save Experience & Finish 🚀"}
+                </Button>
+              </>
+            )}
+
+            {wizardStep === 6 && (
               <Button
                 onClick={resetWizard}
                 className="w-full bg-[#28594E] text-[#F5EBDD] font-bold text-xs"
               >
-                Done
+                Done & Close
               </Button>
             )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Skip Warning Modal with Mascot ─────────────────────────────────── */}
+      {skipWarning.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in-0">
+          <div className="w-full max-w-md rounded-3xl bg-[#F5EBDD] p-6 shadow-2xl border border-[#28594E]/20 space-y-4">
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex justify-center">
+                <YoonieMascot
+                  mood="worried"
+                  size="md"
+                  message={
+                    skipWarning.step === 4
+                      ? "Wait! A hotel needs rooms to take bookings!"
+                      : "Wait! Experiences increase guest revenue by 35%!"
+                  }
+                />
+              </div>
+              <h4 className="text-lg font-extrabold text-[#28594E] pt-2">
+                {skipWarning.step === 4
+                  ? "Skip Adding Your First Room Suite?"
+                  : "Skip Adding Tours & Experiences?"}
+              </h4>
+              <p className="text-xs text-[#7A8B84] leading-relaxed">
+                {skipWarning.step === 4
+                  ? "Without at least one room, guests visiting your website will see an empty room catalog (Rooms Opening Soon) and cannot book dates. We strongly recommend setting up one suite now."
+                  : "Chauffeured airport transfers, sunset boat excursions, and spa services can be booked together with rooms to maximize revenue."}
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <Button
+                onClick={() =>
+                  skipWarning.step === 4 ? confirmSkipRoom() : confirmSkipService()
+                }
+                variant="outline"
+                className="order-2 sm:order-1 flex-1 text-xs font-semibold text-[#7A8B84] border-[#28594E]/20 hover:bg-black/5"
+              >
+                Skip Anyway
+              </Button>
+              <Button
+                onClick={() => setSkipWarning({ isOpen: false, step: skipWarning.step })}
+                className="order-1 sm:order-2 flex-1 text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD]"
+              >
+                {skipWarning.step === 4 ? "Keep Adding Suite" : "Keep Adding Experience"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
