@@ -1,11 +1,11 @@
-# Yoonie — Unified Hospitality Operating System
+# Yoonie Frontend — Architecture & System Topologies
 
 > **Tagline:** *Every booking, closed. Every morning, automated.*  
 > **Ecosystem:** 4 Decoupled Repositories (`yoonie-landing-page`, `yoonie-frontend`, `yoonie-backend`, `yoonie-mobile-staff`) spanning Edge Ingress, Multi-Tenant Web, Autonomous Backend, and Frontline Mobile.
 
 ---
 
-## 1. Master System Architecture
+## 1. Master System Topology
 
 ```
 ========================================================================================================================
@@ -151,92 +151,214 @@
 
 ---
 
-## 2. The 4 Code Repositories
+## 2. Ingress & Subdomain Resolution Sequence (`proxy.ts`)
 
-| Repository | Tech Stack | Role & Scope |
-| :--- | :--- | :--- |
-| **[`yoonie-landing-page`](../yoonie-landing-page)** | Next.js 16, Tailwind v4, Framer Motion | Platform marketing front door (`yoonie.app` / `www.yoonie.app`), ROI calculator, and automated tenant workspace provisioning engine. |
-| **[`yoonie-frontend`](./)** | Next.js 16 App Router, React 18/19, TanStack Query | Universal web surface: Guest direct booking engine (`[tenant].yoonie.app`), central operator hub (`ops.yoonie.app`), and property CMS (`/admin`). Edge routing via `proxy.ts`. |
-| **[`yoonie-backend`](../yoonie-backend)** | NestJS 10, Express, MongoDB Atlas Replica Set | Distributed microservices platform: Atomic CAS inventory locks, 15-minute hold leases, 05:30 morning dispatch runner, JWT refresh rotation, RBAC, and n8n webhook bus. |
-| **[`yoonie-mobile-staff`](../yoonie-mobile-staff)** | React Native, Expo, SQLite, Google FCM | Native mobile application for airport transfer drivers (flight tracking, gate assignments) and housekeepers (room cleaning turnover) with offline sync. |
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Browser / Mobile App
+    participant Edge as Next.js 16 Edge Gateway (proxy.ts)
+    participant OpsPage as /ops/rooms (/ops/dispatch)
+    participant TenantPage as / (Tenant Direct Booking)
+    participant LandingPage as / (Platform Root)
+    participant Backend as NestJS Core API (:8080)
 
----
-
-## 3. Multi-Tenant Subdomain Routing (`proxy.ts`)
-
-In Next.js 16, `middleware.ts` is replaced by **`proxy.ts`** exporting `export function proxy(request: NextRequest)`.
-
-Yoonie inspects incoming `Host` headers at the edge to provide seamless multi-tenancy:
-
-| Host / Subdomain | Target Experience | Edge Action |
-| :--- | :--- | :--- |
-| **`ops.yoonie.app`** / **`ops.localhost:3000`** | Central Operations Hub (`/ops/rooms`, `/ops/dispatch`) | Rewrites `/` to `/ops/rooms`. Auth pages (`/login`, `/register`) pass through to single branded login. |
-| **`[slug].yoonie.app`** / **`[slug].localhost:3000`** | Tenant Direct Booking Engine (`/`) | Resolved directly at `/` for the tenant property. Zero URL redirects; tenant context injected via server headers. |
-| **`yoonie.app`** / **`localhost:3000`** | Platform Root | Platform landing page, property directory, and hotel workspace onboarding. |
-| **`/api/*`** (All domains) | NestJS Backend API | Next.js reverse proxy rewrite to backend API eliminating cross-origin preflight overhead. |
-
----
-
-## 4. Key Architectural Differentiators (Pitch Deck Reference)
-
-### A. Zero Double-Booking Concurrency SLA
-- **Atomic Compare-And-Swap (CAS):** Inventory increments/decrements occur inside a single atomic database operation:
-  ```typescript
-  const slot = await db.collection("inventory_slots").findOneAndUpdate(
-    { _id: slotId, branchId, available: { $gte: requestedQty } },
-    { $inc: { available: -requestedQty, held: +requestedQty } }
-  );
-  if (!slot) throw new ConflictException("Slot already booked.");
-  ```
-- **15-Minute TTL Leases:** Added items receive a temporary hold token in `inventory_holds`. If checkout is abandoned, the background sweeper releases the units back to `available`.
-- **Idempotency-Key Deduplication:** Financial mutations require an `Idempotency-Key: <UUID>` header; retries return cached responses to prevent double-charging.
-
-### B. Zero-Trust Security & Token Rotation
-- **Access Tokens:** 15-minute ephemeral HMAC-SHA256 JWTs stored in-memory (`tokenStore.ts`) to prevent XSS extraction.
-- **Refresh Tokens:** 7-day cryptographic tokens stored in MongoDB with device fingerprinting and automatic family reuse revocation.
-- **Single-Flight Refresh Mutex (`NetworkManager.ts`):** When multiple concurrent API calls receive a `401 Unauthorized`, they queue onto a single `refreshPromise`, preventing token stampedes.
-- **5-Tier RBAC:** `@Roles(ADMIN, BRANCH_MGR, DISPATCHER, STAFF, GUEST)` enforced by `TenantContextGuard`.
-
-### C. Automated Cron Engine & Node Scheduler
-- **05:30 Dispatch Runner (`30 5 * * *`):** Calculates the daily run-sheet before sunrise, pairing incoming airport flights (e.g., TG917) with drivers and organizing boat excursions.
-- **60-Second Hold Sweeper (`* * * * *`):** Reclaims abandoned inventory holds where `expiresAt <= NOW()`.
-- **Tour Yield Consolidator (`0 */2 * * *`):** Inspects shared boat excursions 24h prior; flags tours with fewer than 4 guests to prevent captain fuel losses.
-
-### D. Data-Grounded AI Concierge & n8n Mesh
-- Integrated with **n8n Webhook Bus** and agentic LLMs.
-- Grounded with real-time backend tool APIs (`lookup_room_availability`, `query_dining_table_shifts`, `create_guest_ticket`).
-- Multi-channel delivery to guests and staff via **WhatsApp Business Cloud API**, **LINE Official**, and **FCM Mobile Push**.
-
----
-
-## 5. Local Development Setup
-
-### 1. Prerequisites
-- **Node.js**: `v20.x` or `v22.x`
-- **Backend API**: Running on `http://localhost:8080` (see `../yoonie-backend`)
-
-### 2. Local Subdomain Setup (`/etc/hosts`)
-```
-127.0.0.1 ops.localhost riverside-bkk.localhost sedona.localhost
+    alt 1. Central Operator Portal (ops.yoonie.app or ops.localhost:3000)
+        Client->>Edge: GET http://ops.yoonie.app/
+        Note over Edge: host starts with "ops." & pathname === "/"
+        Edge->>OpsPage: Rewrite to /ops/rooms
+        OpsPage-->>Client: Render Protected Operator Shell (ProtectedLayoutClient)
+    else 2. Tenant Direct Booking ([tenant].yoonie.app or [tenant].localhost:3000)
+        Client->>Edge: GET http://sedona.yoonie.app/
+        Note over Edge: Extract subdomain slug "sedona"; pass-through to /
+        Edge->>TenantPage: Resolve directly at / via server headers()
+        TenantPage-->>Client: Render Branded Sedona Hotel Direct-Booking Engine
+    else 3. Commercial Platform Front Door (yoonie.app or localhost:3000)
+        Client->>Edge: GET http://yoonie.app/
+        Note over Edge: Root apex domain; pass-through to /
+        Edge->>LandingPage: Render Platform Showcase & Workspace Provisioning
+        LandingPage-->>Client: Return Commercial Website
+    else 4. API Proxy Requests
+        Client->>Edge: GET /api/v1/rooms?branchId=...
+        Note over Edge: Reverse proxy rewrite via next.config.ts
+        Edge->>Backend: Forward to http://localhost:8080/api/v1/rooms
+        Backend-->>Client: JSON Response (Zero CORS friction across subdomains)
+    end
 ```
 
-### 3. Install & Run
-```bash
-npm install
-npm run dev
-```
+---
 
-- **Platform Root**: [http://localhost:3000](http://localhost:3000)
-- **Operator Portal**: [http://ops.localhost:3000](http://ops.localhost:3000)
-- **Tenant Direct Booking**: [http://riverside-bkk.localhost:3000](http://riverside-bkk.localhost:3000)
-- **Interactive Whitepaper & Architecture Docs**: [http://localhost:3000/tech-whitepaper.html](http://localhost:3000/tech-whitepaper.html)
+## 3. Zero-Trust Authentication & Silent Refresh Mutex Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Client Browser / Mobile
+    participant NM as NetworkManager (Single-Flight Mutex)
+    participant Store as tokenStore (In-Memory)
+    participant AuthAPI as NestJS AuthController (:8080)
+    participant DB as MongoDB Atlas
+
+    Note over User,AuthAPI: 1. Authoritative Sign-In (/login)
+    User->>NM: login("kanya@riverside-bkk.example", "Password123!")
+    NM->>AuthAPI: POST /api/auth/login
+    AuthAPI->>DB: Verify bcrypt password hash & issue token family
+    DB-->>AuthAPI: User record { role: "ADMIN", branchIds: [...] }
+    AuthAPI-->>NM: { accessToken (15m), refreshToken (7d), user }
+    NM->>Store: Set in-memory accessToken & refreshToken
+    NM-->>User: Auth Success (Redirect to /ops/dispatch)
+
+    Note over User,AuthAPI: 2. Silent Refresh on HTTP 401 with Stampede Prevention
+    User->>NM: Parallel GET /api/v1/rooms & GET /api/v1/orders
+    NM->>AuthAPI: Headers: Bearer ExpiredToken
+    AuthAPI-->>NM: 401 Unauthorized
+
+    rect rgb(20, 30, 45)
+        Note over NM: Single-Flight Mutex Activated: this.refreshPromise created<br/>Parallel request attaches to existing promise
+        NM->>AuthAPI: POST /api/auth/refresh { userId, refreshToken }
+        AuthAPI->>DB: Atomically rotate refresh token (Detect reuse)
+        DB-->>AuthAPI: New Token Pair Issued
+        AuthAPI-->>NM: { accessToken: "fresh_jwt", refreshToken: "new_refresh" }
+        NM->>Store: updateTokens(fresh_jwt, new_refresh)
+    end
+
+    Note over NM,User: Replay queued requests with fresh_jwt
+    NM->>AuthAPI: GET /api/v1/rooms with fresh_jwt
+    AuthAPI-->>User: HTTP 200 OK
+```
 
 ---
 
-## 6. Documentation Index
+## 4. Concurrency & 15-Minute Atomic Hold Sequence
 
-- [**`docs/CTO_TECHNICAL_WHITEPAPER.md`**](./docs/CTO_TECHNICAL_WHITEPAPER.md): Master technical whitepaper with full sequence diagrams and code contracts.
-- [**`public/tech-whitepaper.html`**](./public/tech-whitepaper.html): Standalone, print-to-PDF ready whitepaper with SVG vector diagrams and executive styling.
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Guest1 as Guest A (Bangkok)
+    actor Guest2 as Guest B (London)
+    participant Edge as Edge Gateway
+    participant HoldService as InventoryHoldService
+    participant DB as MongoDB Atlas Cluster
+
+    Note over Guest1,Guest2: Final Deluxe Pool Villa Available (Count = 1)
+    
+    par Race Condition Checkout
+        Guest1->>Edge: POST /api/inventory/hold<br/>Idempotency-Key: "idemp_1001"
+        Guest2->>Edge: POST /api/inventory/hold<br/>Idempotency-Key: "idemp_2002"
+    end
+
+    Edge->>HoldService: Process Hold Request A
+    HoldService->>DB: findOneAndUpdate({ slotId: "101", available: { $gte: 1 } }, { $inc: { available: -1, held: +1 } })
+    Note over DB: Atomic CAS Evaluates TRUE.<br/>Available decremented from 1 to 0.
+    DB-->>HoldService: { status: "SUCCESS", slotId: "101" }
+    HoldService->>DB: insertOne(inventory_holds, { expiresAt: NOW() + 15m })
+    HoldService-->>Guest1: HTTP 201 Created (Hold Token: "hold_9921", Expires: 15:00)
+
+    Edge->>HoldService: Process Hold Request B
+    HoldService->>DB: findOneAndUpdate({ slotId: "101", available: { $gte: 1 } }, { $inc: { available: -1, held: +1 } })
+    Note over DB: Atomic CAS Evaluates FALSE.<br/>Available is 0. Operation Aborted.
+    DB-->>HoldService: null (No Document Modified)
+    HoldService-->>Guest2: HTTP 409 Conflict ("Inventory Sold Out")
+```
+
+---
+
+## 5. Automated 05:30 Morning Dispatch Run-Sheet Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Cron as Node Scheduler (05:30 AM)
+    participant Engine as DispatchSynthesisEngine
+    participant DB as MongoDB Atlas
+    participant N8N as n8n Webhook Bus
+    participant Mobile as yoonie-mobile-staff (FCM)
+
+    Cron->>Engine: Trigger executeMorningDispatchJob()
+    Engine->>DB: Query Confirmed Orders for Today { checkIn: TODAY }
+    DB-->>Engine: [ Villa Bookings, TG917 Flight Pickups, Longtail Tours ]
+
+    rect rgb(20, 30, 45)
+        Note over Engine: 1. Synthesize Airport Transfers (Match Driver Somchai with Flight TG917)<br/>2. Group Island Excursions (Check-in time & Pier Gates)<br/>3. Compute Housekeeping Turnaround Priorities by Guest Arrival ETA
+        Engine->>DB: Bulk Write to operational_dispatches
+    end
+
+    Engine->>N8N: POST /webhook/morning-dispatch-ready { branchId, taskCount }
+    N8N->>Mobile: Send FCM Push Notification to Drivers & Housekeepers
+    Mobile-->>Engine: Staff Mobile Acknowledges Roster Sync
+    Note over Engine: Dispatch run-sheet live at ops.yoonie.app/ops/dispatch
+```
+
+---
+
+## 6. Real-Time Data-Grounded AI Concierge Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Guest as Guest (WhatsApp / Web Chat)
+    participant N8N as n8n Webhook Router
+    participant LLM as Agentic LLM Orchestrator
+    participant API as Yoonie Core Backend (:8080)
+    participant DB as MongoDB Atlas
+
+    Guest->>N8N: "Can I book a table at the Riverside Terrace tonight at 7 PM for 2?"
+    N8N->>LLM: Ingest User Message + Tenant Context (Sedona Hotel)
+    
+    Note over LLM: Evaluates intent: Dining Reservation<br/>Generates Tool Call: query_dining_availability()
+    LLM->>API: POST /api/restaurant/check-availability { branchId: "sedona", date: "2026-10-27", time: "19:00", pax: 2 }
+    API->>DB: Query restaurant table shifts
+    DB-->>API: Available: Table 4 (Terrace Riverfront)
+    API-->>LLM: { status: "AVAILABLE", tableId: "T4", shift: "EVENING" }
+
+    Note over LLM: Formats bilingual confirmation with VIP hotel tone
+    LLM-->>N8N: "I've held Table 4 on the Riverfront Terrace for 7:00 PM tonight! Shall I confirm?"
+    N8N->>Guest: Deliver Instant Message via WhatsApp Cloud API
+```
+
+---
+
+## 7. State Transition Lifecycles
+
+### A. Housekeeping Room Turnaround State Machine
+```mermaid
+stateDiagram-v2
+    [*] --> DIRTY: Guest Checkout / Scheduled Clean
+    DIRTY --> IN_PROGRESS: Housekeeper swipes "Start Cleaning" on Mobile
+    IN_PROGRESS --> CLEAN: Housekeeper completes turnaround & submits checklist
+    CLEAN --> INSPECTED: Supervisor audits room inside /ops/housekeeping
+    INSPECTED --> OCCUPIED: Front desk executes keycard handoff
+    OCCUPIED --> DIRTY: Morning departure / Daily refresh
+```
+
+### B. Composite Order & 15-Minute Hold Lease State Machine
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: Guest initiates composite checkout
+    PENDING --> HELD: Atomic CAS decrements slot count; 15m lease created
+    HELD --> CONFIRMED: Payment authorized & multi-doc ACID transaction commits
+    HELD --> EXPIRED: 15-minute lease timer elapses without payment
+    EXPIRED --> RELEASED: 60s background sweeper increments slot availability
+    CONFIRMED --> CANCELLED: Guest / Operator cancels reservation
+    CANCELLED --> REFUNDED: Gateway webhook returns funds
+```
+
+### C. Operational Dispatch Task Lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN: 05:30 cron runner synthesizes daily run-sheet
+    OPEN --> ACKNOWLEDGED: Dispatcher assigns driver/guide inside /ops/dispatch
+    ACKNOWLEDGED --> IN_PROGRESS: Driver taps "Start Trip" at Airport Terminal Gate
+    IN_PROGRESS --> DONE: Driver delivers guest to lobby; task confirmed
+    OPEN --> CANCELLED: Flight cancelled or rescheduled
+```
+
+---
+
+## 8. Documentation Index
+
+- [**`docs/CTO_TECHNICAL_WHITEPAPER.md`**](./docs/CTO_TECHNICAL_WHITEPAPER.md): Complete architecture blueprint and code contracts.
+- [**`public/tech-whitepaper.html`**](./public/tech-whitepaper.html): Interactive and print-to-PDF ready whitepaper with SVG vector topology.
 - [**`docs/ARCHITECTURE.md`**](./docs/ARCHITECTURE.md): Frontend MVVM architecture, directory structure, and edge proxy rules.
 - [**`docs/SYSTEM_FLOWS.md`**](./docs/SYSTEM_FLOWS.md): Detailed operational workflows and sequence diagrams.
 - [**`docs/DATA_MODEL.md`**](./docs/DATA_MODEL.md): MongoDB Entity-Relationship Diagram (ERD) and collection schemas.
