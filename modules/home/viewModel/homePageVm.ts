@@ -128,7 +128,7 @@ export function useHomePageVm(branchCode?: string) {
     > = {
       STANDARD_KING: {
         type: "STANDARD_KING",
-        title: "Standard King Room",
+        title: "Standard King Suite",
         tagline: "Serene garden & partial river view, plush king bed",
         pricePerNight: 2200,
         capacity: "2 Guests · 32 sqm",
@@ -138,8 +138,8 @@ export function useHomePageVm(branchCode?: string) {
       },
       DELUXE_BALCONY: {
         type: "DELUXE_BALCONY",
-        title: "Deluxe River Balcony",
-        tagline: "Panoramic Chao Phraya views from a private teak terrace",
+        title: "Deluxe Balcony Suite",
+        tagline: "Panoramic scenic views from a private teak terrace",
         pricePerNight: 3800,
         capacity: "3 Guests · 48 sqm",
         features: [
@@ -153,7 +153,7 @@ export function useHomePageVm(branchCode?: string) {
       },
       POOL_VILLA: {
         type: "POOL_VILLA",
-        title: "Riverside Private Pool Villa",
+        title: "Private Pool Villa",
         tagline: "Ultra-luxury sanctuary with private plunge pool and butler service",
         pricePerNight: 7500,
         capacity: "4 Guests · 95 sqm",
@@ -535,6 +535,7 @@ export function useHomePageVm(branchCode?: string) {
 
   return {
     isNotFound,
+    isLoadingTenant: isTenantMode && branchesQuery.isLoading,
     isTenantMode,
     branchCode,
     user,

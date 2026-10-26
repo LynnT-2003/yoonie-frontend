@@ -58,6 +58,28 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
   const [selectedRoomForModal, setSelectedRoomForModal] =
     React.useState<RoomCatalogItem | null>(null);
 
+  if (vm.isLoadingTenant) {
+    return (
+      <main className="min-h-screen bg-[#F5EBDD] flex flex-col items-center justify-center p-6 text-center">
+        <div className="space-y-4 max-w-md">
+          <YoonieMascot
+            mood="checking"
+            size="md"
+            message="Connecting to property direct booking engine..."
+          />
+          <h2 className="text-xl font-serif text-[#28594E] font-bold">
+            Preparing Boutique Experience
+          </h2>
+          <div className="flex justify-center gap-1.5 pt-2">
+            <span className="size-2 rounded-full bg-[#28594E]/40 animate-pulse" />
+            <span className="size-2 rounded-full bg-[#28594E]/60 animate-pulse delay-150" />
+            <span className="size-2 rounded-full bg-[#28594E] animate-pulse delay-300" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   if (vm.isNotFound) {
     return (
       <main className="min-h-screen bg-[#F5EBDD] flex flex-col items-center justify-center px-4 py-20 text-center">
@@ -132,7 +154,8 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     resetBooking,
   } = vm;
 
-  const hotelName = activeBranch?.name || "BKK Riverside";
+  const hotelName = activeBranch?.name || "";
+  const locationLabel = `${(activeBranch?.address as any)?.city || (activeBranch as any)?.city || "Thailand"} · Direct Booking Engine`;
   const heroImage = roomCatalog[1]?.image || roomCatalog[0]?.image || HERO_FALLBACK;
   const nightsLabel = `${nights} ${nights === 1 ? "night" : "nights"}`;
   const guestsLabel = `${adults} ${adults === 1 ? "adult" : "adults"}`;
@@ -151,13 +174,13 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
         <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-black/10" />
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-24 sm:px-6">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/80">
-            Bangkok · Chao Phraya River
+            {locationLabel}
           </p>
           <h1 className="mt-3 font-display text-4xl font-medium leading-[1.05] text-white sm:text-6xl">
             {hotelName}
           </h1>
           <p className="mt-3 max-w-xl text-base text-white/85 sm:text-lg">
-            Riverside rooms, dining over the water and private arrivals, reserved together.
+            {activeBranch?.name ? `${activeBranch.name} — Direct room reservations, curated dining shifts, and private arrivals.` : "Luxury rooms, dining shifts, and private arrivals, reserved together."}
           </p>
         </div>
       </section>
