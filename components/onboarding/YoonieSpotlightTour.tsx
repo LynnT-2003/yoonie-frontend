@@ -20,16 +20,19 @@ export function YoonieSpotlightTour() {
   } = useOnboarding();
 
   const [targetRect, setTargetRect] = React.useState<DOMRect | null>(null);
+  const [targetNotFound, setTargetNotFound] = React.useState(false);
 
   // Poll for target element when route changes or step changes
   React.useEffect(() => {
     if (!isOpen) {
       setTargetRect(null);
+      setTargetNotFound(false);
       return;
     }
 
+    setTargetNotFound(false);
     let attempts = 0;
-    const maxAttempts = 35;
+    const maxAttempts = 25;
 
     const findAndMeasure = () => {
       const el = document.getElementById(currentStep.targetId);
@@ -49,8 +52,11 @@ export function YoonieSpotlightTour() {
 
     const interval = setInterval(() => {
       attempts++;
-      if (findAndMeasure() || attempts >= maxAttempts) {
+      if (findAndMeasure()) {
         clearInterval(interval);
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setTargetNotFound(true);
       }
     }, 100);
 
@@ -77,7 +83,7 @@ export function YoonieSpotlightTour() {
     };
   }, [isOpen, currentStep.targetId]);
 
-  if (!isOpen) return null;
+  if (!isOpen || targetNotFound) return null;
 
   const isFirst = currentStepIndex === 0;
   const isLast = currentStepIndex === totalSteps - 1;
