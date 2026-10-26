@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { MascotMood } from "@/components/mascot/YoonieMascot";
+import { extractTenantSubdomain } from "@/lib/utils";
 
 /**
  * Two separate tours: guests see the booking engine, staff see the ops board once signed in.
@@ -126,12 +127,28 @@ const readDone = (audience: TourAudience) => {
   }
 };
 
-/** Which tour belongs on this page: the booking engine, the ops board, or none (login, admin, account…). */
+/** Which tour belongs on this page: the booking engine, the ops board, or none (platform root, login, admin…). */
 function audienceFor(pathname: string): TourAudience | null {
-  if (pathname.startsWith("/ops")) return "ops";
-  if (pathname !== "/") return null;
-  // ops.<domain>/ is the rooms board (proxy rewrite); everywhere else / is the booking engine
-  return typeof window !== "undefined" && window.location.hostname.startsWith("ops.") ? "ops" : "guest";
+  if (typeof window === "undefined") return null;
+
+  const hostname = window.location.hostname;
+  const host = window.location.host;
+
+  // 1. Staff / Ops Portal: anywhere under /ops or accessed via ops.<domain>
+  if (pathname.startsWith("/ops") || hostname.startsWith("ops.")) {
+    return "ops";
+  }
+
+  // 2. Direct Booking Engine: ONLY on tenant subdomains at root / (e.g. sedona.yoonie.app or bkk-riverside.yoonie.app)
+  if (pathname === "/") {
+    const tenantSlug = extractTenantSubdomain(host);
+    if (tenantSlug) {
+      return "guest";
+    }
+  }
+
+  // 3. Platform Root (yoonie.app, www.yoonie.app, localhost:3000), Auth, Admin: No tour
+  return null;
 }
 
 type OnboardingContextValue = {
