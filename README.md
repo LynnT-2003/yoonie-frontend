@@ -170,12 +170,12 @@ sequenceDiagram
         OpsPage-->>Client: Render Protected Operator Shell (ProtectedLayoutClient)
     else 2. Tenant Direct Booking ([tenant].yoonie.app or [tenant].localhost:3000)
         Client->>Edge: GET http://sedona.yoonie.app/
-        Note over Edge: Extract subdomain slug "sedona"; pass-through to /
+        Note over Edge: Extract subdomain slug "sedona", pass-through to /
         Edge->>TenantPage: Resolve directly at / via server headers()
         TenantPage-->>Client: Render Branded Sedona Hotel Direct-Booking Engine
     else 3. Commercial Platform Front Door (yoonie.app or localhost:3000)
         Client->>Edge: GET http://yoonie.app/
-        Note over Edge: Root apex domain; pass-through to /
+        Note over Edge: Root apex domain, pass-through to /
         Edge->>LandingPage: Render Platform Showcase & Workspace Provisioning
         LandingPage-->>Client: Return Commercial Website
     else 4. API Proxy Requests
@@ -335,7 +335,7 @@ stateDiagram-v2
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: Guest initiates composite checkout
-    PENDING --> HELD: Atomic CAS decrements slot count; 15m lease created
+    PENDING --> HELD: Atomic CAS decrements slot count, 15m lease created
     HELD --> CONFIRMED: Payment authorized & multi-doc ACID transaction commits
     HELD --> EXPIRED: 15-minute lease timer elapses without payment
     EXPIRED --> RELEASED: 60s background sweeper increments slot availability
@@ -349,7 +349,7 @@ stateDiagram-v2
     [*] --> OPEN: 05:30 cron runner synthesizes daily run-sheet
     OPEN --> ACKNOWLEDGED: Dispatcher assigns driver/guide inside /ops/dispatch
     ACKNOWLEDGED --> IN_PROGRESS: Driver taps "Start Trip" at Airport Terminal Gate
-    IN_PROGRESS --> DONE: Driver delivers guest to lobby; task confirmed
+    IN_PROGRESS --> DONE: Driver delivers guest to lobby, task confirmed
     OPEN --> CANCELLED: Flight cancelled or rescheduled
 ```
 
