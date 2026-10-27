@@ -11,11 +11,15 @@ import type { AuthResponse } from "@/lib/types/auth";
 
 export interface WorkspaceFormState {
   hotelName: string;
+  brandName: string;
   slug: string;
   city: string;
   country: string;
   currency: string;
   timezone: string;
+  propertyType: "HOTEL" | "CONDO" | "MIXED";
+  totalUnitsEstimated: number;
+  floorsEstimated: number;
   contactEmail: string;
   contactPhone: string;
   ownerName: string;
@@ -75,7 +79,7 @@ export function computeGeneratedRoomKeys(startNumber: string, count: number): st
 
 export function computeRoomKeysFromDraft(draft: RoomDraftState): string[] {
   if (draft.isSingleUnit) {
-    const key = draft.singleUnitName.trim() || draft.title.trim() || "101";
+    const key = draft.singleUnitName.trim() || draft.title.trim() || "Pool House";
     return [key];
   }
   return computeGeneratedRoomKeys(draft.startRoomNumber, draft.keyCount);
@@ -94,13 +98,17 @@ export function mapTitleToRoomType(title: string): "STANDARD_KING" | "DELUXE_BAL
 
 const DEFAULT_FORM: WorkspaceFormState = {
   hotelName: "Sedona Heritage Resort",
+  brandName: "",
   slug: "sedona-resort",
   city: "Bangkok",
   country: "TH",
   currency: "THB",
   timezone: "Asia/Bangkok",
+  propertyType: "HOTEL",
+  totalUnitsEstimated: 12,
+  floorsEstimated: 3,
   contactEmail: "stay@sedonahotel.example",
-  contactPhone: "+6628881234",
+  contactPhone: "+66812345678",
   ownerName: "Lynn Tan",
   ownerEmail: "lynn@sedonahotel.example",
   ownerPassword: "Password123!",
@@ -110,9 +118,9 @@ const DEFAULT_FORM: WorkspaceFormState = {
 
 export const DEFAULT_ROOM_DRAFT: RoomDraftState = {
   title: "Pool House & Terrace",
-  baseRateThb: 2800,
+  baseRateThb: 3200,
   maxAdults: 2,
-  areaSqm: 45,
+  areaSqm: 50,
   bedConfig: "1 King Bed",
   isSingleUnit: true,
   singleUnitName: "Pool House",
@@ -121,15 +129,6 @@ export const DEFAULT_ROOM_DRAFT: RoomDraftState = {
   floor: 1,
   coverImage: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
   amenities: ["High-Speed WiFi", "Air Conditioning", "Private Pool", "Private Bathroom"],
-};
-
-export const DEFAULT_EXPERIENCE_DRAFT: CustomExperienceDraft = {
-  id: "exp-1",
-  name: "Scooter Rental (125cc)",
-  basePriceThb: 300,
-  pricingModel: "PER_VEHICLE",
-  description: "Daily scooter hire with dual helmets and 24-hr roadside assistance",
-  coverImage: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1600&q=80",
 };
 
 export function usePlatformPageVm() {
@@ -142,15 +141,13 @@ export function usePlatformPageVm() {
   });
 
   const [isWizardOpen, setIsWizardOpen] = React.useState(false);
-  // Steps:
-  // 1: Property Identity & Subdomain
-  // 2: Operational Details & Fiscal
-  // 3: GM Executive Account
-  // 4: Guidance Decision Gate
-  // 5: Space & Room Setup (Clean 3-section stepper)
-  // 6: Custom Experiences & Add-ons (Multiple custom items or 1-click skip)
-  // 7: Production Audit & Verification
-  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
+  // Stages matching OKKAMI architecture:
+  // 1: Get started (Account & domain)
+  // 2: Property details (Location, type, counts)
+  // 3: Rooms & inventory (Types, counts)
+  // 4: Add-ons & services (Experiences, rentals)
+  // 5: Review & submit (Final check & launch)
+  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5>(1);
   const [form, setForm] = React.useState<WorkspaceFormState>(DEFAULT_FORM);
   const [onboardingError, setOnboardingError] = React.useState<string | null>(null);
 
@@ -189,8 +186,8 @@ export function usePlatformPageVm() {
   // Skip Warning Modal State
   const [skipWarning, setSkipWarning] = React.useState<{
     isOpen: boolean;
-    type: "GUIDANCE" | "ROOMS" | "SERVICE";
-  }>({ isOpen: false, type: "GUIDANCE" });
+    type: "ROOMS" | "SERVICE";
+  }>({ isOpen: false, type: "ROOMS" });
 
   // Auto-slugify
   const handleHotelNameChange = (name: string) => {
@@ -253,8 +250,8 @@ export function usePlatformPageVm() {
         opsUrl: `/ops/rooms`,
       });
 
-      // Advance to Step 4: Executive Guidance Decision Gate
-      setWizardStep(4);
+      // Advance to Stage 3: Rooms & inventory
+      setWizardStep(3);
     },
     onError: (err: any) => {
       const msg = err?.message || "Failed to provision workspace. Please check your inputs.";
@@ -262,8 +259,12 @@ export function usePlatformPageVm() {
     },
   });
 
-  const handleLaunchWorkspace = () => {
-    createWorkspaceMutation.mutate(form);
+  const handleAdvanceToRooms = () => {
+    if (createdWorkspace) {
+      setWizardStep(3);
+    } else {
+      createWorkspaceMutation.mutate(form);
+    }
   };
 
   // Toggle amenity
@@ -329,12 +330,12 @@ export function usePlatformPageVm() {
       });
 
       if (stayOnStep) {
-        // Reset form for next room
+        // Reset form for next space
         setRoomDraft({
           title: "",
-          baseRateThb: 2000,
+          baseRateThb: 2500,
           maxAdults: 2,
-          areaSqm: 35,
+          areaSqm: 40,
           bedConfig: "1 King Bed",
           isSingleUnit: false,
           singleUnitName: "",
@@ -345,8 +346,8 @@ export function usePlatformPageVm() {
           amenities: ["High-Speed WiFi", "Air Conditioning", "Private Bathroom"],
         });
       } else {
-        // Move to Step 6: Experiences
-        setWizardStep(6);
+        // Move to Stage 4: Add-ons & services
+        setWizardStep(4);
       }
     } catch (err: any) {
       setGuidedRoomError(err?.message || "Failed to provision room inventory keys.");
@@ -389,7 +390,7 @@ export function usePlatformPageVm() {
 
     try {
       const itemsToPublish = [...customExperiences];
-      // If user typed in the draft but did not click "+ Add Experience", include it
+      // If user typed in the draft but did not click "+ Add to Catalog", include it
       if (experienceDraft.name.trim()) {
         itemsToPublish.push({
           ...experienceDraft,
@@ -401,8 +402,8 @@ export function usePlatformPageVm() {
       }
 
       if (itemsToPublish.length === 0) {
-        // No experiences to publish, jump straight to launch
-        setWizardStep(7);
+        // No experiences to publish, jump straight to review
+        setWizardStep(5);
         return;
       }
 
@@ -488,8 +489,8 @@ export function usePlatformPageVm() {
         queryKey: hospitalityKeys.services(createdWorkspace.id),
       });
 
-      // Move to Step 7: Audit & Verification
-      setWizardStep(7);
+      // Move to Stage 5: Review & submit
+      setWizardStep(5);
     } catch (err: any) {
       setGuidedServiceError(err?.message || "Failed to publish experiences.");
     } finally {
@@ -497,7 +498,7 @@ export function usePlatformPageVm() {
     }
   };
 
-  // File Upload Helper
+  // File Upload Helper (Uploads ONLY - NO URL input)
   const handleUploadImageFile = async (file: File, target: "room" | "service") => {
     setIsUploadingImage(true);
     try {
@@ -517,22 +518,13 @@ export function usePlatformPageVm() {
   };
 
   // Skip Navigation Handlers
-  const triggerSkipGuidance = () => {
-    setSkipWarning({ isOpen: true, type: "GUIDANCE" });
-  };
-
-  const confirmSkipGuidance = () => {
-    setSkipWarning({ isOpen: false, type: "GUIDANCE" });
-    setWizardStep(7);
-  };
-
   const triggerSkipRooms = () => {
     setSkipWarning({ isOpen: true, type: "ROOMS" });
   };
 
   const confirmSkipRooms = () => {
     setSkipWarning({ isOpen: false, type: "ROOMS" });
-    setWizardStep(6);
+    setWizardStep(4);
   };
 
   const triggerSkipService = () => {
@@ -541,7 +533,7 @@ export function usePlatformPageVm() {
 
   const confirmSkipService = () => {
     setSkipWarning({ isOpen: false, type: "SERVICE" });
-    setWizardStep(7);
+    setWizardStep(5);
   };
 
   const resetWizard = () => {
@@ -552,7 +544,7 @@ export function usePlatformPageVm() {
     setCreatedRooms([]);
     setCreatedServices([]);
     setCustomExperiences([]);
-    setSkipWarning({ isOpen: false, type: "GUIDANCE" });
+    setSkipWarning({ isOpen: false, type: "ROOMS" });
   };
 
   return {
@@ -565,7 +557,7 @@ export function usePlatformPageVm() {
     form,
     setForm,
     handleHotelNameChange,
-    handleLaunchWorkspace,
+    handleAdvanceToRooms,
     isLaunching: createWorkspaceMutation.isPending,
     onboardingError,
     createdWorkspace,
@@ -601,8 +593,6 @@ export function usePlatformPageVm() {
     // Skip Warnings
     skipWarning,
     setSkipWarning,
-    triggerSkipGuidance,
-    confirmSkipGuidance,
     triggerSkipRooms,
     confirmSkipRooms,
     triggerSkipService,
