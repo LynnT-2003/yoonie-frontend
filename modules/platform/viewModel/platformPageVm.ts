@@ -12,7 +12,6 @@ import type { AuthResponse } from "@/lib/types/auth";
 export interface WorkspaceFormState {
   hotelName: string;
   slug: string;
-  classification: string;
   city: string;
   country: string;
   currency: string;
@@ -26,41 +25,28 @@ export interface WorkspaceFormState {
   heroImageUrl?: string;
 }
 
-export interface DeepDiveRoomState {
-  roomType: "STANDARD_KING" | "DELUXE_BALCONY" | "POOL_VILLA";
+export interface RoomDraftState {
   title: string;
   baseRateThb: number;
   maxAdults: number;
-  maxChildren: number;
   areaSqm: number;
   bedConfig: string;
-  floor: number;
+  isSingleUnit: boolean;
+  singleUnitName: string;
   keyCount: number;
   startRoomNumber: string;
+  floor: number;
   coverImage: string;
   amenities: string[];
 }
 
-export interface DeepDiveServiceState {
-  type: "TRANSFER" | "TOUR" | "WELLNESS";
+export interface CustomExperienceDraft {
+  id: string;
   name: string;
-  code: string;
   basePriceThb: number;
   pricingModel: "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT";
-  category: "TRANSPORT" | "TOURS" | "WELLNESS";
-  kind: "AIRPORT_TRANSFER" | "SCHEDULED_TOUR" | "SPA_TREATMENT";
   description: string;
   coverImage: string;
-  airportCode: string;
-  airportName: string;
-  leadTimeMin: number;
-  fleetPlate: string;
-  tourCapacity: number;
-  minViablePax: number;
-  departureTimes: string[];
-  spaRooms: number;
-  spaTherapists: number;
-  durationMin: number;
 }
 
 export interface OnboardResponse {
@@ -78,47 +64,6 @@ export interface OnboardResponse {
   };
 }
 
-export const LUXURY_ROOM_PHOTOS = [
-  {
-    title: "Deluxe Ocean Balcony",
-    url: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
-    desc: "Teak terrace with panoramic ocean vista & soaking tub",
-  },
-  {
-    title: "Private Pool Villa",
-    url: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1600&q=80",
-    desc: "Private plunge pool with secluded sun loungers",
-  },
-  {
-    title: "Executive Garden King",
-    url: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1600&q=80",
-    desc: "Warm ambient hardwood suite with luxury king bedding",
-  },
-  {
-    title: "Grand Penthouse Suite",
-    url: "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1600&q=80",
-    desc: "High-floor expansive master suite with skyline views",
-  },
-];
-
-export const LUXURY_EXPERIENCE_PHOTOS = [
-  {
-    title: "VIP Executive Airport Chauffeuring",
-    url: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1600&q=80",
-    desc: "Mercedes / Alphard chauffeured meet-and-greet arrival",
-  },
-  {
-    title: "Sunset Scenic Canal Longtail",
-    url: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1600&q=80",
-    desc: "Private scenic canal voyage with cold refreshments",
-  },
-  {
-    title: "Aromatic Thai Herbal Compress Spa",
-    url: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=1600&q=80",
-    desc: "Traditional therapeutic compress & relaxation pavilion",
-  },
-];
-
 export function computeGeneratedRoomKeys(startNumber: string, count: number): string[] {
   const parsed = parseInt(startNumber.replace(/[^0-9]/g, ""), 10);
   const prefix = startNumber.replace(/[0-9]/g, "");
@@ -128,10 +73,28 @@ export function computeGeneratedRoomKeys(startNumber: string, count: number): st
   return Array.from({ length: Math.max(1, count) }, (_, i) => `${prefix}${parsed + i}`);
 }
 
+export function computeRoomKeysFromDraft(draft: RoomDraftState): string[] {
+  if (draft.isSingleUnit) {
+    const key = draft.singleUnitName.trim() || draft.title.trim() || "101";
+    return [key];
+  }
+  return computeGeneratedRoomKeys(draft.startRoomNumber, draft.keyCount);
+}
+
+export function mapTitleToRoomType(title: string): "STANDARD_KING" | "DELUXE_BALCONY" | "POOL_VILLA" {
+  const lower = title.toLowerCase();
+  if (lower.includes("villa") || lower.includes("pool") || lower.includes("house") || lower.includes("cottage") || lower.includes("bungalow")) {
+    return "POOL_VILLA";
+  }
+  if (lower.includes("deluxe") || lower.includes("balcony") || lower.includes("suite") || lower.includes("penthouse") || lower.includes("exec")) {
+    return "DELUXE_BALCONY";
+  }
+  return "STANDARD_KING";
+}
+
 const DEFAULT_FORM: WorkspaceFormState = {
   hotelName: "Sedona Heritage Resort",
   slug: "sedona-resort",
-  classification: "Boutique Luxury Resort",
   city: "Bangkok",
   country: "TH",
   currency: "THB",
@@ -143,6 +106,30 @@ const DEFAULT_FORM: WorkspaceFormState = {
   ownerPassword: "Password123!",
   logoUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200",
   heroImageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600",
+};
+
+export const DEFAULT_ROOM_DRAFT: RoomDraftState = {
+  title: "Pool House & Terrace",
+  baseRateThb: 2800,
+  maxAdults: 2,
+  areaSqm: 45,
+  bedConfig: "1 King Bed",
+  isSingleUnit: true,
+  singleUnitName: "Pool House",
+  keyCount: 1,
+  startRoomNumber: "101",
+  floor: 1,
+  coverImage: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
+  amenities: ["High-Speed WiFi", "Air Conditioning", "Private Pool", "Private Bathroom"],
+};
+
+export const DEFAULT_EXPERIENCE_DRAFT: CustomExperienceDraft = {
+  id: "exp-1",
+  name: "Scooter Rental (125cc)",
+  basePriceThb: 300,
+  pricingModel: "PER_VEHICLE",
+  description: "Daily scooter hire with dual helmets and 24-hr roadside assistance",
+  coverImage: "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=1600&q=80",
 };
 
 export function usePlatformPageVm() {
@@ -159,9 +146,9 @@ export function usePlatformPageVm() {
   // 1: Property Identity & Subdomain
   // 2: Operational Details & Fiscal
   // 3: GM Executive Account
-  // 4: Executive Guidance Decision Gate (Yes/No)
-  // 5: Master Room Inventory (Deep Dive)
-  // 6: Frontline Guest Experiences (Deep Dive)
+  // 4: Guidance Decision Gate
+  // 5: Space & Room Setup (Clean 3-section stepper)
+  // 6: Custom Experiences & Add-ons (Multiple custom items or 1-click skip)
   // 7: Production Audit & Verification
   const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1);
   const [form, setForm] = React.useState<WorkspaceFormState>(DEFAULT_FORM);
@@ -176,61 +163,27 @@ export function usePlatformPageVm() {
     opsUrl: string;
   } | null>(null);
 
-  // Deep Dive Room Inventory State
-  const [deepDiveRoom, setDeepDiveRoom] = React.useState<DeepDiveRoomState>({
-    roomType: "DELUXE_BALCONY",
-    title: "Deluxe Ocean Balcony Suite",
-    baseRateThb: 4500,
-    maxAdults: 2,
-    maxChildren: 1,
-    areaSqm: 48,
-    bedConfig: "1 Super King Bed (200x200cm)",
-    floor: 1,
-    keyCount: 4,
-    startRoomNumber: "101",
-    coverImage: LUXURY_ROOM_PHOTOS[0].url,
-    amenities: [
-      "High-Speed Fiber WiFi",
-      "Air Conditioning",
-      "King Bed",
-      "Private Balcony",
-      "Deep Soaking Tub",
-      "Mini Bar",
-      "Espresso Machine",
-      "In-room Safe",
-    ],
-  });
-
+  // Room Setup State
+  const [roomDraft, setRoomDraft] = React.useState<RoomDraftState>(DEFAULT_ROOM_DRAFT);
+  const [customAmenityInput, setCustomAmenityInput] = React.useState("");
   const [isCreatingRoom, setIsCreatingRoom] = React.useState(false);
   const [guidedRoomError, setGuidedRoomError] = React.useState<string | null>(null);
   const [createdRooms, setCreatedRooms] = React.useState<RoomItem[]>([]);
 
-  // Deep Dive Frontline Experience State
-  const [deepDiveService, setDeepDiveService] = React.useState<DeepDiveServiceState>({
-    type: "TRANSFER",
-    name: "VIP Chauffeured Airport Transfer",
-    code: "VIP-AIRPORT-TRANSFER",
-    basePriceThb: 1200,
+  // Custom Experiences State
+  const [customExperiences, setCustomExperiences] = React.useState<CustomExperienceDraft[]>([]);
+  const [experienceDraft, setExperienceDraft] = React.useState<CustomExperienceDraft>({
+    id: "",
+    name: "",
+    basePriceThb: 300,
     pricingModel: "PER_PAX",
-    category: "TRANSPORT",
-    kind: "AIRPORT_TRANSFER",
-    description: "Private meet-and-greet chauffeured airport arrival with luxury fleet and luggage assistance",
-    coverImage: LUXURY_EXPERIENCE_PHOTOS[0].url,
-    airportCode: "BKK",
-    airportName: "Suvarnabhumi Airport",
-    leadTimeMin: 60,
-    fleetPlate: "VIP-01",
-    tourCapacity: 12,
-    minViablePax: 2,
-    departureTimes: ["09:00", "14:00"],
-    spaRooms: 2,
-    spaTherapists: 4,
-    durationMin: 60,
+    description: "",
+    coverImage: "",
   });
-
   const [isCreatingService, setIsCreatingService] = React.useState(false);
   const [guidedServiceError, setGuidedServiceError] = React.useState<string | null>(null);
   const [createdServices, setCreatedServices] = React.useState<ServiceItem[]>([]);
+
   const [isUploadingImage, setIsUploadingImage] = React.useState(false);
 
   // Skip Warning Modal State
@@ -313,72 +266,9 @@ export function usePlatformPageVm() {
     createWorkspaceMutation.mutate(form);
   };
 
-  // Switch Room Suite Category Preset
-  const selectRoomCategoryPreset = (category: "STANDARD_KING" | "DELUXE_BALCONY" | "POOL_VILLA") => {
-    if (category === "STANDARD_KING") {
-      setDeepDiveRoom((prev) => ({
-        ...prev,
-        roomType: "STANDARD_KING",
-        title: "Standard King Suite",
-        baseRateThb: 2800,
-        maxAdults: 2,
-        maxChildren: 1,
-        areaSqm: 32,
-        bedConfig: "1 King Bed (180x200cm)",
-        coverImage: LUXURY_ROOM_PHOTOS[2].url,
-        amenities: ["High-Speed Fiber WiFi", "Air Conditioning", "King Bed", "Rain Shower", "Mini Bar"],
-      }));
-    } else if (category === "DELUXE_BALCONY") {
-      setDeepDiveRoom((prev) => ({
-        ...prev,
-        roomType: "DELUXE_BALCONY",
-        title: "Deluxe Ocean Balcony Suite",
-        baseRateThb: 4500,
-        maxAdults: 2,
-        maxChildren: 1,
-        areaSqm: 48,
-        bedConfig: "1 Super King Bed (200x200cm)",
-        coverImage: LUXURY_ROOM_PHOTOS[0].url,
-        amenities: [
-          "High-Speed Fiber WiFi",
-          "Air Conditioning",
-          "King Bed",
-          "Private Balcony",
-          "Deep Soaking Tub",
-          "Mini Bar",
-          "Espresso Machine",
-          "In-room Safe",
-        ],
-      }));
-    } else {
-      setDeepDiveRoom((prev) => ({
-        ...prev,
-        roomType: "POOL_VILLA",
-        title: "Private Pool Villa Sanctuary",
-        baseRateThb: 9200,
-        maxAdults: 4,
-        maxChildren: 2,
-        areaSqm: 95,
-        bedConfig: "1 Grand Master King + Twin Loft",
-        coverImage: LUXURY_ROOM_PHOTOS[1].url,
-        amenities: [
-          "Private Plunge Pool",
-          "Teak Sun Lounge",
-          "High-Speed Fiber WiFi",
-          "Air Conditioning",
-          "King Bed",
-          "Deep Soaking Tub",
-          "Mini Bar",
-          "Espresso Machine",
-          "Express Airport VIP Lane",
-        ],
-      }));
-    }
-  };
-
   // Toggle amenity
   const toggleAmenity = (amenity: string) => {
-    setDeepDiveRoom((prev) => {
+    setRoomDraft((prev) => {
       const exists = prev.amenities.includes(amenity);
       return {
         ...prev,
@@ -389,36 +279,75 @@ export function usePlatformPageVm() {
     });
   };
 
-  // Real backend Room creation in batch for all physical keys
-  const handleProvisionRoomKeys = async () => {
+  const addCustomAmenity = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setRoomDraft((prev) => {
+      if (prev.amenities.includes(trimmed)) return prev;
+      return { ...prev, amenities: [...prev.amenities, trimmed] };
+    });
+    setCustomAmenityInput("");
+  };
+
+  const removeAmenity = (amenity: string) => {
+    setRoomDraft((prev) => ({
+      ...prev,
+      amenities: prev.amenities.filter((a) => a !== amenity),
+    }));
+  };
+
+  // Real backend Room creation in batch
+  const handleProvisionRoomKeys = async (stayOnStep = false) => {
     if (!createdWorkspace) return;
     setIsCreatingRoom(true);
     setGuidedRoomError(null);
     try {
-      const keys = computeGeneratedRoomKeys(deepDiveRoom.startRoomNumber, deepDiveRoom.keyCount);
+      const keys = computeRoomKeysFromDraft(roomDraft);
+      const roomType = mapTitleToRoomType(roomDraft.title);
       const created: RoomItem[] = [];
+
       for (const key of keys) {
         const res = await postRequest<RoomItem, Record<string, unknown>>(
           apiPath("rooms"),
           {
             branchId: createdWorkspace.id,
             roomNumber: key,
-            roomType: deepDiveRoom.roomType,
-            baseRateThb: Number(deepDiveRoom.baseRateThb),
-            maxOccupancy: Number(deepDiveRoom.maxAdults) + Number(deepDiveRoom.maxChildren),
-            floor: Number(deepDiveRoom.floor),
-            amenities: deepDiveRoom.amenities,
-            coverImage: deepDiveRoom.coverImage,
+            roomType,
+            baseRateThb: Number(roomDraft.baseRateThb) || 1000,
+            maxOccupancy: Number(roomDraft.maxAdults) || 2,
+            floor: Number(roomDraft.floor) || 1,
+            amenities: roomDraft.amenities,
+            coverImage: roomDraft.coverImage,
           }
         );
         created.push(res);
       }
-      setCreatedRooms(created);
+
+      setCreatedRooms((prev) => [...prev, ...created]);
       void queryClient.invalidateQueries({
         queryKey: hospitalityKeys.rooms(createdWorkspace.id),
       });
-      // Move to Step 6: Frontline Guest Experiences
-      setWizardStep(6);
+
+      if (stayOnStep) {
+        // Reset form for next room
+        setRoomDraft({
+          title: "",
+          baseRateThb: 2000,
+          maxAdults: 2,
+          areaSqm: 35,
+          bedConfig: "1 King Bed",
+          isSingleUnit: false,
+          singleUnitName: "",
+          keyCount: 2,
+          startRoomNumber: "201",
+          floor: 2,
+          coverImage: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1600&q=80",
+          amenities: ["High-Speed WiFi", "Air Conditioning", "Private Bathroom"],
+        });
+      } else {
+        // Move to Step 6: Experiences
+        setWizardStep(6);
+      }
     } catch (err: any) {
       setGuidedRoomError(err?.message || "Failed to provision room inventory keys.");
     } finally {
@@ -426,130 +355,143 @@ export function usePlatformPageVm() {
     }
   };
 
-  // Switch Experience Preset
-  const selectServicePreset = (type: "TRANSFER" | "TOUR" | "WELLNESS") => {
-    if (type === "TRANSFER") {
-      setDeepDiveService({
-        type: "TRANSFER",
-        name: "VIP Chauffeured Airport Transfer",
-        code: "VIP-AIRPORT-TRANSFER",
-        basePriceThb: 1200,
-        pricingModel: "PER_PAX",
-        category: "TRANSPORT",
-        kind: "AIRPORT_TRANSFER",
-        description: "Private meet-and-greet chauffeured airport arrival with luxury fleet and luggage assistance",
-        coverImage: LUXURY_EXPERIENCE_PHOTOS[0].url,
-        airportCode: "BKK",
-        airportName: "Suvarnabhumi Airport",
-        leadTimeMin: 60,
-        fleetPlate: "VIP-01",
-        tourCapacity: 12,
-        minViablePax: 2,
-        departureTimes: ["09:00", "14:00"],
-        spaRooms: 2,
-        spaTherapists: 4,
-        durationMin: 60,
-      });
-    } else if (type === "TOUR") {
-      setDeepDiveService({
-        type: "TOUR",
-        name: "Sunset Scenic River Longtail Voyage",
-        code: "SUNSET-CRUISE",
-        basePriceThb: 2500,
-        pricingModel: "PER_PAX",
-        category: "TOURS",
-        kind: "SCHEDULED_TOUR",
-        description: "2-hour golden hour scenic canal exploration with private longtail boat and cold drinks",
-        coverImage: LUXURY_EXPERIENCE_PHOTOS[1].url,
-        airportCode: "BKK",
-        airportName: "Suvarnabhumi Airport",
-        leadTimeMin: 60,
-        fleetPlate: "VIP-01",
-        tourCapacity: 12,
-        minViablePax: 2,
-        departureTimes: ["09:00", "16:30"],
-        spaRooms: 2,
-        spaTherapists: 4,
-        durationMin: 120,
-      });
-    } else {
-      setDeepDiveService({
-        type: "WELLNESS",
-        name: "Traditional Thai Herbal Spa Massage",
-        code: "HERBAL-SPA",
-        basePriceThb: 1800,
-        pricingModel: "PER_TREATMENT",
-        category: "WELLNESS",
-        kind: "SPA_TREATMENT",
-        description: "90-minute aromatic hot herbal compress and therapeutic muscle rejuvenation",
-        coverImage: LUXURY_EXPERIENCE_PHOTOS[2].url,
-        airportCode: "BKK",
-        airportName: "Suvarnabhumi Airport",
-        leadTimeMin: 60,
-        fleetPlate: "VIP-01",
-        tourCapacity: 12,
-        minViablePax: 2,
-        departureTimes: ["09:00", "14:00"],
-        spaRooms: 2,
-        spaTherapists: 4,
-        durationMin: 90,
-      });
-    }
+  // Add an experience to the custom list
+  const addExperienceToList = () => {
+    if (!experienceDraft.name.trim()) return;
+    const newItem: CustomExperienceDraft = {
+      ...experienceDraft,
+      id: "exp-" + Date.now(),
+      name: experienceDraft.name.trim(),
+      basePriceThb: Number(experienceDraft.basePriceThb) || 0,
+      description: experienceDraft.description.trim(),
+    };
+    setCustomExperiences((prev) => [...prev, newItem]);
+    // Reset draft
+    setExperienceDraft({
+      id: "",
+      name: "",
+      basePriceThb: 300,
+      pricingModel: "PER_PAX",
+      description: "",
+      coverImage: "",
+    });
   };
 
-  // Real backend Service creation
-  const handlePublishExperience = async () => {
+  const removeExperienceFromList = (id: string) => {
+    setCustomExperiences((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // Real backend Experience creation for ALL items in customExperiences
+  const handlePublishAllExperiences = async () => {
     if (!createdWorkspace) return;
     setIsCreatingService(true);
     setGuidedServiceError(null);
-    try {
-      const payload: Record<string, unknown> = {
-        branchId: createdWorkspace.id,
-        code: deepDiveService.code,
-        name: deepDiveService.name,
-        category: deepDiveService.category,
-        kind: deepDiveService.kind,
-        basePriceThb: Number(deepDiveService.basePriceThb),
-        pricingModel: deepDiveService.pricingModel,
-        coverImage: deepDiveService.coverImage,
-      };
 
-      if (deepDiveService.kind === "AIRPORT_TRANSFER") {
-        payload.transfer = {
-          airportCode: deepDiveService.airportCode || "BKK",
-          airportName: deepDiveService.airportName || "Suvarnabhumi Airport",
-          leadTimeMin: deepDiveService.leadTimeMin || 60,
-          vehicles: [{ plate: deepDiveService.fleetPlate || "VIP-01", type: "MINIVAN", capacityPax: 6 }],
-        };
-      } else if (deepDiveService.kind === "SCHEDULED_TOUR") {
-        payload.tour = {
-          capacity: deepDiveService.tourCapacity || 12,
-          minViablePax: deepDiveService.minViablePax || 2,
-          fixedCostThb: 1000,
-          departureTimes: deepDiveService.departureTimes || ["09:00", "16:30"],
-          durationMin: deepDiveService.durationMin || 120,
-        };
-      } else if (deepDiveService.kind === "SPA_TREATMENT") {
-        payload.wellness = {
-          treatmentRooms: deepDiveService.spaRooms || 2,
-          therapists: deepDiveService.spaTherapists || 4,
-          durationMin: deepDiveService.durationMin || 90,
-          startTimes: ["10:00", "13:00", "16:00"],
-        };
+    try {
+      const itemsToPublish = [...customExperiences];
+      // If user typed in the draft but did not click "+ Add Experience", include it
+      if (experienceDraft.name.trim()) {
+        itemsToPublish.push({
+          ...experienceDraft,
+          id: "exp-" + Date.now(),
+          name: experienceDraft.name.trim(),
+          basePriceThb: Number(experienceDraft.basePriceThb) || 0,
+          description: experienceDraft.description.trim(),
+        });
       }
 
-      const res = await postRequest<ServiceItem, Record<string, unknown>>(
-        apiPath("services"),
-        payload
-      );
-      setCreatedServices([res]);
+      if (itemsToPublish.length === 0) {
+        // No experiences to publish, jump straight to launch
+        setWizardStep(7);
+        return;
+      }
+
+      const published: ServiceItem[] = [];
+
+      for (let i = 0; i < itemsToPublish.length; i++) {
+        const item = itemsToPublish[i];
+        const lower = (item.name + " " + item.description).toLowerCase();
+        const baseCode = item.name.toUpperCase().replace(/[^A-Z0-9]/g, "-").slice(0, 18) || `EXP-${i + 1}`;
+        const code = `${baseCode}-${i + 1}`;
+
+        let category: "TRANSPORT" | "TOURS" | "WELLNESS" = "TOURS";
+        let kind: "AIRPORT_TRANSFER" | "SCHEDULED_TOUR" | "SPA_TREATMENT" = "SCHEDULED_TOUR";
+
+        if (
+          lower.includes("transfer") ||
+          lower.includes("pickup") ||
+          lower.includes("shuttle") ||
+          lower.includes("taxi") ||
+          lower.includes("driver")
+        ) {
+          category = "TRANSPORT";
+          kind = "AIRPORT_TRANSFER";
+        } else if (
+          lower.includes("spa") ||
+          lower.includes("massage") ||
+          lower.includes("wellness") ||
+          lower.includes("facial") ||
+          lower.includes("sauna")
+        ) {
+          category = "WELLNESS";
+          kind = "SPA_TREATMENT";
+        } else {
+          category = "TOURS";
+          kind = "SCHEDULED_TOUR";
+        }
+
+        const payload: Record<string, unknown> = {
+          branchId: createdWorkspace.id,
+          code,
+          name: item.name,
+          category,
+          kind,
+          basePriceThb: Number(item.basePriceThb) || 0,
+          pricingModel: item.pricingModel || "PER_PAX",
+          description: item.description || undefined,
+          coverImage: item.coverImage || undefined,
+        };
+
+        if (kind === "AIRPORT_TRANSFER") {
+          payload.transfer = {
+            airportCode: "BKK",
+            airportName: "Airport / Transfer Hub",
+            leadTimeMin: 60,
+            vehicles: [{ plate: "VAN-01", type: "MINIVAN", capacityPax: 6 }],
+          };
+        } else if (kind === "SCHEDULED_TOUR") {
+          payload.tour = {
+            capacity: 50,
+            minViablePax: 1,
+            fixedCostThb: 0,
+            departureTimes: ["Flexible"],
+            durationMin: 60,
+          };
+        } else if (kind === "SPA_TREATMENT") {
+          payload.wellness = {
+            treatmentRooms: 2,
+            therapists: 2,
+            durationMin: 60,
+            startTimes: ["10:00", "14:00", "18:00"],
+          };
+        }
+
+        const res = await postRequest<ServiceItem, Record<string, unknown>>(
+          apiPath("services"),
+          payload
+        );
+        published.push(res);
+      }
+
+      setCreatedServices(published);
       void queryClient.invalidateQueries({
         queryKey: hospitalityKeys.services(createdWorkspace.id),
       });
+
       // Move to Step 7: Audit & Verification
       setWizardStep(7);
     } catch (err: any) {
-      setGuidedServiceError(err?.message || "Failed to publish experience.");
+      setGuidedServiceError(err?.message || "Failed to publish experiences.");
     } finally {
       setIsCreatingService(false);
     }
@@ -563,9 +505,9 @@ export function usePlatformPageVm() {
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
         if (target === "room") {
-          setDeepDiveRoom((prev) => ({ ...prev, coverImage: dataUrl }));
+          setRoomDraft((prev) => ({ ...prev, coverImage: dataUrl }));
         } else {
-          setDeepDiveService((prev) => ({ ...prev, coverImage: dataUrl }));
+          setExperienceDraft((prev) => ({ ...prev, coverImage: dataUrl }));
         }
       };
       reader.readAsDataURL(file);
@@ -574,7 +516,7 @@ export function usePlatformPageVm() {
     }
   };
 
-  // Trigger skip warnings
+  // Skip Navigation Handlers
   const triggerSkipGuidance = () => {
     setSkipWarning({ isOpen: true, type: "GUIDANCE" });
   };
@@ -609,6 +551,7 @@ export function usePlatformPageVm() {
     setOnboardingError(null);
     setCreatedRooms([]);
     setCreatedServices([]);
+    setCustomExperiences([]);
     setSkipWarning({ isOpen: false, type: "GUIDANCE" });
   };
 
@@ -628,24 +571,30 @@ export function usePlatformPageVm() {
     createdWorkspace,
     resetWizard,
 
-    // Deep Dive Room Inventory
-    deepDiveRoom,
-    setDeepDiveRoom,
-    selectRoomCategoryPreset,
+    // Room Setup
+    roomDraft,
+    setRoomDraft,
+    customAmenityInput,
+    setCustomAmenityInput,
     toggleAmenity,
+    addCustomAmenity,
+    removeAmenity,
     handleProvisionRoomKeys,
     isCreatingRoom,
     guidedRoomError,
     createdRooms,
 
-    // Deep Dive Frontline Experiences
-    deepDiveService,
-    setDeepDiveService,
-    selectServicePreset,
-    handlePublishExperience,
+    // Custom Experiences
+    customExperiences,
+    experienceDraft,
+    setExperienceDraft,
+    addExperienceToList,
+    removeExperienceFromList,
+    handlePublishAllExperiences,
     isCreatingService,
     guidedServiceError,
     createdServices,
+
     isUploadingImage,
     handleUploadImageFile,
 

@@ -6,36 +6,29 @@ import {
   AlertTriangle,
   ArrowRight,
   Bed,
-  Car,
   Check,
   CheckCircle2,
   Clock,
   Compass,
   ExternalLink,
   Globe,
+  Home,
+  ImageIcon,
+  Key,
+  Layers,
   Lock,
   Percent,
-  Plane,
   Plus,
   ShieldCheck,
   Sparkles,
+  Tag,
+  Trash2,
   TrendingUp,
   Users,
-  Waves,
-  Key,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogBody,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Field, Input, InputAffix } from "@/components/ui/form";
 import {
   Select,
@@ -45,17 +38,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
-import { computeGeneratedRoomKeys, LUXURY_ROOM_PHOTOS, LUXURY_EXPERIENCE_PHOTOS, type PlatformPageVm } from "../viewModel/platformPageVm";
+import {
+  computeRoomKeysFromDraft,
+  type PlatformPageVm,
+} from "../viewModel/platformPageVm";
 
-const AVAILABLE_AMENITIES = [
+const ESSENTIAL_AMENITIES = [
   "High-Speed WiFi",
   "Air Conditioning",
-  "King Bed",
-  "Private Balcony",
-  "Deep Soaking Tub",
-  "Ocean View",
-  "Breakfast Included",
-  "Mini Bar",
+  "Private Pool",
+  "Private Bathroom",
+  "Kitchenette",
+  "Hot Shower",
 ];
 
 export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
@@ -74,24 +68,30 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     createdWorkspace,
     resetWizard,
 
-    // Deep Dive Room Inventory
-    deepDiveRoom,
-    setDeepDiveRoom,
-    selectRoomCategoryPreset,
+    // Room Setup
+    roomDraft,
+    setRoomDraft,
+    customAmenityInput,
+    setCustomAmenityInput,
     toggleAmenity,
+    addCustomAmenity,
+    removeAmenity,
     handleProvisionRoomKeys,
     isCreatingRoom,
     guidedRoomError,
     createdRooms,
 
-    // Deep Dive Frontline Experiences
-    deepDiveService,
-    setDeepDiveService,
-    selectServicePreset,
-    handlePublishExperience,
+    // Custom Experiences
+    customExperiences,
+    experienceDraft,
+    setExperienceDraft,
+    addExperienceToList,
+    removeExperienceFromList,
+    handlePublishAllExperiences,
     isCreatingService,
     guidedServiceError,
     createdServices,
+
     isUploadingImage,
     handleUploadImageFile,
 
@@ -143,6 +143,8 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
     const rootDomain = parts.length > 1 ? parts.slice(-2).join(".") : "yoonie.app";
     return `${protocol}//${subdomain}.${rootDomain}${path}`;
   };
+
+  const currentGeneratedKeys = computeRoomKeysFromDraft(roomDraft);
 
   return (
     <div className="min-h-screen bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth">
@@ -202,320 +204,192 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
             <Button
               size="sm"
               onClick={() => setIsWizardOpen(true)}
-              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-sm shadow-[#28594E]/20"
+              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-md"
             >
-              Launch Your Hotel
+              Setup Your Property
             </Button>
           </div>
         </div>
       </header>
 
       {/* ─── Hero Section ───────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden px-4 pt-16 pb-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-5xl text-center space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#28594E]/15 bg-white/60 px-3.5 py-1 text-xs font-semibold text-[#28594E] backdrop-blur-sm shadow-sm">
-            <Sparkles className="size-3.5 text-[#E8A45B]" />
-            <span>0% Commission Direct Guest Bookings</span>
-            <span className="text-[#7A8B84]">·</span>
-            <span className="text-[#7A8B84]">Zero OTA Dependence</span>
-          </div>
+      <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-7 space-y-6 text-left">
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#E8A45B]/15 px-3 py-1 text-xs font-semibold text-[#E8A45B]">
+                <Sparkles className="size-3.5" /> Direct Booking Engine & Hospitality OS
+              </div>
 
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-[#28594E] leading-[1.1]">
-            The complete operating system for independent hotels.
-          </h1>
+              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-[#28594E] leading-[1.1]">
+                Own your guest relationships.
+                <br />
+                <span className="text-[#E8A45B]">Zero commissions to OTAs.</span>
+              </h1>
 
-          <p className="mx-auto max-w-2xl text-base sm:text-lg text-[#7A8B84] leading-relaxed">
-            Give every property its own branded direct booking engine, front-of-house
-            guest concierge, and automated 05:30 operational dispatch run-sheets.
-          </p>
+              <p className="text-base sm:text-lg text-[#7A8B84] max-w-xl font-normal leading-relaxed">
+                Empower your property with a dedicated tenant direct booking engine, central housekeeping board, and instant frontline concierge dispatch.
+              </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <Button
-              size="lg"
-              onClick={() => setIsWizardOpen(true)}
-              className="w-full sm:w-auto bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-sm px-8 shadow-md shadow-[#28594E]/20"
-            >
-              <Plus className="size-4 mr-2" /> Create Hotel Workspace
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => scrollTo("properties")}
-              className="w-full sm:w-auto border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5 font-bold text-sm px-6"
-            >
-              Explore Live Properties
-            </Button>
-          </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <Button
+                  size="lg"
+                  onClick={() => setIsWizardOpen(true)}
+                  className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-sm px-8 shadow-lg transition-transform hover:-translate-y-0.5"
+                >
+                  Create Property Workspace <ArrowRight className="size-4 ml-2" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={() => scrollTo("properties")}
+                  className="text-xs font-bold border-[#28594E]/25 text-[#28594E] hover:bg-[#28594E]/5"
+                >
+                  Explore Live Properties
+                </Button>
+              </div>
 
-          <div className="pt-8 flex items-center justify-center gap-6 text-xs text-[#7A8B84]">
-            <span className="flex items-center gap-1.5">
-              <ShieldCheck className="size-4 text-[#28594E]" /> Multi-Tenant Subdomain
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="size-4 text-[#28594E]" /> 05:30 Daily Dispatch Run-Sheet
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Users className="size-4 text-[#28594E]" /> Unified Guest CDP
-            </span>
+              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-[#28594E]/10">
+                <div>
+                  <div className="text-2xl font-extrabold text-[#28594E]">0%</div>
+                  <div className="text-xs text-[#7A8B84] font-medium">OTA Commission Loss</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-[#28594E]">100%</div>
+                  <div className="text-xs text-[#7A8B84] font-medium">Guest Data Ownership</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-extrabold text-[#28594E]">05:30 AM</div>
+                  <div className="text-xs text-[#7A8B84] font-medium">Auto Daily Dispatch</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 relative">
+              <div className="relative mx-auto max-w-sm rounded-3xl bg-white/80 p-6 shadow-2xl backdrop-blur-xl border border-white/60 space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-black/5">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src="/brand/mascot/yoonie-calm.png"
+                      alt="Yoonie"
+                      className="size-7 object-contain"
+                    />
+                    <span className="font-bold text-xs text-[#28594E]">
+                      Direct Subdomain Setup
+                    </span>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5">
+                    Live Engine
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-[#F5EBDD]/60 border border-[#28594E]/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#7A8B84]">
+                      Dedicated Subdomain
+                    </span>
+                    <div className="text-sm font-mono font-bold text-[#28594E]">
+                      yourhotel.<span className="text-[#E8A45B]">{activeRootDomain}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white border border-[#28594E]/10 space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[#7A8B84]">Direct Booking Value</span>
+                      <span className="font-bold text-[#28594E]">฿12,500</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-[#7A8B84]">OTA Commission Saved</span>
+                      <span className="font-bold text-emerald-700">+฿2,500 (20%)</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-[#28594E] text-[#F5EBDD] space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-[#E8A45B]">
+                      Frontline Concierge
+                    </span>
+                    <p className="text-xs text-white/90 font-medium">
+                      Airport transfers, excursions, and custom add-ons booked upfront with room reservations.
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setIsWizardOpen(true)}
+                  className="w-full bg-[#E8A45B] hover:bg-[#d6924b] text-[#303A36] font-extrabold text-xs py-2.5 shadow-sm"
+                >
+                  Launch Property Studio →
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── Live Properties Section ────────────────────────────────────────── */}
-      <section id="properties" className="border-t border-[#28594E]/10 bg-white/50 py-20">
+      {/* ─── Live Properties Showcase ───────────────────────────────────────── */}
+      <section id="properties" className="py-20 bg-white/50 border-y border-[#28594E]/10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
-                Active Subdomains
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#28594E]">
-                Boutique Properties Powered by Yoonie
-              </h2>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setIsWizardOpen(true)}
-              className="text-xs font-bold border-[#28594E]/20 text-[#28594E]"
-            >
-              + Provision New Hotel
-            </Button>
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#E8A45B]">
+              Active Network
+            </span>
+            <h2 className="text-3xl font-extrabold text-[#28594E]">
+              Boutique Hotels & Properties on Yoonie
+            </h2>
+            <p className="text-xs sm:text-sm text-[#7A8B84]">
+              Each property operates on its own dedicated tenant subdomain with live availability and direct booking.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {branches.map((b) => {
-              const slug = b.code.toLowerCase();
-              const guestUrl = getSubdomainUrl(slug);
-              return (
-                <Card
-                  key={b._id}
-                  className="overflow-hidden border-[#28594E]/15 bg-white hover:shadow-lg transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div className="relative aspect-[16/10] bg-[#F5EBDD] overflow-hidden">
+            {branches.map((b) => (
+              <Card
+                key={b._id}
+                className="overflow-hidden rounded-3xl border-[#28594E]/15 bg-white shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="aspect-[16/10] bg-black/5 relative overflow-hidden">
                     <img
-                      src={b.heroImageUrl || "/brand/mascot/yoonie-calm.png"}
+                      src={
+                        b.heroImageUrl ||
+                        "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800"
+                      }
                       alt={b.name}
-                      className="h-full w-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
-                    <div className="absolute top-3 left-3 rounded-full bg-[#28594E]/80 backdrop-blur-sm px-2.5 py-1 text-[10px] font-bold text-[#F5EBDD]">
-                      {(b.address as any)?.city || "Bangkok"}, {(b.address as any)?.countryCode || "TH"}
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md text-[11px] font-bold text-[#28594E] shadow-xs">
+                      {b.code}
                     </div>
                   </div>
 
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-[#7A8B84] mb-1">
-                        <span className="font-mono text-[11px]">{b.code}</span>
-                        <span>{b.currency} · {b.timezone.split("/")[1] || b.timezone}</span>
-                      </div>
-                      <h3 className="font-extrabold text-lg text-[#28594E] line-clamp-1">
-                        {b.name}
-                      </h3>
-                      <p className="text-xs text-[#7A8B84] mt-1 font-mono break-all">
-                        {slug}.{activeRootDomain}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 border-t border-[#28594E]/10 flex items-center justify-between gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        asChild
-                        className="flex-1 text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5"
-                      >
-                        <a href={guestUrl} target="_blank" rel="noopener noreferrer">
-                          Direct Booking <ExternalLink className="size-3 ml-1" />
-                        </a>
-                      </Button>
-                      <Button
-                        size="sm"
-                        asChild
-                        className="flex-1 text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD]"
-                      >
-                        <a href={getSubdomainUrl("ops")}>
-                          Ops Hub <ArrowRight className="size-3 ml-1" />
-                        </a>
-                      </Button>
-                    </div>
+                  <div className="p-5 space-y-2">
+                    <h3 className="font-extrabold text-lg text-[#28594E] tracking-tight">
+                      {b.name}
+                    </h3>
+                    <p className="text-xs text-[#7A8B84] line-clamp-2">
+                      {b.timezone} · {b.currency} · 0% Commission Direct Engine
+                    </p>
                   </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Platform Architecture / Value Props ────────────────────────────── */}
-      <section id="features" className="py-20 border-t border-[#28594E]/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
-              Triple-Surface Architecture
-            </span>
-            <h2 className="text-3xl font-extrabold text-[#28594E]">
-              Built for Operators, Loved by Guests
-            </h2>
-            <p className="text-xs sm:text-sm text-[#7A8B84]">
-              Three interconnected surfaces powered by a unified hotel data model.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#28594E]/10 text-[#28594E]">
-                <Globe className="size-5" />
-              </div>
-              <h3 className="font-extrabold text-base text-[#28594E]">
-                1. Tenant Direct Booking
-              </h3>
-              <p className="text-xs text-[#7A8B84] leading-relaxed">
-                Every hotel gets its own dedicated subdomain ([hotel].yoonie.app).
-                Guests book rooms, dining shifts, and airport transfers directly without
-                OTA commissions.
-              </p>
-            </Card>
-
-            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#E8A45B]/15 text-[#E8A45B]">
-                <Clock className="size-5" />
-              </div>
-              <h3 className="font-extrabold text-base text-[#28594E]">
-                2. 05:30 Daily Dispatch Hub
-              </h3>
-              <p className="text-xs text-[#7A8B84] leading-relaxed">
-                Centralized operations console at ops.yoonie.app. Every morning at 05:30,
-                daily run-sheets synthesize room turnovers, transfers, and dining reservations
-                into actionable frontline staff tasks.
-              </p>
-            </Card>
-
-            <Card className="p-6 bg-white border-[#28594E]/15 space-y-4">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#28594E]/10 text-[#28594E]">
-                <Users className="size-5" />
-              </div>
-              <h3 className="font-extrabold text-base text-[#28594E]">
-                3. Unified Guest CDP
-              </h3>
-              <p className="text-xs text-[#7A8B84] leading-relaxed">
-                Cross-service guest profiles keep memory of guest preferences, room notes,
-                dietary restrictions, and lifetime value across multiple stays.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── Pricing Section ────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-20 border-t border-[#28594E]/10 bg-white/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
-              Transparent Pricing
-            </span>
-            <h2 className="text-3xl font-extrabold text-[#28594E]">
-              Zero Commissions. Flat Monthly Fee.
-            </h2>
-            <p className="text-xs sm:text-sm text-[#7A8B84]">
-              Stop giving 18% to 25% of your gross booking value to online travel agencies.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <Card className="p-6 bg-white border-[#28594E]/15 space-y-5">
-              <div>
-                <span className="text-xs font-bold text-[#7A8B84]">Boutique</span>
-                <div className="text-3xl font-extrabold text-[#28594E] mt-1">
-                  $99<span className="text-xs text-[#7A8B84] font-normal"> / mo</span>
                 </div>
-                <p className="text-xs text-[#7A8B84] mt-1">
-                  Up to 20 rooms & suites. Full direct booking engine.
-                </p>
-              </div>
-              <ul className="text-xs space-y-2.5 text-[#303A36]">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> Custom [slug].yoonie.app
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> 0% Commission direct bookings
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> 05:30 Daily Dispatch board
-                </li>
-              </ul>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsWizardOpen(true)}
-                className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E]"
-              >
-                Start 14-Day Trial
-              </Button>
-            </Card>
 
-            <Card className="p-6 bg-[#28594E] text-[#F5EBDD] border-[#28594E] space-y-5 shadow-xl relative">
-              <div className="absolute -top-3 right-4 rounded-full bg-[#E8A45B] px-3 py-0.5 text-[10px] font-extrabold text-[#303A36] uppercase tracking-wider">
-                Most Popular
-              </div>
-              <div>
-                <span className="text-xs font-bold text-[#F5EBDD]/70">Resort & Villas</span>
-                <div className="text-3xl font-extrabold text-[#F5EBDD] mt-1">
-                  $199<span className="text-xs text-[#F5EBDD]/70 font-normal"> / mo</span>
+                <div className="p-5 pt-0 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    asChild
+                    className="flex-1 text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5"
+                  >
+                    <a
+                      href={getSubdomainUrl(b.code.toLowerCase())}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visit Direct Door <ExternalLink className="size-3.5 ml-1" />
+                    </a>
+                  </Button>
                 </div>
-                <p className="text-xs text-[#F5EBDD]/70 mt-1">
-                  Up to 60 keys, dining shifts & tour dispatch.
-                </p>
-              </div>
-              <ul className="text-xs space-y-2.5 text-[#F5EBDD]/90">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Custom CNAME domain support
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Frontline WhatsApp/LINE bots
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#E8A45B]" /> Guest CDP & lifetime metrics
-                </li>
-              </ul>
-              <Button
-                size="sm"
-                onClick={() => setIsWizardOpen(true)}
-                className="w-full text-xs font-bold bg-[#E8A45B] hover:bg-[#d6924b] text-[#303A36]"
-              >
-                Launch Property
-              </Button>
-            </Card>
-
-            <Card className="p-6 bg-white border-[#28594E]/15 space-y-5">
-              <div>
-                <span className="text-xs font-bold text-[#7A8B84]">Hotel Group</span>
-                <div className="text-3xl font-extrabold text-[#28594E] mt-1">
-                  $399<span className="text-xs text-[#7A8B84] font-normal"> / mo</span>
-                </div>
-                <p className="text-xs text-[#7A8B84] mt-1">
-                  Unlimited properties, central management & API access.
-                </p>
-              </div>
-              <ul className="text-xs space-y-2.5 text-[#303A36]">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> Multi-property dashboard
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> Custom PMS & POS webhooks
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="size-4 text-[#28594E]" /> Dedicated account concierge
-                </li>
-              </ul>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setIsWizardOpen(true)}
-                className="w-full text-xs font-bold border-[#28594E]/20 text-[#28594E]"
-              >
-                Contact Sales
-              </Button>
-            </Card>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -530,12 +404,12 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
             <span>every booking, closed.</span>
           </div>
           <div>
-            Direct booking engine, master guest CDP, and frontline dispatch for boutique hotels.
+            Direct booking engine, master guest CDP, and frontline dispatch for boutique properties.
           </div>
         </div>
       </footer>
 
-      {/* ─── Full-Screen Immersive B2B Property Setup Studio ─────────────────── */}
+      {/* ─── Full-Screen Immersive Property Setup Studio ─────────────────── */}
       {isWizardOpen && (
         <div className="fixed inset-0 z-50 bg-[#F5EBDD] flex flex-col overflow-y-auto animate-in fade-in-0 duration-200 text-[#303A36]">
           {/* Executive Top Navigation Bar */}
@@ -556,9 +430,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     : wizardStep === 4
                     ? "Phase 2: Concierge Guidance Decision"
                     : wizardStep === 5
-                    ? "Phase 3: Master Room Suite & Physical Key Inventory"
+                    ? "Phase 3: Space & Room Setup"
                     : wizardStep === 6
-                    ? "Phase 4: Frontline Concierge & Ancillary Experiences"
+                    ? "Phase 4: Guest Experiences & Add-on Services"
                     : "Phase 5: Executive Audit & Production Launch"}
                 </span>
               </div>
@@ -571,7 +445,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 { num: 2, label: "Operations" },
                 { num: 3, label: "Executive" },
                 { num: 4, label: "Guidance" },
-                { num: 5, label: "Room Keys" },
+                { num: 5, label: "Rooms" },
                 { num: 6, label: "Experiences" },
                 { num: 7, label: "Launch" },
               ].map((s) => (
@@ -627,33 +501,16 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       id="hotel-name"
                       value={form.hotelName}
                       onChange={(e) => handleHotelNameChange(e.target.value)}
-                      placeholder="e.g. The Siam Heritage Resort & Spa"
+                      placeholder="e.g. Sedona Heritage Resort or The Pool House"
                       required
                       className="text-base font-medium py-3"
                     />
                   </Field>
 
-                  <Field label="Property Classification" htmlFor="hotel-class">
-                    <Select
-                      value={form.classification}
-                      onValueChange={(val) => setForm({ ...form, classification: val })}
-                    >
-                      <SelectTrigger id="hotel-class">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Boutique Luxury Resort">Boutique Luxury Resort (10 - 50 keys)</SelectItem>
-                        <SelectItem value="Private Pool Villa Estate">Private Pool Villa Estate (Exclusive residences)</SelectItem>
-                        <SelectItem value="Historic Heritage Hotel">Historic Heritage Hotel (Urban culture & dining)</SelectItem>
-                        <SelectItem value="Eco Wellness Sanctuary">Eco Wellness Sanctuary (Spa & retreat)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-
                   <Field
                     label="Tenant Subdomain Slug (Guest Direct Front Door)"
                     htmlFor="hotel-slug"
-                    hint="Guests will book rooms and transfers directly here without OTA commission deductions."
+                    hint="Guests will book rooms and add-ons directly here without OTA commission deductions."
                   >
                     <InputAffix
                       id="hotel-slug"
@@ -775,7 +632,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         type="email"
                         value={form.contactEmail}
                         onChange={(e) => setForm({ ...form, contactEmail: e.target.value })}
-                        placeholder="e.g. reservations@siamheritage.com"
+                        placeholder="e.g. stay@sedonahotel.example"
                         required
                       />
                     </Field>
@@ -860,34 +717,34 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       type="email"
                       value={form.ownerEmail}
                       onChange={(e) => setForm({ ...form, ownerEmail: e.target.value })}
-                      placeholder="e.g. gm@siamheritage.com"
+                      placeholder="e.g. lynn@sedonahotel.example"
                       required
                     />
                   </Field>
 
-                  <Field label="Master Password" htmlFor="owner-password">
+                  <Field
+                    label="Master Account Password"
+                    htmlFor="owner-pass"
+                    hint="Minimum 8 characters with at least one number."
+                  >
                     <Input
-                      id="owner-password"
+                      id="owner-pass"
                       type="password"
                       value={form.ownerPassword}
                       onChange={(e) => setForm({ ...form, ownerPassword: e.target.value })}
-                      placeholder="Create a strong executive password"
                       required
                     />
                   </Field>
 
-                  {/* Onboarding Error with Mascot */}
+                  {/* Error Mascot if Onboarding Fails */}
                   {onboardingError && (
-                    <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-950 flex items-start gap-3 shadow-sm">
+                    <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
                       <YoonieMascot mood="worried" size="sm" />
                       <div className="space-y-1 text-xs">
-                        <span className="font-bold block text-red-800">
-                          Workspace Provisioning Failed
+                        <span className="font-bold block text-amber-800">
+                          Workspace Provisioning Halted
                         </span>
-                        <p className="text-red-700">{onboardingError}</p>
-                        <p className="text-[11px] text-red-600/90 pt-1">
-                          Please verify your subdomain availability and email uniqueness.
-                        </p>
+                        <p className="text-amber-700">{onboardingError}</p>
                       </div>
                     </div>
                   )}
@@ -903,10 +760,10 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   </Button>
                   <Button
                     onClick={handleLaunchWorkspace}
-                    disabled={isLaunching || !form.ownerEmail || !form.ownerPassword}
+                    disabled={isLaunching || !form.ownerName || !form.ownerEmail || !form.ownerPassword}
                     className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-8 py-2.5 text-xs shadow-md"
                   >
-                    {isLaunching ? "Provisioning Property Entity..." : "Provision Hotel Entity 🚀"}
+                    {isLaunching ? "Provisioning Workspace..." : "Create Property Workspace →"}
                   </Button>
                 </div>
               </div>
@@ -920,14 +777,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     <YoonieMascot
                       mood="happy"
                       size="md"
-                      message="Hotel Entity Initialized! Choose how you'd like to configure your property."
+                      message="Hotel Entity Initialized! Choose how you would like to configure your property."
                     />
                   </div>
                   <h2 className="text-3xl font-extrabold text-[#28594E]">
                     Workspace Initialized: Choose Setup Path
                   </h2>
                   <p className="text-xs text-[#7A8B84]">
-                    Your hotel entity is registered in the database. Now, configure your live inventory and experiences.
+                    Your property entity is registered in the database. Now, configure your live inventory and experiences.
                   </p>
                 </div>
 
@@ -948,7 +805,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         Yes, Guide Property Setup
                       </h3>
                       <p className="text-xs text-[#7A8B84] mt-1.5 leading-relaxed">
-                        Deep-dive room configuration: generate physical keys (e.g. Rooms 101–104), attach high-resolution photography, and publish airport transfers or tours for day-one direct revenue.
+                        Configure room details, set up physical keys (from a single pool house to multi-room floors), attach photos, and add your custom experiences.
                       </p>
                     </div>
                     <Button
@@ -971,7 +828,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </div>
                       <div>
                         <h3 className="font-extrabold text-lg text-[#303A36]">
-                          No, I&apos;ll Configure Manually Later
+                          No, I will Configure Manually Later
                         </h3>
                         <p className="text-xs text-[#7A8B84] mt-1.5 leading-relaxed">
                           Skip guided inventory setup and proceed directly to the raw Central Ops board.
@@ -991,224 +848,314 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               </div>
             )}
 
-            {/* STEP 5: Master Room Suite & Physical Key Inventory (Deep Dive) */}
+            {/* STEP 5: Space & Room Setup (Clean 3-Section Stepper) */}
             {wizardStep === 5 && (
               <div className="space-y-6">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
-                    Phase 3 · Deep Dive
+                    Phase 3 · Space & Rooms
                   </span>
                   <h2 className="text-3xl font-extrabold text-[#28594E] mt-1">
-                    Master Room Suite & Physical Key Inventory
+                    Space & Room Inventory Setup
                   </h2>
                   <p className="text-xs text-[#7A8B84] mt-1">
-                    Define your suite specifications, generate the exact physical room keys for your housekeeping board, and upload cover photography.
+                    Configure the spaces guests can book — whether it is an entire pool house, private villa, boutique hotel suite, or hostel dorm bed.
                   </p>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-[#28594E]/15 space-y-6 shadow-sm">
-                  {/* Category Selector Tabs */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#28594E] block">
-                      Suite Classification Archetype
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { id: "DELUXE_BALCONY", label: "Deluxe Ocean Balcony", icon: Waves, rate: "฿4,500" },
-                        { id: "POOL_VILLA", label: "Private Pool Villa", icon: Sparkles, rate: "฿9,200" },
-                        { id: "STANDARD_KING", label: "Garden Executive King", icon: Bed, rate: "฿2,800" },
-                      ].map((cat) => {
-                        const active = deepDiveRoom.roomType === cat.id;
-                        const Icon = cat.icon;
-                        return (
-                          <div
-                            key={cat.id}
-                            onClick={() => selectRoomCategoryPreset(cat.id as any)}
-                            className={`cursor-pointer p-4 rounded-2xl border transition-all space-y-2 ${
-                              active
-                                ? "bg-[#28594E]/5 border-[#28594E] ring-2 ring-[#28594E]/20"
-                                : "bg-white/60 border-[#28594E]/15 hover:bg-white"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
-                                <Icon className="size-4" />
-                              </div>
-                              {active && <Check className="size-4 text-[#28594E]" />}
-                            </div>
-                            <div className="font-extrabold text-xs text-[#28594E]">{cat.label}</div>
-                            <div className="text-[11px] font-bold text-[#E8A45B]">
-                              {cat.rate} <span className="font-normal text-[#7A8B84]">/ night</span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                {/* Banner of Already Provisioned Rooms if any */}
+                {createdRooms.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-white border border-[#28594E]/20 shadow-xs space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-[#28594E] flex items-center gap-1.5">
+                        <CheckCircle2 className="size-4 text-emerald-600" />
+                        Provisioned Spaces ({createdRooms.length} keys total in database)
+                      </span>
+                      <span className="text-[#7A8B84]">You can add another room type below</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {createdRooms.map((r) => (
+                        <span
+                          key={r._id}
+                          className="px-2.5 py-1 rounded-xl bg-[#28594E]/5 border border-[#28594E]/20 text-xs font-medium text-[#28594E]"
+                        >
+                          Room {r.roomNumber} ({r.roomType.replace(/_/g, " ")}) · ฿{(r.baseRateThb ?? 0).toLocaleString()}
+                        </span>
+                      ))}
                     </div>
                   </div>
+                )}
 
-                  {/* Suite Specifications Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Suite Display Name" htmlFor="suite-title">
-                      <Input
-                        id="suite-title"
-                        value={deepDiveRoom.title}
-                        onChange={(e) =>
-                          setDeepDiveRoom((prev) => ({ ...prev, title: e.target.value }))
-                        }
-                        placeholder="e.g. Deluxe Ocean Balcony Suite"
-                        required
-                      />
-                    </Field>
+                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#28594E]/15 space-y-8 shadow-sm">
+                  {/* SECTION 1: Space Basics & Pricing */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-[#28594E]/10">
+                      <div className="size-6 rounded-full bg-[#28594E] text-[#F5EBDD] text-xs font-bold flex items-center justify-center">
+                        1
+                      </div>
+                      <h3 className="font-extrabold text-base text-[#28594E]">
+                        Space Basics & Pricing
+                      </h3>
+                    </div>
 
-                    <Field label="Nightly Base Rack Rate (THB ฿)" htmlFor="suite-rate">
-                      <Input
-                        id="suite-rate"
-                        type="number"
-                        value={deepDiveRoom.baseRateThb}
-                        onChange={(e) =>
-                          setDeepDiveRoom((prev) => ({
-                            ...prev,
-                            baseRateThb: Number(e.target.value) || 0,
-                          }))
-                        }
-                        required
-                      />
-                    </Field>
-                  </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Space / Room Title" htmlFor="room-title">
+                        <Input
+                          id="room-title"
+                          value={roomDraft.title}
+                          onChange={(e) =>
+                            setRoomDraft((prev) => ({ ...prev, title: e.target.value }))
+                          }
+                          placeholder="e.g. Private Pool House, Beach Villa, Deluxe King Room"
+                          required
+                          className="text-sm font-medium"
+                        />
+                      </Field>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <Field label="Room Dimensions (sqm)" htmlFor="suite-area">
-                      <Input
-                        id="suite-area"
-                        type="number"
-                        value={deepDiveRoom.areaSqm}
-                        onChange={(e) =>
-                          setDeepDiveRoom((prev) => ({
-                            ...prev,
-                            areaSqm: Number(e.target.value) || 0,
-                          }))
-                        }
-                        placeholder="48"
-                      />
-                    </Field>
-
-                    <Field label="Max Adult Guests" htmlFor="suite-adults">
-                      <Input
-                        id="suite-adults"
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={deepDiveRoom.maxAdults}
-                        onChange={(e) =>
-                          setDeepDiveRoom((prev) => ({
-                            ...prev,
-                            maxAdults: Number(e.target.value) || 1,
-                          }))
-                        }
-                      />
-                    </Field>
-
-                    <Field label="Bedding Configuration" htmlFor="suite-bed">
-                      <Input
-                        id="suite-bed"
-                        value={deepDiveRoom.bedConfig}
-                        onChange={(e) =>
-                          setDeepDiveRoom((prev) => ({ ...prev, bedConfig: e.target.value }))
-                        }
-                        placeholder="1 King Bed"
-                      />
-                    </Field>
-                  </div>
-
-                  {/* Physical Key Inventory Generation */}
-                  <div className="p-5 rounded-2xl bg-[#F5EBDD]/60 border border-[#28594E]/15 space-y-4">
-                    <div>
-                      <h4 className="font-extrabold text-sm text-[#28594E] flex items-center gap-2">
-                        <Key className="size-4 text-[#E8A45B]" /> Physical Room Keys to Provision
-                      </h4>
-                      <p className="text-xs text-[#7A8B84] mt-0.5">
-                        Specify how many individual rooms of this category you operate, and the starting room number.
-                      </p>
+                      <Field label="Nightly Base Rate (THB ฿)" htmlFor="room-rate">
+                        <Input
+                          id="room-rate"
+                          type="number"
+                          value={roomDraft.baseRateThb}
+                          onChange={(e) =>
+                            setRoomDraft((prev) => ({
+                              ...prev,
+                              baseRateThb: Number(e.target.value) || 0,
+                            }))
+                          }
+                          required
+                        />
+                      </Field>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <Field label="Number of Room Keys (Quantity)" htmlFor="key-count">
+                      <Field label="Max Adult Guests" htmlFor="room-adults">
                         <Input
-                          id="key-count"
+                          id="room-adults"
                           type="number"
                           min={1}
                           max={20}
-                          value={deepDiveRoom.keyCount}
+                          value={roomDraft.maxAdults}
                           onChange={(e) =>
-                            setDeepDiveRoom((prev) => ({
+                            setRoomDraft((prev) => ({
                               ...prev,
-                              keyCount: Math.max(1, parseInt(e.target.value, 10) || 1),
+                              maxAdults: Number(e.target.value) || 1,
                             }))
                           }
-                          required
                         />
                       </Field>
 
-                      <Field label="Starting Room Number" htmlFor="start-number">
+                      <Field label="Bedding Configuration" htmlFor="room-bed">
                         <Input
-                          id="start-number"
-                          value={deepDiveRoom.startRoomNumber}
+                          id="room-bed"
+                          value={roomDraft.bedConfig}
                           onChange={(e) =>
-                            setDeepDiveRoom((prev) => ({ ...prev, startRoomNumber: e.target.value }))
+                            setRoomDraft((prev) => ({ ...prev, bedConfig: e.target.value }))
                           }
-                          placeholder="e.g. 101 or PV1"
-                          required
+                          placeholder="e.g. 1 King Bed, 2 Single Beds, Bunk Bed"
                         />
                       </Field>
 
-                      <Field label="Floor Level" htmlFor="room-floor">
+                      <Field label="Room Dimensions (sqm, optional)" htmlFor="room-area">
                         <Input
-                          id="room-floor"
+                          id="room-area"
                           type="number"
-                          min={1}
-                          max={99}
-                          value={deepDiveRoom.floor}
+                          value={roomDraft.areaSqm || ""}
                           onChange={(e) =>
-                            setDeepDiveRoom((prev) => ({
+                            setRoomDraft((prev) => ({
                               ...prev,
-                              floor: parseInt(e.target.value, 10) || 1,
+                              areaSqm: Number(e.target.value) || 0,
                             }))
                           }
+                          placeholder="e.g. 45"
                         />
                       </Field>
-                    </div>
-
-                    {/* Live Generated Keys Badges */}
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[11px] font-bold text-[#28594E] block">
-                        Generated PMS Inventory Keys ({deepDiveRoom.keyCount} Keys):
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {computeGeneratedRoomKeys(deepDiveRoom.startRoomNumber, deepDiveRoom.keyCount).map((k) => (
-                          <span
-                            key={k}
-                            className="px-3 py-1 rounded-xl bg-white border border-[#28594E]/20 text-xs font-mono font-bold text-[#28594E] shadow-2xs"
-                          >
-                            Room {k}
-                          </span>
-                        ))}
-                      </div>
-                      <p className="text-[11px] text-[#7A8B84] pt-1">
-                        Yoonie will insert individual room documents into MongoDB for housekeeping status tracking and live dispatch.
-                      </p>
                     </div>
                   </div>
 
-                  {/* High-Resolution Cover Photography */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-bold text-[#28594E] block">
-                      Suite Cover Photography & Imagery
-                    </label>
+                  {/* SECTION 2: Inventory & Keys (Single Unit vs Multi-Room) */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-[#28594E]/10">
+                      <div className="size-6 rounded-full bg-[#28594E] text-[#F5EBDD] text-xs font-bold flex items-center justify-center">
+                        2
+                      </div>
+                      <h3 className="font-extrabold text-base text-[#28594E]">
+                        Inventory & Room Keys
+                      </h3>
+                    </div>
 
+                    {/* Single Unit vs Multi-Room Toggle Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div
+                        onClick={() =>
+                          setRoomDraft((prev) => ({
+                            ...prev,
+                            isSingleUnit: true,
+                            keyCount: 1,
+                            singleUnitName: prev.singleUnitName || prev.title || "Pool House",
+                          }))
+                        }
+                        className={`cursor-pointer p-4 rounded-2xl border transition-all space-y-1.5 ${
+                          roomDraft.isSingleUnit
+                            ? "bg-[#28594E]/5 border-[#28594E] ring-2 ring-[#28594E]/20"
+                            : "bg-white/60 border-[#28594E]/15 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-extrabold text-xs text-[#28594E]">
+                            <Home className="size-4 text-[#E8A45B]" /> Single Unit / Entire Property
+                          </div>
+                          {roomDraft.isSingleUnit && <Check className="size-4 text-[#28594E]" />}
+                        </div>
+                        <p className="text-[11px] text-[#7A8B84]">
+                          For standalone spaces like a Pool House, Private Villa, Cottage, or Penthouse.
+                        </p>
+                      </div>
+
+                      <div
+                        onClick={() =>
+                          setRoomDraft((prev) => ({
+                            ...prev,
+                            isSingleUnit: false,
+                            keyCount: Math.max(2, prev.keyCount || 2),
+                          }))
+                        }
+                        className={`cursor-pointer p-4 rounded-2xl border transition-all space-y-1.5 ${
+                          !roomDraft.isSingleUnit
+                            ? "bg-[#28594E]/5 border-[#28594E] ring-2 ring-[#28594E]/20"
+                            : "bg-white/60 border-[#28594E]/15 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 font-extrabold text-xs text-[#28594E]">
+                            <Layers className="size-4 text-[#E8A45B]" /> Multiple Rooms / Units
+                          </div>
+                          {!roomDraft.isSingleUnit && <Check className="size-4 text-[#28594E]" />}
+                        </div>
+                        <p className="text-[11px] text-[#7A8B84]">
+                          For multi-key properties, boutique hotels, or hostels with room numbers.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Inputs depending on Single vs Multi */}
+                    {roomDraft.isSingleUnit ? (
+                      <div className="p-4 rounded-2xl bg-[#F5EBDD]/50 border border-[#28594E]/15 space-y-3">
+                        <Field
+                          label="Unit Identifier / Room Key Name"
+                          htmlFor="single-unit-name"
+                          hint="This is the exact label assigned on your housekeeping board and guest booking confirmation."
+                        >
+                          <Input
+                            id="single-unit-name"
+                            value={roomDraft.singleUnitName}
+                            onChange={(e) =>
+                              setRoomDraft((prev) => ({
+                                ...prev,
+                                singleUnitName: e.target.value,
+                              }))
+                            }
+                            placeholder="e.g. Pool House, Villa 1, Main Cabin"
+                            required
+                          />
+                        </Field>
+
+                        <div className="flex items-center gap-2 pt-1 text-xs">
+                          <span className="font-bold text-[#28594E]">Generated PMS Key:</span>
+                          <span className="px-3 py-1 rounded-xl bg-white border border-[#28594E]/20 font-mono font-bold text-[#28594E] shadow-2xs">
+                            {roomDraft.singleUnitName.trim() || roomDraft.title.trim() || "Pool House"}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-[#F5EBDD]/50 border border-[#28594E]/15 space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <Field label="Number of Room Keys" htmlFor="key-count">
+                            <Input
+                              id="key-count"
+                              type="number"
+                              min={1}
+                              max={50}
+                              value={roomDraft.keyCount}
+                              onChange={(e) =>
+                                setRoomDraft((prev) => ({
+                                  ...prev,
+                                  keyCount: Math.max(1, parseInt(e.target.value, 10) || 1),
+                                }))
+                              }
+                              required
+                            />
+                          </Field>
+
+                          <Field label="Starting Room Number" htmlFor="start-room">
+                            <Input
+                              id="start-room"
+                              value={roomDraft.startRoomNumber}
+                              onChange={(e) =>
+                                setRoomDraft((prev) => ({
+                                  ...prev,
+                                  startRoomNumber: e.target.value,
+                                }))
+                              }
+                              placeholder="101"
+                              required
+                            />
+                          </Field>
+
+                          <Field label="Floor Level" htmlFor="floor-level">
+                            <Input
+                              id="floor-level"
+                              type="number"
+                              value={roomDraft.floor}
+                              onChange={(e) =>
+                                setRoomDraft((prev) => ({
+                                  ...prev,
+                                  floor: Number(e.target.value) || 1,
+                                }))
+                              }
+                            />
+                          </Field>
+                        </div>
+
+                        {/* Generated Keys Badges */}
+                        <div className="space-y-1 pt-1">
+                          <span className="text-[11px] font-bold text-[#28594E] block">
+                            Generated PMS Keys ({currentGeneratedKeys.length} Keys):
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {currentGeneratedKeys.map((k) => (
+                              <span
+                                key={k}
+                                className="px-3 py-1 rounded-xl bg-white border border-[#28594E]/20 text-xs font-mono font-bold text-[#28594E] shadow-2xs"
+                              >
+                                Room {k}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SECTION 3: Photography & Amenities */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 pb-2 border-b border-[#28594E]/10">
+                      <div className="size-6 rounded-full bg-[#28594E] text-[#F5EBDD] text-xs font-bold flex items-center justify-center">
+                        3
+                      </div>
+                      <h3 className="font-extrabold text-base text-[#28594E]">
+                        Photography & Amenities
+                      </h3>
+                    </div>
+
+                    {/* Photo upload and URL input */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
                       <div className="aspect-[16/10] rounded-2xl bg-black/5 overflow-hidden border border-[#28594E]/15 relative">
                         <img
-                          src={deepDiveRoom.coverImage || LUXURY_ROOM_PHOTOS[0].url}
+                          src={
+                            roomDraft.coverImage ||
+                            "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80"
+                          }
                           alt="Cover Preview"
                           className="w-full h-full object-cover"
                         />
@@ -1218,27 +1165,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </div>
 
                       <div className="space-y-3 text-xs">
-                        <p className="text-[#7A8B84]">
-                          Select from luxury curated presets or upload your own high-resolution hotel photo.
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {LUXURY_ROOM_PHOTOS.map((p, idx) => (
-                            <button
-                              key={p.url}
-                              type="button"
-                              onClick={() => setDeepDiveRoom((prev) => ({ ...prev, coverImage: p.url }))}
-                              className={`p-2 rounded-xl border text-left transition-all text-[11px] truncate ${
-                                deepDiveRoom.coverImage === p.url
-                                  ? "bg-[#28594E] text-[#F5EBDD] font-bold border-[#28594E]"
-                                  : "bg-white/80 border-[#28594E]/15 text-[#28594E] hover:bg-white"
-                              }`}
-                            >
-                              Preset {idx + 1}: {p.title}
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="pt-2">
+                        <div>
                           <label className="block text-[11px] font-bold text-[#28594E] mb-1">
                             Upload Custom Photo
                           </label>
@@ -1249,49 +1176,101 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                               const file = e.target.files?.[0];
                               if (file) void handleUploadImageFile(file, "room");
                             }}
-                            className="text-xs text-[#7A8B84] file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#28594E] file:text-[#F5EBDD] hover:file:bg-[#1E433A]"
+                            className="text-xs text-[#7A8B84] file:mr-2 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#28594E] file:text-[#F5EBDD] hover:file:bg-[#1E433A]"
                           />
+                        </div>
+
+                        <div>
+                          <Field label="Or Enter Photo Image URL" htmlFor="room-image-url">
+                            <Input
+                              id="room-image-url"
+                              value={roomDraft.coverImage}
+                              onChange={(e) =>
+                                setRoomDraft((prev) => ({
+                                  ...prev,
+                                  coverImage: e.target.value,
+                                }))
+                              }
+                              placeholder="https://..."
+                              className="text-xs"
+                            />
+                          </Field>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Amenities */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#28594E] block">
-                      Suite Features & Amenities
-                    </label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        "High-Speed Fiber WiFi",
-                        "Air Conditioning",
-                        "King Bed",
-                        "Private Balcony",
-                        "Deep Soaking Tub",
-                        "Mini Bar",
-                        "Espresso Machine",
-                        "In-room Safe",
-                        "Smart TV",
-                        "Marshall Sound System",
-                        "Luxury Linens",
-                        "Rain Shower",
-                      ].map((amenity) => {
-                        const active = deepDiveRoom.amenities.includes(amenity);
-                        return (
-                          <button
-                            key={amenity}
-                            type="button"
-                            onClick={() => toggleAmenity(amenity)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                              active
-                                ? "bg-[#28594E] text-[#F5EBDD] shadow-sm"
-                                : "bg-white/70 text-[#28594E] border border-[#28594E]/15 hover:bg-white"
-                            }`}
-                          >
-                            {amenity} {active && "✓"}
-                          </button>
-                        );
-                      })}
+                    {/* Amenities Tag Input & Essentials */}
+                    <div className="space-y-3 pt-2">
+                      <label className="text-xs font-bold text-[#28594E] block">
+                        Features & Amenities
+                      </label>
+
+                      {/* Quick toggles */}
+                      <div className="flex flex-wrap gap-2">
+                        {ESSENTIAL_AMENITIES.map((amenity) => {
+                          const active = roomDraft.amenities.includes(amenity);
+                          return (
+                            <button
+                              key={amenity}
+                              type="button"
+                              onClick={() => toggleAmenity(amenity)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                active
+                                  ? "bg-[#28594E] text-[#F5EBDD] shadow-sm"
+                                  : "bg-white text-[#28594E] border border-[#28594E]/20 hover:bg-[#28594E]/5"
+                              }`}
+                            >
+                              {amenity} {active && "✓"}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Custom Amenity Adder */}
+                      <div className="flex gap-2 items-center pt-1">
+                        <Input
+                          value={customAmenityInput}
+                          onChange={(e) => setCustomAmenityInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomAmenity(customAmenityInput);
+                            }
+                          }}
+                          placeholder="Type custom amenity (e.g. BBQ Grill, Sea View) and press Enter"
+                          className="text-xs max-w-md"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addCustomAmenity(customAmenityInput)}
+                          className="text-xs font-bold border-[#28594E]/20 text-[#28594E] shrink-0"
+                        >
+                          <Plus className="size-3.5 mr-1" /> Add
+                        </Button>
+                      </div>
+
+                      {/* Active Tag Chips */}
+                      {roomDraft.amenities.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {roomDraft.amenities.map((item) => (
+                            <span
+                              key={item}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#28594E]/10 text-xs font-semibold text-[#28594E]"
+                            >
+                              {item}
+                              <button
+                                type="button"
+                                onClick={() => removeAmenity(item)}
+                                className="hover:text-red-600 transition-colors"
+                              >
+                                <X className="size-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1300,14 +1279,17 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
                       <YoonieMascot mood="worried" size="sm" />
                       <div className="space-y-1 text-xs">
-                        <span className="font-bold block text-amber-800">Room Provisioning Issue</span>
+                        <span className="font-bold block text-amber-800">
+                          Room Provisioning Issue
+                        </span>
                         <p className="text-amber-700">{guidedRoomError}</p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="flex justify-between pt-2">
+                {/* Bottom Action Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
                   <Button
                     variant="ghost"
                     onClick={triggerSkipRooms}
@@ -1315,238 +1297,195 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   >
                     Skip Room Creation
                   </Button>
-                  <Button
-                    onClick={handleProvisionRoomKeys}
-                    disabled={isCreatingRoom || !deepDiveRoom.startRoomNumber}
-                    className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-8 py-2.5 text-xs shadow-md"
-                  >
-                    {isCreatingRoom
-                      ? `Provisioning ${deepDiveRoom.keyCount} Keys in Database...`
-                      : `Provision ${deepDiveRoom.keyCount} Room Keys & Continue →`}
-                  </Button>
+
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleProvisionRoomKeys(true)}
+                      disabled={isCreatingRoom || !roomDraft.title}
+                      className="text-xs font-bold border-[#28594E]/25 text-[#28594E] hover:bg-[#28594E]/5 flex-1 sm:flex-initial"
+                    >
+                      <Plus className="size-3.5 mr-1" /> Save & Add Another Space
+                    </Button>
+
+                    <Button
+                      onClick={() => handleProvisionRoomKeys(false)}
+                      disabled={isCreatingRoom || !roomDraft.title}
+                      className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-8 py-2.5 text-xs shadow-md flex-1 sm:flex-initial"
+                    >
+                      {isCreatingRoom
+                        ? "Provisioning Keys in Database..."
+                        : `Provision ${currentGeneratedKeys.length} Keys & Continue →`}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* STEP 6: Frontline Guest Experiences & Concierge (Deep Dive) */}
+            {/* STEP 6: Custom Experiences & Add-on Services */}
             {wizardStep === 6 && (
               <div className="space-y-6">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8A45B]">
-                    Phase 4 · Deep Dive
+                    Phase 4 · Experiences & Add-ons
                   </span>
                   <h2 className="text-3xl font-extrabold text-[#28594E] mt-1">
-                    Frontline Guest Experiences & Concierge
+                    Guest Experiences & Add-on Services
                   </h2>
                   <p className="text-xs text-[#7A8B84] mt-1">
-                    Add direct-revenue excursions and chauffeured airport pickups that guests can book alongside their stay.
+                    Offer extra services like scooter rentals, floating breakfast, kayak hire, guided tours, or airport pickup. Add as many as you like, or skip if you only offer accommodation.
                   </p>
                 </div>
 
-                <div className="bg-white p-6 rounded-3xl border border-[#28594E]/15 space-y-6 shadow-sm">
-                  {/* Category Selector Tabs */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-[#28594E] block">
-                      Experience Category
-                    </label>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {[
-                        { id: "TRANSFER", label: "VIP Airport Transfer", icon: Car, rate: "฿1,200" },
-                        { id: "TOUR", label: "Sunset Longtail Cruise", icon: Waves, rate: "฿2,500" },
-                        { id: "WELLNESS", label: "Traditional Herbal Spa", icon: Sparkles, rate: "฿1,800" },
-                      ].map((svc) => {
-                        const active = deepDiveService.type === svc.id;
-                        const Icon = svc.icon;
-                        return (
-                          <div
-                            key={svc.id}
-                            onClick={() => selectServicePreset(svc.id as any)}
-                            className={`cursor-pointer p-4 rounded-2xl border transition-all space-y-2 ${
-                              active
-                                ? "bg-[#28594E]/5 border-[#28594E] ring-2 ring-[#28594E]/20"
-                                : "bg-white/60 border-[#28594E]/15 hover:bg-white"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="size-8 rounded-xl bg-[#28594E]/10 flex items-center justify-center text-[#28594E]">
-                                <Icon className="size-4" />
-                              </div>
-                              {active && <Check className="size-4 text-[#28594E]" />}
-                            </div>
-                            <div className="font-extrabold text-xs text-[#28594E]">{svc.label}</div>
-                            <div className="text-[11px] font-bold text-[#E8A45B]">
-                              {svc.rate} <span className="font-normal text-[#7A8B84]">/ booking</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Service / Experience Title" htmlFor="service-name">
-                      <Input
-                        id="service-name"
-                        value={deepDiveService.name}
-                        onChange={(e) =>
-                          setDeepDiveService((prev) => ({ ...prev, name: e.target.value }))
-                        }
-                        placeholder="e.g. VIP Chauffeured Airport Transfer"
-                        required
-                      />
-                    </Field>
-
-                    <Field label="Internal Tracking Code" htmlFor="service-code">
-                      <Input
-                        id="service-code"
-                        value={deepDiveService.code}
-                        onChange={(e) =>
-                          setDeepDiveService((prev) => ({
-                            ...prev,
-                            code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""),
-                          }))
-                        }
-                        required
-                      />
-                    </Field>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Field label="Retail Base Price (THB ฿)" htmlFor="service-price">
-                      <Input
-                        id="service-price"
-                        type="number"
-                        value={deepDiveService.basePriceThb}
-                        onChange={(e) =>
-                          setDeepDiveService((prev) => ({
-                            ...prev,
-                            basePriceThb: Number(e.target.value) || 0,
-                          }))
-                        }
-                        required
-                      />
-                    </Field>
-
-                    <Field label="Pricing Model" htmlFor="service-model">
-                      <Select
-                        value={deepDiveService.pricingModel}
-                        onValueChange={(val: any) =>
-                          setDeepDiveService((prev) => ({ ...prev, pricingModel: val }))
-                        }
-                      >
-                        <SelectTrigger id="service-model">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PER_PAX">Per Guest / Passenger (PER_PAX)</SelectItem>
-                          <SelectItem value="PER_VEHICLE">Per Vehicle / Trip (PER_VEHICLE)</SelectItem>
-                          <SelectItem value="PER_TREATMENT">Per Session / Treatment (PER_TREATMENT)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </Field>
-                  </div>
-
-                  {/* Operational Details based on kind */}
-                  {deepDiveService.kind === "AIRPORT_TRANSFER" && (
-                    <div className="p-4 rounded-2xl bg-[#F5EBDD]/60 border border-[#28594E]/15 space-y-3">
-                      <span className="font-bold text-xs text-[#28594E] block">
-                        Airport Transfer Dispatch Configuration
+                <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#28594E]/15 space-y-6 shadow-sm">
+                  {/* Inline Form to Add a Custom Experience */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b border-[#28594E]/10">
+                      <h3 className="font-extrabold text-sm text-[#28594E] flex items-center gap-2">
+                        <Plus className="size-4 text-[#E8A45B]" /> Add an Experience or Add-on Service
+                      </h3>
+                      <span className="text-[11px] text-[#7A8B84]">
+                        Fully customizable for any property type
                       </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                        <Field label="Airport Code" htmlFor="airport-code">
-                          <Input
-                            id="airport-code"
-                            value={deepDiveService.airportCode}
-                            onChange={(e) =>
-                              setDeepDiveService((prev) => ({
-                                ...prev,
-                                airportCode: e.target.value.toUpperCase(),
-                              }))
-                            }
-                          />
-                        </Field>
-                        <Field label="Vehicle Plate Number" htmlFor="fleet-plate">
-                          <Input
-                            id="fleet-plate"
-                            value={deepDiveService.fleetPlate}
-                            onChange={(e) =>
-                              setDeepDiveService((prev) => ({ ...prev, fleetPlate: e.target.value }))
-                            }
-                          />
-                        </Field>
-                        <Field label="Dispatch Lead Time (mins)" htmlFor="lead-time">
-                          <Input
-                            id="lead-time"
-                            type="number"
-                            value={deepDiveService.leadTimeMin}
-                            onChange={(e) =>
-                              setDeepDiveService((prev) => ({
-                                ...prev,
-                                leadTimeMin: Number(e.target.value) || 60,
-                              }))
-                            }
-                          />
-                        </Field>
-                      </div>
                     </div>
-                  )}
 
-                  {/* High-Resolution Cover Photography */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-bold text-[#28594E] block">
-                      Experience Photography
-                    </label>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                      <div className="aspect-[16/10] rounded-2xl bg-black/5 overflow-hidden border border-[#28594E]/15 relative">
-                        <img
-                          src={deepDiveService.coverImage || LUXURY_EXPERIENCE_PHOTOS[0].url}
-                          alt="Cover Preview"
-                          className="w-full h-full object-cover"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Experience / Service Title" htmlFor="exp-name">
+                        <Input
+                          id="exp-name"
+                          value={experienceDraft.name}
+                          onChange={(e) =>
+                            setExperienceDraft((prev) => ({ ...prev, name: e.target.value }))
+                          }
+                          placeholder="e.g. Scooter Rental (125cc), Floating Pool Breakfast, Kayak Tour"
+                          className="text-sm font-medium"
                         />
-                        <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-bold text-white">
-                          Live Cover Preview
-                        </div>
-                      </div>
+                      </Field>
 
-                      <div className="space-y-3 text-xs">
-                        <p className="text-[#7A8B84]">
-                          Choose from curated luxury experience photography or upload a custom image.
-                        </p>
-                        <div className="space-y-1.5">
-                          {LUXURY_EXPERIENCE_PHOTOS.map((p, idx) => (
-                            <button
-                              key={p.url}
-                              type="button"
-                              onClick={() => setDeepDiveService((prev) => ({ ...prev, coverImage: p.url }))}
-                              className={`w-full p-2 rounded-xl border text-left transition-all text-[11px] truncate block ${
-                                deepDiveService.coverImage === p.url
-                                  ? "bg-[#28594E] text-[#F5EBDD] font-bold border-[#28594E]"
-                                  : "bg-white/80 border-[#28594E]/15 text-[#28594E] hover:bg-white"
-                              }`}
-                            >
-                              Preset {idx + 1}: {p.title}
-                            </button>
-                          ))}
-                        </div>
-
-                        <div className="pt-2">
-                          <label className="block text-[11px] font-bold text-[#28594E] mb-1">
-                            Upload Custom Photo
-                          </label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) void handleUploadImageFile(file, "service");
-                            }}
-                            className="text-xs text-[#7A8B84] file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#28594E] file:text-[#F5EBDD] hover:file:bg-[#1E433A]"
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Price (THB ฿)" htmlFor="exp-price">
+                          <Input
+                            id="exp-price"
+                            type="number"
+                            value={experienceDraft.basePriceThb}
+                            onChange={(e) =>
+                              setExperienceDraft((prev) => ({
+                                ...prev,
+                                totalPriceThb: Number(e.target.value) || 0,
+                                basePriceThb: Number(e.target.value) || 0,
+                              }))
+                            }
                           />
-                        </div>
+                        </Field>
+
+                        <Field label="Pricing Unit" htmlFor="exp-model">
+                          <Select
+                            value={experienceDraft.pricingModel}
+                            onValueChange={(val: any) =>
+                              setExperienceDraft((prev) => ({ ...prev, pricingModel: val }))
+                            }
+                          >
+                            <SelectTrigger id="exp-model">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PER_PAX">Per Guest / Person</SelectItem>
+                              <SelectItem value="PER_VEHICLE">Per Item / Rental</SelectItem>
+                              <SelectItem value="PER_TREATMENT">Per Booking / Stay</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </Field>
                       </div>
                     </div>
+
+                    <Field
+                      label="Short Description (optional)"
+                      htmlFor="exp-desc"
+                      hint="Details for guest direct booking confirmations."
+                    >
+                      <Input
+                        id="exp-desc"
+                        value={experienceDraft.description}
+                        onChange={(e) =>
+                          setExperienceDraft((prev) => ({
+                            ...prev,
+                            description: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g. Includes helmet and 24-hr rental, or fresh tropical fruit breakfast served at your villa"
+                      />
+                    </Field>
+
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) void handleUploadImageFile(file, "service");
+                          }}
+                          className="text-xs text-[#7A8B84] file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#28594E] file:text-[#F5EBDD] hover:file:bg-[#1E433A]"
+                        />
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={addExperienceToList}
+                        disabled={!experienceDraft.name.trim()}
+                        className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs px-6 py-2 shadow-sm w-full sm:w-auto"
+                      >
+                        <Plus className="size-3.5 mr-1" /> Add Experience to Property
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* List of Added Custom Experiences */}
+                  <div className="space-y-3 pt-3 border-t border-[#28594E]/10">
+                    <span className="font-extrabold text-xs text-[#28594E] block">
+                      Configured Property Experiences ({customExperiences.length} Items):
+                    </span>
+
+                    {customExperiences.length === 0 ? (
+                      <div className="p-5 rounded-2xl bg-[#F5EBDD]/40 border border-[#28594E]/10 text-xs text-[#7A8B84] text-center">
+                        No extra experiences added yet. Fill in the form above and click &ldquo;Add Experience&rdquo;, or skip if you only offer accommodation.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {customExperiences.map((item) => (
+                          <div
+                            key={item.id}
+                            className="p-4 rounded-2xl bg-white border border-[#28594E]/15 shadow-xs flex items-start justify-between gap-3"
+                          >
+                            <div className="space-y-1">
+                              <h4 className="font-extrabold text-sm text-[#28594E]">
+                                {item.name}
+                              </h4>
+                              <div className="text-xs font-bold text-[#E8A45B]">
+                                ฿{item.basePriceThb.toLocaleString()}{" "}
+                                <span className="font-normal text-[#7A8B84]">
+                                  / {item.pricingModel === "PER_PAX" ? "guest" : item.pricingModel === "PER_VEHICLE" ? "item / rental" : "booking"}
+                                </span>
+                              </div>
+                              {item.description && (
+                                <p className="text-[11px] text-[#7A8B84] line-clamp-2">
+                                  {item.description}
+                                </p>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeExperienceFromList(item.id)}
+                              className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
+                              title="Remove item"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Error if any */}
@@ -1554,27 +1493,34 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
                       <YoonieMascot mood="worried" size="sm" />
                       <div className="space-y-1 text-xs">
-                        <span className="font-bold block text-amber-800">Experience Creation Issue</span>
+                        <span className="font-bold block text-amber-800">
+                          Experience Creation Issue
+                        </span>
                         <p className="text-amber-700">{guidedServiceError}</p>
                       </div>
                     </div>
                   )}
                 </div>
 
+                {/* Bottom Navigation */}
                 <div className="flex justify-between pt-2">
                   <Button
                     variant="ghost"
-                    onClick={triggerSkipService}
+                    onClick={() => setWizardStep(7)}
                     className="text-xs font-semibold text-[#7A8B84] hover:text-[#28594E]"
                   >
-                    Skip Experience Creation
+                    Skip Experiences — Accommodation Only
                   </Button>
                   <Button
-                    onClick={handlePublishExperience}
-                    disabled={isCreatingService || !deepDiveService.name}
+                    onClick={handlePublishAllExperiences}
+                    disabled={isCreatingService}
                     className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-8 py-2.5 text-xs shadow-md"
                   >
-                    {isCreatingService ? "Publishing Experience in Database..." : "Publish Experience & Review Setup →"}
+                    {isCreatingService
+                      ? "Publishing in Database..."
+                      : customExperiences.length > 0 || experienceDraft.name.trim()
+                      ? `Save Experiences & Review Launch (${customExperiences.length + (experienceDraft.name.trim() ? 1 : 0)}) →`
+                      : "Continue to Launch Verification →"}
                   </Button>
                 </div>
               </div>
@@ -1588,14 +1534,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     <YoonieMascot
                       mood="happy"
                       size="md"
-                      message="All systems operational! Your hotel workspace is live and bookable."
+                      message="All systems operational! Your property workspace is live and bookable."
                     />
                   </div>
                   <h2 className="text-3xl font-extrabold text-[#28594E]">
                     {createdWorkspace.name} is Production-Ready
                   </h2>
                   <p className="text-xs text-[#7A8B84]">
-                    All hotel entities, physical room keys, and guest services are provisioned in the live database. Verify your inventory below before launch.
+                    All property entities, physical room keys, and guest services are provisioned in the live database. Verify your inventory below before launch.
                   </p>
                 </div>
 
@@ -1603,7 +1549,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 <div className="bg-white p-5 rounded-2xl border border-[#28594E]/15 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                   <div>
                     <span className="text-[#7A8B84] block text-[11px]">Property Code</span>
-                    <span className="font-mono font-bold text-[#28594E] text-sm">{createdWorkspace.code}</span>
+                    <span className="font-mono font-bold text-[#28594E] text-sm">
+                      {createdWorkspace.code}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[#7A8B84] block text-[11px]">Operating Currency</span>
@@ -1611,7 +1559,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   </div>
                   <div>
                     <span className="text-[#7A8B84] block text-[11px]">Operating Timezone</span>
-                    <span className="font-bold text-[#28594E] text-sm">{form.timezone.split("/")[1] || form.timezone}</span>
+                    <span className="font-bold text-[#28594E] text-sm">
+                      {form.timezone.split("/")[1] || form.timezone}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[#7A8B84] block text-[11px]">General Manager</span>
@@ -1680,15 +1630,15 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   )}
                 </div>
 
-                {/* Frontline Experiences Verification Table */}
+                {/* Experiences Verification Table */}
                 <div className="bg-white p-6 rounded-3xl border border-[#28594E]/15 space-y-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-extrabold text-sm text-[#28594E] flex items-center gap-2">
-                        <Sparkles className="size-4 text-[#E8A45B]" /> Published Ancillary Experiences ({createdServices.length} Active)
+                        <Sparkles className="size-4 text-[#E8A45B]" /> Published Experiences & Add-ons ({createdServices.length} Active)
                       </h4>
                       <p className="text-xs text-[#7A8B84] mt-0.5">
-                        Transfers and activities published for upfront booking alongside room reservations.
+                        Excursions, rentals, and services published for upfront direct booking alongside room reservations.
                       </p>
                     </div>
                     {createdServices.length > 0 ? (
@@ -1697,7 +1647,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">
-                        No experiences configured
+                        No extra experiences configured
                       </span>
                     )}
                   </div>
@@ -1707,7 +1657,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
                           <tr className="border-b border-[#28594E]/10 text-[#7A8B84]">
-                            <th className="py-2.5 font-bold">Experience Title</th>
+                            <th className="py-2.5 font-bold">Service / Add-on</th>
                             <th className="py-2.5 font-bold">Code</th>
                             <th className="py-2.5 font-bold">Category</th>
                             <th className="py-2.5 font-bold">Retail Price</th>
@@ -1734,7 +1684,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-xs text-[#7A8B84]">No tours or airport transfers configured yet.</p>
+                    <p className="text-xs text-[#7A8B84]">Accommodation only — no extra add-on services configured.</p>
                   )}
                 </div>
 
@@ -1806,8 +1756,8 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     skipWarning.type === "GUIDANCE"
                       ? "Wait! Skipping setup leaves your guest direct booking site completely empty!"
                       : skipWarning.type === "ROOMS"
-                      ? "Wait! A hotel cannot take reservations without physical room keys!"
-                      : "Wait! Guest transfers & tours account for 35% of direct revenue!"
+                      ? "Wait! A property cannot take reservations without physical room keys!"
+                      : "Wait! Extra guest services account for valuable direct revenue!"
                   }
                 />
               </div>
@@ -1820,10 +1770,10 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
               </h4>
               <p className="text-xs text-[#7A8B84] leading-relaxed">
                 {skipWarning.type === "GUIDANCE"
-                  ? "Without setting up room types and physical inventory keys, guests visiting your direct booking site will find an empty catalog with zero bookable dates. OTAs will continue taking 25% commissions. We strongly recommend configuring at least one room category now."
+                  ? "Without setting up room spaces and inventory keys, guests visiting your direct booking site will find an empty catalog with zero bookable dates. We strongly recommend configuring at least one space now."
                   : skipWarning.type === "ROOMS"
                   ? "Physical room keys are required for the housekeeping run-sheet and guest reservations. Skipping now means your property will remain unbookable until you manually create keys in the Ops Hub."
-                  : "Boutique hotel guests expect seamless airport pickups and concierge excursions upon booking their stay. You can always add more services later in the Ops Hub."}
+                  : "Guests love booking extras like scooter rentals, breakfast baskets, or island tours directly alongside their stay. You can always add more services later in the Ops Hub."}
               </p>
             </div>
 
