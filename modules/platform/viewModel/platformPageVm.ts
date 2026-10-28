@@ -48,7 +48,7 @@ export interface CustomExperienceDraft {
   id: string;
   name: string;
   basePriceThb: number;
-  pricingModel: "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT";
+  pricingModel: "PER_PAX" | "PER_VEHICLE" | "PER_TREATMENT" | "PER_GUEST" | "PER_BOOKING" | "PER_DAY";
   description: string;
   coverImage: string;
 }
@@ -448,7 +448,7 @@ export function usePlatformPageVm() {
           category,
           kind,
           basePriceThb: Number(item.basePriceThb) || 0,
-          pricingModel: item.pricingModel || "PER_PAX",
+          pricingModel: (item.pricingModel === "PER_GUEST" ? "PER_PAX" : (item.pricingModel || "PER_PAX")),
           description: item.description || undefined,
           coverImage: item.coverImage || undefined,
         };

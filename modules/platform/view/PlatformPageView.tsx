@@ -47,11 +47,11 @@ const ESSENTIAL_AMENITIES = [
 ];
 
 const ONBOARDING_STAGES = [
-  { num: 1, title: "Workspace & Domain", sub: "Branded URL & GM Login" },
-  { num: 2, title: "Property & White-Label", sub: "Format, location & branding" },
-  { num: 3, title: "Rooms & Inventory", sub: "Room types, rates & keys" },
-  { num: 4, title: "Curated Add-ons", sub: "Transfers, tours & dining" },
-  { num: 5, title: "Review & Launch", sub: "Verification & live engine" },
+  { num: 1, title: "Workspace & Domain", sub: "Subdomain & executive login" },
+  { num: 2, title: "Property & Location", sub: "Destination, format & rules" },
+  { num: 3, title: "Rooms & Inventory", sub: "Room categories, rates & keys" },
+  { num: 4, title: "Curated Add-ons", sub: "Transfers, tours & rentals" },
+  { num: 5, title: "Review & Launch", sub: "Inventory verification & live door" },
 ];
 
 export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
@@ -427,8 +427,8 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   <span className="font-extrabold text-sm tracking-tight text-[#28594E]">
                     Yoonie Studio
                   </span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#D8E6DA] text-[#28594E]">
-                    White-Label Setup
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 border border-stone-200">
+                    Property Studio
                   </span>
                 </div>
                 <span className="text-[11px] text-[#7A8B84]">
@@ -462,15 +462,26 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     {ONBOARDING_STAGES.map((s) => {
                       const isPast = wizardStep > s.num;
                       const isCurrent = wizardStep === s.num;
+                      const isClickable = isPast;
                       return (
-                        <div key={s.num} className="flex items-start gap-3 relative">
+                        <div
+                          key={s.num}
+                          onClick={() => {
+                            if (isClickable) setWizardStep(s.num as any);
+                          }}
+                          className={`flex items-start gap-3 relative p-2 -m-2 rounded-xl transition-all ${
+                            isClickable
+                              ? "cursor-pointer hover:bg-stone-100/70 group"
+                              : ""
+                          }`}
+                        >
                           {/* Stepper Node */}
                           <div
                             className={`size-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
                               isCurrent
                                 ? "bg-[#28594E] text-[#F5EBDD] shadow-sm ring-4 ring-[#D8E6DA]/70"
                                 : isPast
-                                ? "bg-[#28594E]/15 text-[#28594E] font-bold"
+                                ? "bg-[#28594E]/15 text-[#28594E] font-bold group-hover:bg-[#28594E] group-hover:text-white"
                                 : "bg-stone-100 text-stone-400 border border-stone-200"
                             }`}
                           >
@@ -478,20 +489,27 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                           </div>
 
                           {/* Stepper Labels */}
-                          <div className="space-y-0.5 pt-0.5">
-                            <span
-                              className={`block text-xs font-bold leading-none ${
-                                isCurrent
-                                  ? "text-[#28594E]"
-                                  : isPast
-                                  ? "text-stone-800"
-                                  : "text-stone-400"
-                              }`}
-                            >
-                              {s.title}
-                            </span>
+                          <div className="space-y-0.5 pt-0.5 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`block text-xs font-bold leading-none ${
+                                  isCurrent
+                                    ? "text-[#28594E]"
+                                    : isPast
+                                    ? "text-stone-800 group-hover:text-[#28594E]"
+                                    : "text-stone-400"
+                                }`}
+                              >
+                                {s.title}
+                              </span>
+                              {isPast && (
+                                <span className="text-[10px] text-stone-400 font-semibold group-hover:text-[#28594E] opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Edit
+                                </span>
+                              )}
+                            </div>
                             <span className="block text-[11px] text-stone-500 font-normal">
-                              {isCurrent ? "In progress" : isPast ? "Complete" : s.sub}
+                              {isCurrent ? "In progress" : isPast ? "Complete · Click to edit" : s.sub}
                             </span>
                           </div>
                         </div>
@@ -507,7 +525,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       className="size-7 object-contain shrink-0"
                     />
                     <span className="text-[11px] leading-tight text-stone-500">
-                      Need help? Yoonie guides every step of your white-label launch.
+                      Need help? Yoonie guides every step of your property setup.
                     </span>
                   </div>
                 </div>
@@ -524,7 +542,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                           Workspace & Dedicated Domain
                         </h2>
                         <p className="text-xs text-stone-500 mt-1">
-                          Create your white-labeled hotel identity and master executive credentials.
+                          Set up your property identity and master executive credentials.
                         </p>
                       </div>
                       <YoonieMascot mood="calm" size="sm" />
@@ -553,7 +571,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </Field>
 
                       <Field
-                        label="Dedicated white-label subdomain *"
+                        label="Dedicated tenant subdomain *"
                         htmlFor="hotel-slug"
                         hint="Guests book rooms directly here with 0% OTA commissions."
                       >
@@ -1160,13 +1178,22 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                      <Button
-                        variant="ghost"
-                        onClick={triggerSkipRooms}
-                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
-                      >
-                        Skip for now
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setWizardStep(2)}
+                          className="text-xs font-semibold text-stone-500 hover:text-stone-900"
+                        >
+                          ← Back
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={triggerSkipRooms}
+                          className="text-xs font-semibold text-stone-400 hover:text-stone-700"
+                        >
+                          Skip for now
+                        </Button>
+                      </div>
 
                       <div className="flex items-center gap-2 w-full sm:w-auto">
                         <Button
@@ -1252,8 +1279,10 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="PER_PAX">Per Guest</SelectItem>
+                                <SelectItem value="PER_VEHICLE">Per Vehicle / Rental</SelectItem>
+                                <SelectItem value="PER_TREATMENT">Per Session / Treatment</SelectItem>
                                 <SelectItem value="PER_BOOKING">Per Stay</SelectItem>
-                                <SelectItem value="PER_GUEST">Per Guest</SelectItem>
                                 <SelectItem value="PER_DAY">Per Day</SelectItem>
                               </SelectContent>
                             </Select>
@@ -1318,13 +1347,22 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     )}
 
                     <div className="flex justify-between pt-2">
-                      <Button
-                        variant="ghost"
-                        onClick={triggerSkipService}
-                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
-                      >
-                        Skip Extras & Review →
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          onClick={() => setWizardStep(3)}
+                          className="text-xs font-semibold text-stone-500 hover:text-stone-900"
+                        >
+                          ← Back
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={triggerSkipService}
+                          className="text-xs font-semibold text-stone-400 hover:text-stone-700"
+                        >
+                          Skip Extras & Review →
+                        </Button>
+                      </div>
 
                       <Button
                         onClick={handlePublishAllExperiences}
@@ -1347,7 +1385,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         <YoonieMascot
                           mood="happy"
                           size="md"
-                          message="Your white-labeled property is verified and production-ready!"
+                          message="Your property workspace is verified and ready for live reservations!"
                         />
                       </div>
                       <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
@@ -1476,7 +1514,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </Button>
                     </div>
 
-                    <div className="pt-2 text-center">
+                    <div className="pt-2 flex items-center justify-between">
+                      <Button
+                        variant="ghost"
+                        onClick={() => setWizardStep(4)}
+                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
+                      >
+                        ← Back to Add-ons
+                      </Button>
                       <Button
                         variant="ghost"
                         onClick={resetWizard}
@@ -1550,7 +1595,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     </div>
 
                     <div className="text-[10px] text-center text-stone-400 font-medium pt-0.5">
-                      100% White-Labeled to Your Brand
+                      Direct Guest Reservation Engine · Live PMS Synced
                     </div>
                   </div>
                 </div>
@@ -1589,7 +1634,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     {wizardStep === 1 && (
                       <>
                         <p>
-                          <strong className="text-stone-900">White-Labeled Subdomain:</strong> Every property gets its own direct booking front door with zero commission fees.
+                          <strong className="text-stone-900">Dedicated Subdomain:</strong> Every property gets its own direct booking front door with zero commission fees.
                         </p>
                         <p>
                           <strong className="text-stone-900">Master GM Access:</strong> This account unlocks your housekeeping board and 05:30 AM dispatch run-sheet.
@@ -1651,38 +1696,76 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
       {/* ─── Skip Warning Modal ───────────────────────────────────────────── */}
       {skipWarning.isOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in-0">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-gray-200 space-y-4 text-gray-900">
-            <div className="text-center space-y-2">
-              <div className="mx-auto flex justify-center">
-                <YoonieMascot
-                  mood="worried"
-                  size="md"
-                  message="Wait! Are you sure you want to skip configuring room keys?"
-                />
-              </div>
-              <h4 className="text-base font-extrabold text-gray-900 pt-1">
-                Skip Room Key Creation?
-              </h4>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                A property needs at least one room key or space configured for guests to check in and book. You can configure this later in the Central Ops Hub.
-              </p>
-            </div>
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border border-stone-200 space-y-4 text-stone-900">
+            {skipWarning.type === "SERVICE" ? (
+              <>
+                <div className="text-center space-y-2">
+                  <div className="mx-auto flex justify-center">
+                    <YoonieMascot
+                      mood="calm"
+                      size="md"
+                      message="You can launch your property now with rooms only."
+                    />
+                  </div>
+                  <h4 className="text-base font-extrabold text-stone-900 pt-1">
+                    Skip Add-on Experiences?
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Optional extras like scooter rentals, airport transfers, or dining packages can be configured anytime later from your Central Ops Hub.
+                  </p>
+                </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button
-                onClick={confirmSkipRooms}
-                variant="outline"
-                className="flex-1 text-xs font-semibold text-gray-600 border-gray-200 hover:bg-gray-50"
-              >
-                Skip Anyway
-              </Button>
-              <Button
-                onClick={() => setSkipWarning({ isOpen: false, type: "ROOMS" })}
-                className="flex-1 text-xs font-bold bg-gray-900 hover:bg-black text-white"
-              >
-                Keep Setting Up
-              </Button>
-            </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={confirmSkipService}
+                    variant="outline"
+                    className="flex-1 text-xs font-semibold text-stone-600 border-stone-200 hover:bg-stone-50"
+                  >
+                    Skip to Review →
+                  </Button>
+                  <Button
+                    onClick={() => setSkipWarning({ isOpen: false, type: "SERVICE" })}
+                    className="flex-1 text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-white"
+                  >
+                    Keep Adding Extras
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center space-y-2">
+                  <div className="mx-auto flex justify-center">
+                    <YoonieMascot
+                      mood="worried"
+                      size="md"
+                      message="Wait! Are you sure you want to skip configuring room keys?"
+                    />
+                  </div>
+                  <h4 className="text-base font-extrabold text-stone-900 pt-1">
+                    Skip Room Key Creation?
+                  </h4>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    A property needs at least one room key or space configured for guests to check in and book. You can configure this later in the Central Ops Hub.
+                  </p>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    onClick={confirmSkipRooms}
+                    variant="outline"
+                    className="flex-1 text-xs font-semibold text-stone-600 border-stone-200 hover:bg-stone-50"
+                  >
+                    Skip Anyway
+                  </Button>
+                  <Button
+                    onClick={() => setSkipWarning({ isOpen: false, type: "ROOMS" })}
+                    className="flex-1 text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-white"
+                  >
+                    Keep Setting Up
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
