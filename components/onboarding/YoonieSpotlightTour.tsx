@@ -35,6 +35,7 @@ export function YoonieSpotlightTour() {
     const maxAttempts = 25;
 
     const findAndMeasure = () => {
+      if (!currentStep?.targetId) return false;
       const el = document.getElementById(currentStep.targetId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -61,13 +62,14 @@ export function YoonieSpotlightTour() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isOpen, currentStepIndex, currentStep.targetId, currentStep.pageRoute]);
+  }, [isOpen, currentStepIndex, currentStep?.targetId, currentStep?.pageRoute]);
 
   // Keep target rect updated on window resize or scroll
   React.useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !currentStep?.targetId) return;
 
     const updateRect = () => {
+      if (!currentStep?.targetId) return;
       const el = document.getElementById(currentStep.targetId);
       if (el) {
         setTargetRect(el.getBoundingClientRect());
@@ -81,7 +83,7 @@ export function YoonieSpotlightTour() {
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };
-  }, [isOpen, currentStep.targetId]);
+  }, [isOpen, currentStep?.targetId]);
 
   if (!isOpen || targetNotFound) return null;
 
