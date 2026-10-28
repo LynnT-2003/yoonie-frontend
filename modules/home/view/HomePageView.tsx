@@ -96,14 +96,14 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
           <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5 w-full">
             <Button
               asChild
-              className="w-full bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs rounded-xl"
+              className="w-full sm:flex-1 bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs rounded-xl"
             >
               <a href="https://yoonie.app">Visit Yoonie Platform</a>
             </Button>
             <Button
               variant="outline"
               asChild
-              className="w-full border-[#28594E]/20 text-[#28594E] font-bold text-xs rounded-xl"
+              className="w-full sm:flex-1 border-[#28594E]/20 text-[#28594E] font-bold text-xs rounded-xl whitespace-normal text-center"
             >
               <a href="https://yoonie.app/#workspaces">Create Hotel Workspace</a>
             </Button>

@@ -98,9 +98,44 @@ export function useHomePageVm(branchCode?: string) {
   const activeBranch: Branch | undefined = React.useMemo(() => {
     if (!branchesQuery.data || branchesQuery.data.length === 0) return undefined;
     if (branchCode) {
-      return branchesQuery.data.find(
-        (b) => b.code.toLowerCase() === branchCode.toLowerCase()
+      const target = branchCode.toLowerCase().trim();
+      const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const normalizeSingular = (s: string) => normalize(s).replace(/s(?=\d|$)/g, "");
+
+      // 1. Exact match on code (e.g. "LYNN-STAYS-2" === "lynn-stays-2")
+      const exactCode = branchesQuery.data.find(
+        (b) => b.code.toLowerCase() === target
       );
+      if (exactCode) return exactCode;
+
+      // 2. Normalized code match (ignoring hyphens, underscores, casing)
+      const normTarget = normalize(target);
+      const normalizedCode = branchesQuery.data.find(
+        (b) => normalize(b.code) === normTarget
+      );
+      if (normalizedCode) return normalizedCode;
+
+      // 3. Name slug match (e.g. name "Lynn Stays 2" -> "lynn-stays-2")
+      const nameMatch = branchesQuery.data.find((b) => {
+        const slugFromName = b.name
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        return slugFromName === target || normalize(b.name) === normTarget;
+      });
+      if (nameMatch) return nameMatch;
+
+      // 4. Fuzzy singular/plural match (e.g. "lynn-stays-2" <-> "LYNN-STAY-2")
+      const singularTarget = normalizeSingular(target);
+      const fuzzyMatch = branchesQuery.data.find(
+        (b) =>
+          normalizeSingular(b.code) === singularTarget ||
+          normalizeSingular(b.name) === singularTarget
+      );
+      if (fuzzyMatch) return fuzzyMatch;
+
+      return undefined;
     }
     return branchesQuery.data[0];
   }, [branchesQuery.data, branchCode]);
