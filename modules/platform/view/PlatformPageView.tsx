@@ -47,11 +47,11 @@ const ESSENTIAL_AMENITIES = [
 ];
 
 const ONBOARDING_STAGES = [
-  { num: 1, title: "Get started", sub: "Account & domain" },
-  { num: 2, title: "Property details", sub: "Location & rules" },
-  { num: 3, title: "Rooms & inventory", sub: "Types, counts" },
-  { num: 4, title: "Add-ons & services", sub: "Rentals, extras" },
-  { num: 5, title: "Review & submit", sub: "Final check" },
+  { num: 1, title: "Workspace & Domain", sub: "Branded URL & GM Login" },
+  { num: 2, title: "Property & White-Label", sub: "Format, location & branding" },
+  { num: 3, title: "Rooms & Inventory", sub: "Room types, rates & keys" },
+  { num: 4, title: "Curated Add-ons", sub: "Transfers, tours & dining" },
+  { num: 5, title: "Review & Launch", sub: "Verification & live engine" },
 ];
 
 export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
@@ -409,32 +409,46 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
         </div>
       </footer>
 
-      {/* ─── FULL OKKAMI-STYLE 3-COLUMN PROPERTY SETUP STUDIO ─────────────────── */}
+      {/* ─── FULL YOONIE WHITE-LABEL PROPERTY SETUP STUDIO ─────────────────── */}
       {isWizardOpen && (
-        <div className="fixed inset-0 z-50 bg-[#F8F9FA] flex flex-col overflow-y-auto animate-in fade-in-0 duration-200 text-[#1F2937]">
-          {/* Top Bar matching OKKAMI */}
-          <header className="sticky top-0 z-40 border-b border-gray-200 bg-white px-6 py-3.5 flex items-center justify-between shadow-2xs">
+        <div className="fixed inset-0 z-50 bg-[#FAF8F5] flex flex-col overflow-y-auto animate-in fade-in-0 duration-200 text-[#1F2925]">
+          {/* Top Bar - Yoonie White-Label Studio */}
+          <header className="sticky top-0 z-40 border-b border-[#28594E]/10 bg-white/95 backdrop-blur-md px-6 py-3.5 flex items-center justify-between shadow-2xs">
             <div className="flex items-center gap-3">
-              <div className="size-7 rounded-lg bg-[#E5484D] flex items-center justify-center text-white font-extrabold text-sm shadow-xs">
-                ✱
+              <div className="size-8 rounded-xl bg-[#28594E] flex items-center justify-center text-white shadow-xs">
+                <img
+                  src="/brand/mascot/yoonie-calm.png"
+                  alt="Yoonie"
+                  className="size-6 object-contain"
+                />
               </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-extrabold text-base tracking-tight text-gray-900">
-                  yoonie
-                </span>
-                <span className="text-xs font-medium text-gray-500">
-                  Property onboarding
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-sm tracking-tight text-[#28594E]">
+                    Yoonie Studio
+                  </span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#D8E6DA] text-[#28594E]">
+                    White-Label Setup
+                  </span>
+                </div>
+                <span className="text-[11px] text-[#7A8B84]">
+                  Direct Booking Engine & Automated Frontline Dispatch
                 </span>
               </div>
+            </div>
+
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-stone-100 border border-stone-200 text-xs font-semibold text-stone-700">
+              <span className="size-2 rounded-full bg-[#28594E] animate-pulse" />
+              <span>Stage {wizardStep} of 5 · {ONBOARDING_STAGES[wizardStep - 1]?.title}</span>
             </div>
 
             <Button
               size="sm"
               variant="ghost"
               onClick={resetWizard}
-              className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+              className="text-xs font-semibold text-stone-500 hover:text-stone-900"
             >
-              <X className="size-4 mr-1" /> Exit Setup
+              <X className="size-4 mr-1" /> Exit Studio
             </Button>
           </header>
 
@@ -443,21 +457,21 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* ─── LEFT COLUMN: Vertical Stepper ─────────────────────────── */}
               <aside className="lg:col-span-3">
-                <div className="sticky top-20 bg-white rounded-2xl p-5 border border-gray-200/80 shadow-xs space-y-6">
+                <div className="sticky top-20 bg-white rounded-2xl p-5 border border-stone-200/80 shadow-xs space-y-6">
                   <div className="space-y-4">
                     {ONBOARDING_STAGES.map((s) => {
                       const isPast = wizardStep > s.num;
                       const isCurrent = wizardStep === s.num;
                       return (
                         <div key={s.num} className="flex items-start gap-3 relative">
-                          {/* Stepper Node Circle */}
+                          {/* Stepper Node */}
                           <div
-                            className={`size-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                            className={`size-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
                               isCurrent
-                                ? "bg-[#E5484D] text-white shadow-xs"
+                                ? "bg-[#28594E] text-[#F5EBDD] shadow-sm ring-4 ring-[#D8E6DA]/70"
                                 : isPast
-                                ? "bg-gray-900 text-white"
-                                : "bg-gray-100 text-gray-400 border border-gray-200"
+                                ? "bg-[#28594E]/15 text-[#28594E] font-bold"
+                                : "bg-stone-100 text-stone-400 border border-stone-200"
                             }`}
                           >
                             {isPast ? <Check className="size-3.5" /> : s.num}
@@ -468,15 +482,15 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                             <span
                               className={`block text-xs font-bold leading-none ${
                                 isCurrent
-                                  ? "text-gray-900"
+                                  ? "text-[#28594E]"
                                   : isPast
-                                  ? "text-gray-800"
-                                  : "text-gray-400"
+                                  ? "text-stone-800"
+                                  : "text-stone-400"
                               }`}
                             >
                               {s.title}
                             </span>
-                            <span className="block text-[11px] text-gray-400 font-normal">
+                            <span className="block text-[11px] text-stone-500 font-normal">
                               {isCurrent ? "In progress" : isPast ? "Complete" : s.sub}
                             </span>
                           </div>
@@ -484,21 +498,36 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       );
                     })}
                   </div>
+
+                  {/* Left Rail Mascot Helper */}
+                  <div className="pt-4 border-t border-stone-100 flex items-center gap-2.5 text-xs text-stone-600">
+                    <img
+                      src="/brand/mascot/yoonie-calm.png"
+                      alt="Yoonie"
+                      className="size-7 object-contain shrink-0"
+                    />
+                    <span className="text-[11px] leading-tight text-stone-500">
+                      Need help? Yoonie guides every step of your white-label launch.
+                    </span>
+                  </div>
                 </div>
               </aside>
 
-              {/* ─── CENTER COLUMN: Minimal Forms ──────────────────────────── */}
+              {/* ─── CENTER COLUMN: Minimal & Frictionless Forms ────────────── */}
               <main className="lg:col-span-6 space-y-6">
-                {/* STAGE 1: Get started */}
+                {/* STAGE 1: Workspace & Domain */}
                 {wizardStep === 1 && (
-                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xs space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        Get started
-                      </h2>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tell us your property identity and create your master management credentials.
-                      </p>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 shadow-xs space-y-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
+                          Workspace & Dedicated Domain
+                        </h2>
+                        <p className="text-xs text-stone-500 mt-1">
+                          Create your white-labeled hotel identity and master executive credentials.
+                        </p>
+                      </div>
+                      <YoonieMascot mood="calm" size="sm" />
                     </div>
 
                     <div className="space-y-4">
@@ -513,7 +542,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         />
                       </Field>
 
-                      <Field label="Brand name" htmlFor="brand-name" hint="Enter the chain or management brand. Leave blank if independent.">
+                      <Field label="Brand / chain name" htmlFor="brand-name" hint="Enter parent management brand, or leave blank if independent.">
                         <Input
                           id="brand-name"
                           value={form.brandName}
@@ -524,9 +553,9 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       </Field>
 
                       <Field
-                        label="Dedicated tenant subdomain *"
+                        label="Dedicated white-label subdomain *"
                         htmlFor="hotel-slug"
-                        hint="Guests will book rooms and add-ons directly here with 0% OTA commission."
+                        hint="Guests book rooms directly here with 0% OTA commissions."
                       >
                         <InputAffix
                           id="hotel-slug"
@@ -543,8 +572,8 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         />
                       </Field>
 
-                      <div className="pt-2 border-t border-gray-100 space-y-3">
-                        <span className="block text-xs font-bold text-gray-900 uppercase tracking-wider">
+                      <div className="pt-2 border-t border-stone-100 space-y-3">
+                        <span className="block text-xs font-bold text-stone-900 uppercase tracking-wider">
                           General Manager Executive Account
                         </span>
 
@@ -587,7 +616,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <Button
                         onClick={() => setWizardStep(2)}
                         disabled={!form.hotelName || !form.slug || !form.ownerEmail || !form.ownerPassword}
-                        className="bg-gray-900 hover:bg-black text-white font-bold px-7 py-2.5 text-xs shadow-xs"
+                        className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-7 py-2.5 text-xs shadow-sm"
                       >
                         Continue to Property Details →
                       </Button>
@@ -595,16 +624,19 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   </div>
                 )}
 
-                {/* STAGE 2: Property details (Exact OKKAMI Layout) */}
+                {/* STAGE 2: Property & White-Label Details */}
                 {wizardStep === 2 && (
-                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xs space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        Property details
-                      </h2>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Tell us about the property you&apos;re setting up.
-                      </p>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 shadow-xs space-y-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
+                          Property Details & Format
+                        </h2>
+                        <p className="text-xs text-stone-500 mt-1">
+                          Configure destination, operating currency, and property format.
+                        </p>
+                      </div>
+                      <YoonieMascot mood="thinking" size="sm" />
                     </div>
 
                     <div className="space-y-4">
@@ -629,7 +661,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                           </Select>
                         </Field>
 
-                        <Field label="City *" htmlFor="hotel-city">
+                        <Field label="City / Destination *" htmlFor="hotel-city">
                           <Input
                             id="hotel-city"
                             value={form.city}
@@ -678,19 +710,18 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         </Field>
                       </div>
 
-                      {/* Property Type: 3 Clean Cards */}
+                      {/* Property Format: Minimal Segmented Pill Buttons (NO CHUNKY CARDS) */}
                       <div className="space-y-1.5 pt-1">
-                        <label className="text-xs font-bold text-gray-900 block">
-                          Property type *
+                        <label className="text-xs font-bold text-stone-900 block">
+                          Property format <span className="text-red-500">*</span>
                         </label>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-2 p-1 bg-stone-100 rounded-xl border border-stone-200/80">
                           {[
-                            { id: "HOTEL", label: "Hotel", icon: Building },
-                            { id: "CONDO", label: "Condo", icon: Building2 },
-                            { id: "MIXED", label: "Mixed-use", icon: Layers },
+                            { id: "HOTEL", label: "Boutique Hotel", sub: "Multi-room hospitality" },
+                            { id: "CONDO", label: "Private Villa", sub: "Pool house or villa" },
+                            { id: "MIXED", label: "Resort & Suites", sub: "Mixed rooms & suites" },
                           ].map((t) => {
                             const active = form.propertyType === t.id;
-                            const Icon = t.icon;
                             return (
                               <button
                                 key={t.id}
@@ -698,14 +729,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 onClick={() =>
                                   setForm({ ...form, propertyType: t.id as any })
                                 }
-                                className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${
+                                className={`p-3 rounded-lg text-left transition-all ${
                                   active
-                                    ? "border-emerald-600 bg-emerald-50/50 text-emerald-900 ring-1 ring-emerald-600 font-bold"
-                                    : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50 font-medium"
+                                    ? "bg-white text-[#28594E] shadow-xs font-bold border border-stone-200"
+                                    : "text-stone-600 hover:text-stone-900 hover:bg-white/50 font-medium"
                                 }`}
                               >
-                                <Icon className="size-5" />
-                                <span className="text-xs">{t.label}</span>
+                                <div className="text-xs font-bold">{t.label}</div>
+                                <div className="text-[10px] text-stone-500 font-normal mt-0.5">{t.sub}</div>
                               </button>
                             );
                           })}
@@ -714,7 +745,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
 
                       {/* Total rooms & Number of floors */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        <Field label="Total rooms / units *" htmlFor="total-units">
+                        <Field label="Total units / rooms estimate *" htmlFor="total-units">
                           <Input
                             id="total-units"
                             type="number"
@@ -759,14 +790,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <Button
                         variant="ghost"
                         onClick={() => setWizardStep(1)}
-                        className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
                       >
                         ← Back
                       </Button>
                       <Button
                         onClick={handleAdvanceToRooms}
                         disabled={isLaunching || !form.city || !form.country}
-                        className="bg-gray-900 hover:bg-black text-white font-bold px-7 py-2.5 text-xs shadow-xs"
+                        className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-7 py-2.5 text-xs shadow-sm"
                       >
                         {isLaunching ? "Saving Property..." : "Continue to Rooms & Inventory →"}
                       </Button>
@@ -774,32 +805,35 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   </div>
                 )}
 
-                {/* STAGE 3: Rooms & inventory (Types, counts) */}
+                {/* STAGE 3: Rooms & Inventory */}
                 {wizardStep === 3 && (
-                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xs space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        Rooms & inventory
-                      </h2>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Define your room types, set nightly rates, and generate physical keys.
-                      </p>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 shadow-xs space-y-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
+                          Rooms & Physical Keys
+                        </h2>
+                        <p className="text-xs text-stone-500 mt-1">
+                          Define your room types, set nightly rates, and generate physical keys.
+                        </p>
+                      </div>
+                      <YoonieMascot mood="checking" size="sm" />
                     </div>
 
                     {/* Banner of Already Added Rooms */}
                     {createdRooms.length > 0 && (
-                      <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 text-xs space-y-1.5">
-                        <div className="font-bold text-emerald-900 flex items-center gap-1.5">
-                          <CheckCircle2 className="size-4 text-emerald-600" />
+                      <div className="p-3.5 rounded-xl bg-[#D8E6DA]/50 border border-[#28594E]/20 text-xs space-y-1.5">
+                        <div className="font-bold text-[#28594E] flex items-center gap-1.5">
+                          <CheckCircle2 className="size-4 text-[#28594E]" />
                           {createdRooms.length} Key(s) Provisioned in Database:
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {createdRooms.map((r) => (
                             <span
                               key={r._id}
-                              className="px-2.5 py-1 rounded-md bg-white border border-emerald-300 font-mono font-medium text-emerald-900 text-xs"
+                              className="px-2.5 py-1 rounded-md bg-white border border-[#28594E]/30 font-mono font-medium text-[#28594E] text-xs"
                             >
-                              Room {r.roomNumber} · ฿{(r.baseRateThb ?? 0).toLocaleString()}
+                              Room {r.roomNumber} ({r.roomType}) · ฿{(r.baseRateThb ?? 0).toLocaleString()}
                             </span>
                           ))}
                         </div>
@@ -807,16 +841,16 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     )}
 
                     <div className="space-y-4">
-                      {/* Space Name & Rate */}
+                      {/* Room Type Title & Base Rate */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Field label="Space / Room type title *" htmlFor="room-title">
+                        <Field label="Room type name *" htmlFor="room-title">
                           <Input
                             id="room-title"
                             value={roomDraft.title}
                             onChange={(e) =>
                               setRoomDraft((prev) => ({ ...prev, title: e.target.value }))
                             }
-                            placeholder="e.g. Private Pool House, Beach Villa, King Room"
+                            placeholder="e.g. Deluxe Pool Suite or Entire Villa"
                             required
                             className="text-sm font-medium"
                           />
@@ -826,6 +860,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                           <Input
                             id="room-rate"
                             type="number"
+                            min={0}
                             value={roomDraft.baseRateThb}
                             onChange={(e) =>
                               setRoomDraft((prev) => ({
@@ -868,13 +903,14 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         </Field>
                       </div>
 
-                      {/* Single Unit vs Multi-Key Toggle */}
-                      <div className="space-y-2 pt-1">
-                        <label className="text-xs font-bold text-gray-900 block">
-                          Inventory format *
+                      {/* Single Unit vs Multi-Key Toggle: Sleek Segmented Pill Switch (NO CHUNKY CARDS) */}
+                      <div className="space-y-1.5 pt-1">
+                        <label className="text-xs font-bold text-stone-900 block">
+                          Inventory mode <span className="text-red-500">*</span>
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div
+                        <div className="grid grid-cols-2 gap-2 p-1 bg-stone-100 rounded-xl border border-stone-200/80">
+                          <button
+                            type="button"
                             onClick={() =>
                               setRoomDraft((prev) => ({
                                 ...prev,
@@ -883,24 +919,22 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 singleUnitName: prev.singleUnitName || prev.title || "Pool House",
                               }))
                             }
-                            className={`cursor-pointer p-3.5 rounded-xl border text-left space-y-1 transition-all ${
+                            className={`p-3 rounded-lg text-left transition-all ${
                               roomDraft.isSingleUnit
-                                ? "border-emerald-600 bg-emerald-50/40 text-emerald-900 ring-1 ring-emerald-600 font-bold"
-                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "bg-white text-[#28594E] shadow-xs font-bold border border-stone-200"
+                                : "text-stone-600 hover:text-stone-900 hover:bg-white/50 font-medium"
                             }`}
                           >
-                            <div className="flex items-center justify-between text-xs font-bold">
-                              <span className="flex items-center gap-1.5">
-                                <Home className="size-4 text-emerald-700" /> Single Unit
-                              </span>
-                              {roomDraft.isSingleUnit && <Check className="size-3.5 text-emerald-700" />}
+                            <div className="flex items-center gap-1.5 text-xs font-bold">
+                              <Home className="size-3.5 text-[#28594E]" /> Standalone Villa / Pool House
                             </div>
-                            <p className="text-[11px] text-gray-500 font-normal">
-                              For standalone pool houses, villas, or cottages (1 key).
-                            </p>
-                          </div>
+                            <div className="text-[10px] text-stone-500 font-normal mt-0.5">
+                              Single unit (1 key, no room numbering clutter)
+                            </div>
+                          </button>
 
-                          <div
+                          <button
+                            type="button"
                             onClick={() =>
                               setRoomDraft((prev) => ({
                                 ...prev,
@@ -908,27 +942,24 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 keyCount: Math.max(2, prev.keyCount || 2),
                               }))
                             }
-                            className={`cursor-pointer p-3.5 rounded-xl border text-left space-y-1 transition-all ${
+                            className={`p-3 rounded-lg text-left transition-all ${
                               !roomDraft.isSingleUnit
-                                ? "border-emerald-600 bg-emerald-50/40 text-emerald-900 ring-1 ring-emerald-600 font-bold"
-                                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                                ? "bg-white text-[#28594E] shadow-xs font-bold border border-stone-200"
+                                : "text-stone-600 hover:text-stone-900 hover:bg-white/50 font-medium"
                             }`}
                           >
-                            <div className="flex items-center justify-between text-xs font-bold">
-                              <span className="flex items-center gap-1.5">
-                                <Layers className="size-4 text-emerald-700" /> Multiple Rooms
-                              </span>
-                              {!roomDraft.isSingleUnit && <Check className="size-3.5 text-emerald-700" />}
+                            <div className="flex items-center gap-1.5 text-xs font-bold">
+                              <Layers className="size-3.5 text-[#28594E]" /> Multi-Room Hotel / Resort
                             </div>
-                            <p className="text-[11px] text-gray-500 font-normal">
-                              For hotels, hostels, or guesthouses with room numbers.
-                            </p>
-                          </div>
+                            <div className="text-[10px] text-stone-500 font-normal mt-0.5">
+                              Multiple keys with room numbers (101, 102...)
+                            </div>
+                          </button>
                         </div>
 
                         {/* Inventory inputs */}
                         {roomDraft.isSingleUnit ? (
-                          <div className="pt-1">
+                          <div className="pt-2">
                             <Field
                               label="Unit identifier / key name *"
                               htmlFor="single-unit-name"
@@ -947,15 +978,15 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 required
                               />
                             </Field>
-                            <div className="text-xs text-gray-600 mt-1.5 flex items-center gap-2">
+                            <div className="text-xs text-stone-600 mt-1.5 flex items-center gap-2">
                               <span>Generated PMS Key:</span>
-                              <span className="font-mono font-bold px-2 py-0.5 bg-gray-100 rounded-md text-gray-900">
+                              <span className="font-mono font-bold px-2 py-0.5 bg-stone-100 rounded-md text-[#28594E]">
                                 {roomDraft.singleUnitName.trim() || roomDraft.title.trim() || "Pool House"}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <div className="grid grid-cols-2 gap-3 pt-1">
+                          <div className="grid grid-cols-2 gap-3 pt-2">
                             <Field label="Key count (Quantity) *" htmlFor="multi-key-count">
                               <Input
                                 id="multi-key-count"
@@ -983,59 +1014,78 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                     startRoomNumber: e.target.value,
                                   }))
                                 }
-                                placeholder="101"
+                                placeholder="e.g. 101 or 201"
                                 required
                               />
                             </Field>
+
+                            <div className="col-span-2 text-xs text-stone-600 flex items-center gap-2 flex-wrap">
+                              <span>PMS keys generated:</span>
+                              {currentGeneratedKeys.map((k) => (
+                                <span
+                                  key={k}
+                                  className="font-mono font-bold px-2 py-0.5 bg-stone-100 rounded-md text-[#28594E]"
+                                >
+                                  {k}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
 
-                      {/* Photo Upload ONLY (No Image URL) */}
+                      {/* Photo Upload: File Dropzone Only (NO URL INPUTS) */}
                       <div className="space-y-2 pt-1">
-                        <label className="text-xs font-bold text-gray-900 block">
-                          Room photography (File upload only)
+                        <label className="text-xs font-bold text-stone-900 block">
+                          Room photos (Upload-only) <span className="text-red-500">*</span>
                         </label>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
-                          <div className="sm:col-span-1 aspect-[16/10] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 relative">
+                        <label className="relative flex flex-col items-center justify-center p-6 border-2 border-dashed border-stone-200 rounded-xl hover:border-[#28594E] hover:bg-[#FAF8F5] transition-colors cursor-pointer group">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => { const file = e.target.files?.[0]; if (file) handleUploadImageFile(file, "room"); }}
+                            disabled={isUploadingImage}
+                            className="hidden"
+                          />
+                          <UploadCloud className="size-8 text-[#28594E] group-hover:scale-110 transition-transform mb-1.5" />
+                          <span className="text-xs font-bold text-stone-800">
+                            {isUploadingImage
+                              ? "Optimizing and saving photo..."
+                              : "Click to upload room photography or drag & drop"}
+                          </span>
+                          <span className="text-[11px] text-stone-400 mt-0.5">
+                            High-res JPG, PNG, WEBP (No image URL needed)
+                          </span>
+                        </label>
+
+                        {/* Uploaded Photo Preview */}
+                        {roomDraft.coverImage && (
+                          <div className="relative aspect-video max-w-sm rounded-xl overflow-hidden border border-stone-200 group shadow-2xs mt-2">
                             <img
                               src={roomDraft.coverImage}
-                              alt="Room preview"
+                              alt="Room Preview"
                               className="w-full h-full object-cover"
                             />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setRoomDraft((prev) => ({ ...prev, coverImage: "" }))
+                              }
+                              className="absolute top-1.5 right-1.5 size-6 rounded-full bg-black/70 hover:bg-red-600 text-white flex items-center justify-center transition-colors shadow-xs"
+                            >
+                              <X className="size-3.5" />
+                            </button>
                           </div>
-
-                          <div className="sm:col-span-2 space-y-2">
-                            <label className="border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer transition-colors bg-gray-50/50 hover:bg-gray-50">
-                              <UploadCloud className="size-5 text-gray-500 mb-1" />
-                              <span className="text-xs font-bold text-gray-700">
-                                Click or drag to upload photo
-                              </span>
-                              <span className="text-[11px] text-gray-400">
-                                PNG, JPG, or WEBP up to 10MB
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) void handleUploadImageFile(file, "room");
-                                }}
-                                className="hidden"
-                              />
-                            </label>
-                          </div>
-                        </div>
+                        )}
                       </div>
 
-                      {/* Amenities Toggles & Tags */}
+                      {/* Amenities Pills & Custom Input */}
                       <div className="space-y-2 pt-1">
-                        <label className="text-xs font-bold text-gray-900 block">
-                          Room amenities & highlights
+                        <label className="text-xs font-bold text-stone-900 block">
+                          Room amenities
                         </label>
-
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {ESSENTIAL_AMENITIES.map((amenity) => {
                             const active = roomDraft.amenities.includes(amenity);
                             return (
@@ -1045,8 +1095,8 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 onClick={() => toggleAmenity(amenity)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                                   active
-                                    ? "bg-gray-900 text-white border-gray-900 shadow-2xs"
-                                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                                    ? "bg-[#28594E] text-[#F5EBDD] border-[#28594E] shadow-2xs font-bold"
+                                    : "bg-white text-stone-700 border-stone-200 hover:bg-stone-50"
                                 }`}
                               >
                                 {amenity} {active && "✓"}
@@ -1074,7 +1124,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                             variant="outline"
                             size="sm"
                             onClick={() => addCustomAmenity(customAmenityInput)}
-                            className="text-xs font-bold border-gray-200 shrink-0"
+                            className="text-xs font-bold border-stone-200 text-stone-700 shrink-0"
                           >
                             <Plus className="size-3.5 mr-1" /> Add
                           </Button>
@@ -1085,7 +1135,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                             {roomDraft.amenities.map((item) => (
                               <span
                                 key={item}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-800"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-stone-100 text-xs font-medium text-stone-800"
                               >
                                 {item}
                                 <button
@@ -1113,7 +1163,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <Button
                         variant="ghost"
                         onClick={triggerSkipRooms}
-                        className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
                       >
                         Skip for now
                       </Button>
@@ -1123,7 +1173,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                           variant="outline"
                           onClick={() => handleProvisionRoomKeys(true)}
                           disabled={isCreatingRoom || !roomDraft.title}
-                          className="text-xs font-bold border-gray-200 text-gray-700 hover:bg-gray-50 flex-1 sm:flex-initial"
+                          className="text-xs font-bold border-stone-200 text-stone-700 hover:bg-stone-50 flex-1 sm:flex-initial"
                         >
                           <Plus className="size-3.5 mr-1" /> Add Another Type
                         </Button>
@@ -1131,7 +1181,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         <Button
                           onClick={() => handleProvisionRoomKeys(false)}
                           disabled={isCreatingRoom || !roomDraft.title}
-                          className="bg-gray-900 hover:bg-black text-white font-bold px-7 py-2.5 text-xs shadow-xs flex-1 sm:flex-initial"
+                          className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-7 py-2.5 text-xs shadow-sm flex-1 sm:flex-initial"
                         >
                           {isCreatingRoom
                             ? "Provisioning..."
@@ -1142,22 +1192,25 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                   </div>
                 )}
 
-                {/* STAGE 4: Add-ons & services */}
+                {/* STAGE 4: Curated Add-ons & Services */}
                 {wizardStep === 4 && (
-                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xs space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        Add-ons & services
-                      </h2>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Offer optional extras like scooter rentals, breakfast baskets, or airport rides.
-                      </p>
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 shadow-xs space-y-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
+                          Curated Add-ons & Services
+                        </h2>
+                        <p className="text-xs text-stone-500 mt-1">
+                          Offer optional extras like airport transfers, scooter rentals, or breakfast baskets.
+                        </p>
+                      </div>
+                      <YoonieMascot mood="happy" size="sm" />
                     </div>
 
                     {/* Inline Form to Add Item */}
-                    <div className="p-4 rounded-xl bg-gray-50/80 border border-gray-200/80 space-y-3">
-                      <span className="block text-xs font-bold text-gray-900">
-                        Add a service or rental
+                    <div className="p-4 rounded-xl bg-stone-50/80 border border-stone-200/80 space-y-3">
+                      <span className="block text-xs font-bold text-stone-900">
+                        Add a curated service or rental
                       </span>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1188,7 +1241,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                             />
                           </Field>
 
-                          <Field label="Pricing unit" htmlFor="exp-unit">
+                          <Field label="Pricing model" htmlFor="exp-unit">
                             <Select
                               value={experienceDraft.pricingModel}
                               onValueChange={(val: any) =>
@@ -1199,94 +1252,63 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="PER_PAX">Per Guest</SelectItem>
-                                <SelectItem value="PER_VEHICLE">Per Item / Day</SelectItem>
-                                <SelectItem value="PER_TREATMENT">Per Booking</SelectItem>
+                                <SelectItem value="PER_BOOKING">Per Stay</SelectItem>
+                                <SelectItem value="PER_GUEST">Per Guest</SelectItem>
+                                <SelectItem value="PER_DAY">Per Day</SelectItem>
                               </SelectContent>
                             </Select>
                           </Field>
                         </div>
                       </div>
 
-                      <Field label="Short description" htmlFor="exp-desc">
-                        <Input
-                          id="exp-desc"
-                          value={experienceDraft.description}
-                          onChange={(e) =>
-                            setExperienceDraft((prev) => ({ ...prev, description: e.target.value }))
-                          }
-                          placeholder="e.g. Includes helmet and 24-hr rental, or fresh tropical fruit breakfast"
-                        />
-                      </Field>
-
-                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-                        <label className="border border-gray-200 bg-white hover:bg-gray-50 rounded-lg px-3 py-1.5 text-xs text-gray-700 cursor-pointer flex items-center gap-1.5 w-full sm:w-auto">
-                          <UploadCloud className="size-3.5 text-gray-500" />
-                          <span>Upload photo</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) void handleUploadImageFile(file, "service");
-                            }}
-                            className="hidden"
-                          />
-                        </label>
-
+                      <div className="flex justify-end">
                         <Button
-                          type="button"
+                          size="sm"
+                          variant="outline"
                           onClick={addExperienceToList}
-                          disabled={!experienceDraft.name.trim()}
-                          className="bg-gray-900 hover:bg-black text-white font-bold text-xs px-5 py-2 shadow-xs w-full sm:w-auto"
+                          disabled={!experienceDraft.name || experienceDraft.basePriceThb <= 0}
+                          className="text-xs font-bold border-stone-200 text-stone-800"
                         >
-                          <Plus className="size-3.5 mr-1" /> Add to Catalog
+                          <Plus className="size-3.5 mr-1" /> Add to Service List
                         </Button>
                       </div>
                     </div>
 
-                    {/* Added List */}
-                    <div className="space-y-2">
-                      <span className="block text-xs font-bold text-gray-700">
-                        Added services ({customExperiences.length} items):
-                      </span>
-
-                      {customExperiences.length === 0 ? (
-                        <p className="text-xs text-gray-400 italic">
-                          No add-ons configured yet. You can add items above or skip to launch.
-                        </p>
-                      ) : (
-                        <div className="space-y-2">
-                          {customExperiences.map((item) => (
+                    {/* Added Experiences List */}
+                    {customExperiences.length > 0 && (
+                      <div className="space-y-2">
+                        <span className="block text-xs font-bold text-stone-900">
+                          Services Ready to Publish ({customExperiences.length})
+                        </span>
+                        <div className="divide-y divide-stone-100 rounded-xl border border-stone-200 overflow-hidden">
+                          {customExperiences.map((exp, idx) => (
                             <div
-                              key={item.id}
-                              className="p-3.5 rounded-xl bg-white border border-gray-200 flex items-center justify-between gap-3 shadow-2xs"
+                              key={idx}
+                              className="p-3 bg-white flex items-center justify-between text-xs"
                             >
-                              <div className="space-y-0.5">
-                                <span className="font-bold text-xs text-gray-900 block">
-                                  {item.name}
-                                </span>
-                                <span className="text-[11px] text-gray-500">
-                                  ฿{item.basePriceThb.toLocaleString()} /{" "}
-                                  {item.pricingModel === "PER_PAX"
-                                    ? "guest"
-                                    : item.pricingModel === "PER_VEHICLE"
-                                    ? "item"
-                                    : "booking"}
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold text-stone-900">{exp.name}</span>
+                                <span className="px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] uppercase font-bold">
+                                  {exp.pricingModel}
                                 </span>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => removeExperienceFromList(item.id)}
-                                className="text-gray-400 hover:text-red-600 p-1 rounded-md transition-colors"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono font-bold text-[#28594E]">
+                                  ฿{exp.basePriceThb.toLocaleString()} ({exp.pricingModel})
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExperienceFromList(exp.id)}
+                                  className="text-stone-400 hover:text-red-600 transition-colors"
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {guidedServiceError && (
                       <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2.5">
@@ -1298,78 +1320,81 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                     <div className="flex justify-between pt-2">
                       <Button
                         variant="ghost"
-                        onClick={() => setWizardStep(5)}
-                        className="text-xs font-semibold text-gray-500 hover:text-gray-900"
+                        onClick={triggerSkipService}
+                        className="text-xs font-semibold text-stone-500 hover:text-stone-900"
                       >
-                        Skip this step — Accommodation only
+                        Skip Extras & Review →
                       </Button>
+
                       <Button
                         onClick={handlePublishAllExperiences}
                         disabled={isCreatingService}
-                        className="bg-gray-900 hover:bg-black text-white font-bold px-7 py-2.5 text-xs shadow-xs"
+                        className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold px-7 py-2.5 text-xs shadow-sm"
                       >
                         {isCreatingService
-                          ? "Saving..."
-                          : `Save Add-ons & Review (${customExperiences.length + (experienceDraft.name.trim() ? 1 : 0)}) →`}
+                          ? "Publishing Extras..."
+                          : `Save ${customExperiences.length} Item(s) & Continue →`}
                       </Button>
                     </div>
                   </div>
                 )}
 
-                {/* STAGE 5: Review & submit (Final check & Launch) */}
-                {wizardStep === 5 && createdWorkspace && (
-                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-gray-200 shadow-xs space-y-6">
+                {/* STAGE 5: Review & Launch */}
+                {wizardStep === 5 && (createdWorkspace || form.hotelName) && (
+                  <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200/80 shadow-xs space-y-6">
                     <div className="text-center space-y-1.5 pb-2">
                       <div className="flex justify-center mb-1">
                         <YoonieMascot
                           mood="happy"
                           size="md"
-                          message="Your property workspace is live and production-ready!"
+                          message="Your white-labeled property is verified and production-ready!"
                         />
                       </div>
-                      <h2 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                        {createdWorkspace.name} is Live
+                      <h2 className="text-2xl font-bold text-[#1F2925] tracking-tight">
+                        {createdWorkspace?.name || form.hotelName} is Live
                       </h2>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-stone-500">
                         Review your verified inventory and open your direct booking front-door.
                       </p>
                     </div>
 
                     {/* Property Specs */}
-                    <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                       <div>
-                        <span className="text-gray-400 block text-[11px]">Property Code</span>
-                        <span className="font-mono font-bold text-gray-900">{createdWorkspace.code}</span>
+                        <span className="text-stone-400 block text-[11px]">Property Code</span>
+                        <span className="font-mono font-bold text-stone-900">
+                          {createdWorkspace?.code || form.slug.toUpperCase()}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-gray-400 block text-[11px]">Currency</span>
-                        <span className="font-bold text-gray-900">{form.currency}</span>
+                        <span className="text-stone-400 block text-[11px]">Currency</span>
+                        <span className="font-bold text-stone-900">{form.currency}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 block text-[11px]">City & Country</span>
-                        <span className="font-bold text-gray-900">{form.city}, {form.country}</span>
+                        <span className="text-stone-400 block text-[11px]">City & Country</span>
+                        <span className="font-bold text-stone-900">{form.city}, {form.country}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 block text-[11px]">Manager</span>
-                        <span className="font-bold text-gray-900">{form.ownerName}</span>
+                        <span className="text-stone-400 block text-[11px]">Manager</span>
+                        <span className="font-bold text-stone-900">{form.ownerName}</span>
                       </div>
                     </div>
 
                     {/* Inventory Table */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-gray-900 flex items-center gap-1.5">
-                          <Bed className="size-4 text-gray-700" /> Physical Room Inventory ({createdRooms.length} Keys)
+                        <span className="font-bold text-stone-900 flex items-center gap-1.5">
+                          <Bed className="size-4 text-stone-700" /> Physical Room Inventory ({createdRooms.length} Keys)
                         </span>
-                        <span className="text-emerald-700 font-semibold flex items-center gap-1 text-[11px]">
-                          <CheckCircle2 className="size-3.5" /> Ready for Guests
+                        <span className="text-[#28594E] font-semibold flex items-center gap-1 text-[11px]">
+                          <CheckCircle2 className="size-3.5 text-[#28594E]" /> Ready for Direct Bookings
                         </span>
                       </div>
 
                       {createdRooms.length > 0 ? (
-                        <div className="overflow-x-auto rounded-xl border border-gray-200">
+                        <div className="overflow-x-auto rounded-xl border border-stone-200">
                           <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 font-medium">
+                            <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-medium">
                               <tr>
                                 <th className="p-2.5">Room / Key #</th>
                                 <th className="p-2.5">Type</th>
@@ -1377,44 +1402,44 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                                 <th className="p-2.5">PMS Status</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-stone-100">
                               {createdRooms.map((r) => (
                                 <tr key={r._id}>
-                                  <td className="p-2.5 font-mono font-bold text-gray-900">Room {r.roomNumber}</td>
+                                  <td className="p-2.5 font-mono font-bold text-stone-900">Room {r.roomNumber}</td>
                                   <td className="p-2.5">{r.roomType.replace(/_/g, " ")}</td>
-                                  <td className="p-2.5 font-bold text-gray-900">฿{(r.baseRateThb ?? 0).toLocaleString()}</td>
-                                  <td className="p-2.5 text-emerald-700 font-medium">Active (Clean)</td>
+                                  <td className="p-2.5 font-bold text-stone-900">฿{(r.baseRateThb ?? 0).toLocaleString()}</td>
+                                  <td className="p-2.5 text-[#28594E] font-medium">Active (Clean)</td>
                                 </tr>
                               ))}
                             </tbody>
                           </table>
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-400">Accommodation only — no physical keys provisioned yet.</p>
+                        <p className="text-xs text-stone-400">Accommodation only — no physical keys provisioned yet.</p>
                       )}
                     </div>
 
                     {/* Services Table */}
                     {createdServices.length > 0 && (
                       <div className="space-y-2">
-                        <span className="block text-xs font-bold text-gray-900">
+                        <span className="block text-xs font-bold text-stone-900">
                           Published Experiences ({createdServices.length} Active)
                         </span>
-                        <div className="overflow-x-auto rounded-xl border border-gray-200">
+                        <div className="overflow-x-auto rounded-xl border border-stone-200">
                           <table className="w-full text-left text-xs border-collapse">
-                            <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 font-medium">
+                            <thead className="bg-stone-50 border-b border-stone-200 text-stone-500 font-medium">
                               <tr>
                                 <th className="p-2.5">Service</th>
                                 <th className="p-2.5">Price</th>
                                 <th className="p-2.5">Model</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100">
+                            <tbody className="divide-y divide-stone-100">
                               {createdServices.map((s) => (
                                 <tr key={s._id}>
-                                  <td className="p-2.5 font-bold text-gray-900">{s.name}</td>
-                                  <td className="p-2.5 font-bold text-gray-900">฿{(s.basePriceThb ?? 0).toLocaleString()}</td>
-                                  <td className="p-2.5 text-gray-500">{s.pricingModel}</td>
+                                  <td className="p-2.5 font-bold text-stone-900">{s.name}</td>
+                                  <td className="p-2.5 font-bold text-stone-900">฿{(s.basePriceThb ?? 0).toLocaleString()}</td>
+                                  <td className="p-2.5 text-stone-500">{s.pricingModel}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -1429,9 +1454,13 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                         size="sm"
                         variant="outline"
                         asChild
-                        className="w-full text-xs font-bold border-gray-300 text-gray-800 hover:bg-gray-50 py-3"
+                        className="w-full text-xs font-bold border-stone-300 text-stone-800 hover:bg-stone-50 py-3"
                       >
-                        <a href={getSubdomainUrl(createdWorkspace.slug)} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={getSubdomainUrl(createdWorkspace?.slug || form.slug)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           Open Direct Booking Door <ExternalLink className="size-3.5 ml-1.5" />
                         </a>
                       </Button>
@@ -1439,7 +1468,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <Button
                         size="sm"
                         asChild
-                        className="w-full text-xs font-bold bg-gray-900 hover:bg-black text-white py-3 shadow-xs"
+                        className="w-full text-xs font-bold bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] py-3 shadow-sm"
                       >
                         <a href={getSubdomainUrl("ops", "/ops/rooms")}>
                           Enter Ops Hub <ArrowRight className="size-3.5 ml-1.5" />
@@ -1451,147 +1480,168 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                       <Button
                         variant="ghost"
                         onClick={resetWizard}
-                        className="text-xs text-gray-400 hover:text-gray-700"
+                        className="text-xs text-stone-400 hover:text-stone-700"
                       >
-                        Done & Exit Onboarding
+                        Done & Exit Studio
                       </Button>
                     </div>
                   </div>
                 )}
               </main>
 
-              {/* ─── RIGHT COLUMN: Contextual Guidance Cards (OKKAMI Style) ─── */}
+              {/* ─── RIGHT COLUMN: Live White-Label Preview & Yoonie Co-Pilot ─── */}
               <aside className="lg:col-span-3 space-y-4">
-                {wizardStep === 1 && (
-                  <>
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-[#E5484D] shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Dedicated Subdomain?
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Every property on Yoonie gets a custom branded domain (e.g. <span className="font-mono text-gray-800">yourname.yoonie.app</span>). Direct bookings are captured with 0% OTA fees.
-                      </p>
+                {/* 1. Live White-Label Guest Booking Engine Preview */}
+                <div className="bg-white rounded-2xl border border-stone-200/80 shadow-xs overflow-hidden">
+                  {/* Browser Mockup Chrome */}
+                  <div className="bg-stone-100 px-3.5 py-2 border-b border-stone-200 flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-red-400/80" />
+                      <span className="size-2 rounded-full bg-amber-400/80" />
+                      <span className="size-2 rounded-full bg-emerald-400/80" />
+                    </div>
+                    <div className="flex-1 bg-white rounded-md px-2 py-0.5 text-[10px] font-mono text-stone-500 truncate flex items-center gap-1 border border-stone-200">
+                      <Lock className="size-2.5 text-emerald-600 shrink-0" />
+                      <span className="truncate">https://{form.slug || "yourhotel"}.yoonie.app</span>
+                    </div>
+                  </div>
+
+                  {/* Visual Preview Content */}
+                  <div className="p-3.5 space-y-3">
+                    {/* Live Image Header */}
+                    <div className="relative aspect-16/10 rounded-xl overflow-hidden bg-stone-100 border border-stone-200">
+                      <img
+                        src={
+                          roomDraft.coverImage ||
+                          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80"
+                        }
+                        alt="Property preview"
+                        className="w-full h-full object-cover transition-all duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-2.5 text-white">
+                        <span className="text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-[#E8A45B] text-stone-900 w-fit mb-1">
+                          Direct Booking
+                        </span>
+                        <div className="font-bold text-sm leading-tight font-serif truncate">
+                          {form.hotelName || "Your Luxury Property"}
+                        </div>
+                        <div className="text-[10px] text-stone-200 flex items-center gap-1">
+                          <span>{form.city || "Bangkok"}, {form.country || "TH"}</span>
+                          <span>·</span>
+                          <span>0% OTA Fees</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-gray-900 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Master GM Account
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        This credential holds primary access to manage rooms, assign housekeeping tasks, and view the daily dispatch run-sheet.
-                      </p>
+                    {/* Room & Price Pill */}
+                    <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-stone-800 truncate">
+                          {roomDraft.title || "Deluxe Suite"}
+                        </span>
+                        <span className="font-mono font-bold text-[#28594E]">
+                          ฿{(roomDraft.baseRateThb || 3500).toLocaleString()}/nt
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-stone-500 flex items-center justify-between">
+                        <span>{roomDraft.isSingleUnit ? "Standalone Key" : `${currentGeneratedKeys.length} Keys`}</span>
+                        <span className="text-emerald-700 font-medium">Instant Confirmation</span>
+                      </div>
                     </div>
 
-                    <div className="bg-white/80 p-4 rounded-2xl border border-gray-200 text-xs flex items-center gap-3">
-                      <YoonieMascot mood="checking" size="sm" />
-                      <span className="text-gray-600 text-[11px] leading-relaxed">
-                        Yoonie ensures direct reservations sync live to your central housekeeping board.
+                    <div className="text-[10px] text-center text-stone-400 font-medium pt-0.5">
+                      100% White-Labeled to Your Brand
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Yoonie Mascot Co-Pilot Guidance */}
+                <div className="bg-[#FAF8F5] p-5 rounded-2xl border border-[#28594E]/15 shadow-xs space-y-3.5">
+                  <div className="flex items-center gap-3">
+                    <YoonieMascot
+                      mood={
+                        wizardStep === 1
+                          ? "calm"
+                          : wizardStep === 2
+                          ? "thinking"
+                          : wizardStep === 3
+                          ? "checking"
+                          : "happy"
+                      }
+                      size="sm"
+                    />
+                    <div className="space-y-0.5">
+                      <span className="block text-xs font-bold text-[#28594E]">
+                        Yoonie Co-Pilot
+                      </span>
+                      <span className="block text-[11px] text-stone-500">
+                        {wizardStep === 1 && "Setting up your identity"}
+                        {wizardStep === 2 && "Configuring your format"}
+                        {wizardStep === 3 && "Optimizing inventory"}
+                        {wizardStep === 4 && "Maximizing ancillary revenue"}
+                        {wizardStep === 5 && "Ready for reservations"}
                       </span>
                     </div>
-                  </>
-                )}
+                  </div>
 
-                {wizardStep === 2 && (
-                  <>
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-[#E5484D] shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Hotel vs mixed-use?
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Choose &apos;Mixed-use&apos; if the property is a private pool house, standalone villa, or combines hotel units with residential apartments.
-                      </p>
-                    </div>
+                  {/* Contextual guidance text */}
+                  <div className="text-xs text-stone-600 leading-relaxed space-y-2 pt-1 border-t border-stone-200/60">
+                    {wizardStep === 1 && (
+                      <>
+                        <p>
+                          <strong className="text-stone-900">White-Labeled Subdomain:</strong> Every property gets its own direct booking front door with zero commission fees.
+                        </p>
+                        <p>
+                          <strong className="text-stone-900">Master GM Access:</strong> This account unlocks your housekeeping board and 05:30 AM dispatch run-sheet.
+                        </p>
+                      </>
+                    )}
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-gray-900 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Brand name
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Enter the chain or management brand. If the property is independent, leave this blank.
-                      </p>
-                    </div>
+                    {wizardStep === 2 && (
+                      <>
+                        <p>
+                          <strong className="text-stone-900">Boutique vs Villa:</strong> Running a single pool house or vacation rental? Select &apos;Private Villa&apos; to keep management effortless.
+                        </p>
+                        <p>
+                          <strong className="text-stone-900">Independent Properties:</strong> Leave the brand name blank if you operate independently.
+                        </p>
+                      </>
+                    )}
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-gray-400 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Room count
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Total keys or units across all room types. You can refine the breakdown in Stage 3.
-                      </p>
-                    </div>
-                  </>
-                )}
+                    {wizardStep === 3 && (
+                      <>
+                        <p>
+                          <strong className="text-stone-900">Upload Authentic Photos:</strong> Real property photos convert direct guests 4x faster than stock imagery.
+                        </p>
+                        <p>
+                          <strong className="text-stone-900">Single Space vs Multi-Key:</strong> Single unit mode assigns 1 key directly without room-numbering fuss.
+                        </p>
+                      </>
+                    )}
 
-                {wizardStep === 3 && (
-                  <>
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-[#E5484D] shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Single space vs multi-room?
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Selling just one pool house or entire villa? Choose &apos;Single Unit&apos; to assign 1 key with zero room-numbering clutter.
-                      </p>
-                    </div>
+                    {wizardStep === 4 && (
+                      <>
+                        <p>
+                          <strong className="text-stone-900">Ancillary Revenue:</strong> Offering airport pickups, scooter rentals, or breakfast adds 20–35% direct revenue.
+                        </p>
+                        <p>
+                          <strong className="text-stone-900">Completely Optional:</strong> If you only sell accommodation, click &apos;Skip Extras&apos; to continue directly.
+                        </p>
+                      </>
+                    )}
 
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-gray-900 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Photo upload only
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Upload your real photos directly. Properties with authentic, high-resolution photography convert guests 4x faster.
-                      </p>
-                    </div>
-
-                    <div className="bg-white/80 p-4 rounded-2xl border border-gray-200 text-xs flex items-center gap-3">
-                      <YoonieMascot mood="happy" size="sm" />
-                      <span className="text-gray-600 text-[11px] leading-relaxed">
-                        All provisioned room keys sync automatically to your 05:30 AM morning dispatch run-sheet.
-                      </span>
-                    </div>
-                  </>
-                )}
-
-                {wizardStep === 4 && (
-                  <>
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-[#E5484D] shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Ancillary revenue
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Offering scooter rentals, floating breakfast, or island tours adds 20–35% direct revenue to room reservations.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-gray-900 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Completely optional
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Not every property has extra services. Click &apos;Skip this step&apos; below if you only sell accommodation. You can add items later anytime.
-                      </p>
-                    </div>
-                  </>
-                )}
-
-                {wizardStep === 5 && (
-                  <>
-                    <div className="bg-white p-5 rounded-2xl border border-gray-200 border-l-4 border-l-emerald-600 shadow-xs space-y-2">
-                      <h4 className="font-bold text-xs text-gray-900">
-                        Direct Booking Active
-                      </h4>
-                      <p className="text-xs text-gray-600 leading-relaxed">
-                        Your dedicated guest website is live at <span className="font-mono text-gray-900">{(createdWorkspace?.slug || form.slug)}.{activeRootDomain}</span>.
-                      </p>
-                    </div>
-
-                    <div className="bg-white/80 p-4 rounded-2xl border border-gray-200 text-xs flex items-center gap-3">
-                      <YoonieMascot mood="happy" size="sm" />
-                      <span className="text-gray-600 text-[11px] leading-relaxed">
-                        Setup complete! You can dispatch drivers, assign housekeeping, and inspect rooms from the Ops Hub.
-                      </span>
-                    </div>
-                  </>
-                )}
+                    {wizardStep === 5 && (
+                      <>
+                        <p>
+                          <strong className="text-stone-900">Frontline Operations:</strong> Room turnarounds and arrivals dispatch automatically every morning at 05:30 AM.
+                        </p>
+                        <p>
+                          <strong className="text-stone-900">Live Booking Engine:</strong> Share your direct link to start accepting commission-free reservations immediately.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
               </aside>
             </div>
           </div>

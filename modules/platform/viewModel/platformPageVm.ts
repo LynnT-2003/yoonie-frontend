@@ -141,7 +141,7 @@ export function usePlatformPageVm() {
   });
 
   const [isWizardOpen, setIsWizardOpen] = React.useState(false);
-  // Stages matching OKKAMI architecture:
+  // 5-Stage Guided Hospitality Studio:
   // 1: Get started (Account & domain)
   // 2: Property details (Location, type, counts)
   // 3: Rooms & inventory (Types, counts)
