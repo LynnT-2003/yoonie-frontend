@@ -57,6 +57,8 @@ const formatTimer = (seconds: number) => {
 export function HomePageView({ vm }: { vm: HomePageVm }) {
   const [selectedRoomForModal, setSelectedRoomForModal] =
     React.useState<RoomCatalogItem | null>(null);
+  const [selectedServiceForModal, setSelectedServiceForModal] =
+    React.useState<ServiceItem | null>(null);
 
   if (vm.isLoadingTenant) {
     return (
@@ -112,9 +114,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
       </main>
     );
   }
-  const [selectedServiceForModal, setSelectedServiceForModal] =
-    React.useState<ServiceItem | null>(null);
-
+ 
   const {
     activeBranch,
     roomCatalog,
