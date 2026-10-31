@@ -13,8 +13,10 @@ import {
   CornerDownLeft,
   LayoutGrid,
   MessageSquarePlus,
+  Send,
   Sparkles,
   Users,
+  X,
 } from "lucide-react";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 import { ApiError } from "@/lib/domain/api/ApiError";
@@ -110,6 +112,20 @@ export function YoonieProvider({ children }: { children: React.ReactNode }) {
     <Ctx.Provider value={value}>
       {children}
       <YooniePalette open={isOpen} onOpenChange={setIsOpen} focusRoom={focusRoom} />
+      {!isOpen && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          aria-label="Ask Yoonie"
+          className="fixed bottom-5 right-5 z-40 flex size-12 items-center justify-center rounded-full bg-[#28594E] text-[#F5EBDD] shadow-xl ring-2 ring-white/60 transition-all duration-200 hover:scale-105 active:scale-95 md:hidden"
+        >
+          <img
+            src="/brand/mascot/yoonie-calm.png"
+            alt="Yoonie"
+            className="size-7 object-contain"
+          />
+        </button>
+      )}
     </Ctx.Provider>
   );
 }
@@ -228,7 +244,7 @@ function YooniePalette({
             e.preventDefault();
             inputRef.current?.focus();
           }}
-          className="fixed left-1/2 top-[10vh] z-50 flex max-h-[78vh] w-[min(42rem,calc(100vw-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-border/70 bg-surface/95 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.35)] outline-none backdrop-blur-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.97] data-[state=open]:slide-in-from-top-2 duration-150"
+          className="fixed left-1/2 top-4 sm:top-[10vh] z-50 flex max-h-[86vh] sm:max-h-[78vh] w-[calc(100vw-1.5rem)] sm:w-[min(42rem,calc(100vw-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-2xl border border-border/70 bg-surface/95 shadow-[0_24px_80px_-12px_rgba(0,0,0,0.35)] outline-none backdrop-blur-xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.97] data-[state=open]:slide-in-from-top-2 duration-150"
         >
           <DialogPrimitive.Title className="sr-only">Ask Yoonie</DialogPrimitive.Title>
           <DialogPrimitive.Description className="sr-only">
@@ -236,7 +252,7 @@ function YooniePalette({
           </DialogPrimitive.Description>
 
           {/* input row */}
-          <div className="flex items-center gap-3 border-b border-border/70 px-4">
+          <div className="flex items-center gap-2 sm:gap-3 border-b border-border/70 px-3 sm:px-4">
             <YoonieMascot mood={thinking ? "thinking" : "happy"} size="xs" className="shrink-0" />
             <input
               ref={inputRef}
@@ -247,10 +263,28 @@ function YooniePalette({
               aria-label="Ask Yoonie"
               className="h-14 min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground"
             />
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
+            <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-md bg-secondary px-2 py-1 text-xs font-medium text-secondary-foreground">
               <ChipIcon className="size-3.5" />
               {chip}
             </span>
+            {query.trim() && (
+              <button
+                type="button"
+                onClick={() => run(items[active] ?? (query.trim() ? undefined : items[0]))}
+                aria-label="Send message"
+                className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#28594E] text-[#F5EBDD] shadow-xs transition hover:bg-[#1E433A] active:scale-95"
+              >
+                <Send className="size-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              aria-label="Close"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
           </div>
 
           {/* conversation */}

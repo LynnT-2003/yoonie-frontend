@@ -113,11 +113,12 @@ export function OpsNavbar() {
           <button
             type="button"
             onClick={() => yoonie?.open()}
-            className="hidden h-8 items-center gap-2 rounded-lg border border-border bg-surface pl-2.5 pr-1.5 text-[13px] text-muted-foreground shadow-xs transition-colors hover:border-primary/40 hover:text-foreground md:inline-flex"
+            aria-label="Ask Yoonie"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 text-[13px] text-muted-foreground shadow-xs transition-colors hover:border-primary/40 hover:text-foreground active:scale-95"
           >
             <Sparkles className="size-3.5 text-primary" />
-            Ask Yoonie
-            <span className="ml-3 inline-flex gap-0.5">
+            <span className="font-medium text-foreground">Ask Yoonie</span>
+            <span className="hidden ml-2 md:inline-flex gap-0.5">
               <Kbd>⌘</Kbd>
               <Kbd>K</Kbd>
             </span>
