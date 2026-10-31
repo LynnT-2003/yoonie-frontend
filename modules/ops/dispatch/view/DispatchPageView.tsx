@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, BedDouble, Car, CheckCircle2, Compass, Plane } from "lucide-react";
+import { AlertTriangle, BedDouble, Car, CheckCircle2, Clock, Compass, Plane } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -159,12 +159,16 @@ function Count({ n }: { n: number }) {
 
 /** Today as a runway: rooms that must be ready and flights that land, against a live "now". */
 function Runway({ vm }: { vm: DispatchPageVm }) {
-  const dayStart = new Date(`${vm.today}T06:00:00+07:00`).getTime();
-  const dayEnd = new Date(`${vm.today}T23:59:00+07:00`).getTime();
+  // 24-hour business day starting at 00:00:00 in hotel's timezone (UTC+7)
+  const dayStart = new Date(`${vm.today}T00:00:00+07:00`).getTime();
+  const dayEnd = dayStart + 24 * 3_600_000;
   const pos = (t: number) => Math.min(100, Math.max(0, ((t - dayStart) / (dayEnd - dayStart)) * 100));
 
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const trackRef = React.useRef<HTMLDivElement>(null);
-  const [trackWidth, setTrackWidth] = React.useState(1200);
+  const [trackWidth, setTrackWidth] = React.useState(1280);
+  const hasAutoScrolled = React.useRef(false);
+
   React.useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
@@ -173,8 +177,8 @@ function Runway({ vm }: { vm: DispatchPageVm }) {
     return () => ro.disconnect();
   }, []);
 
-  // stack markers that would overlap into lanes; each marker is ~120px wide on any screen
-  const minGap = (120 / Math.max(1, trackWidth)) * 100;
+  // stack markers that would overlap into lanes; each marker is ~130px wide
+  const minGap = (130 / Math.max(1, trackWidth)) * 100;
   const lanes: number[] = [];
   const markers = vm.runway.map((m) => {
     const x = pos(new Date(m.at).getTime());
@@ -192,32 +196,77 @@ function Runway({ vm }: { vm: DispatchPageVm }) {
   const focus = (id: string) =>
     document.getElementById(`task-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
 
+  const centerOnNow = React.useCallback(() => {
+    if (nowX === null) return;
+    const container = scrollContainerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+    const trackW = track.offsetWidth || trackWidth;
+    const containerW = container.clientWidth;
+    const targetLeft = (nowX / 100) * trackW - containerW / 2;
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior: "smooth" });
+  }, [nowX, trackWidth]);
+
+  // Center on current time when loaded
+  React.useEffect(() => {
+    if (hasAutoScrolled.current || nowX === null) return;
+    centerOnNow();
+    hasAutoScrolled.current = true;
+  }, [nowX, centerOnNow]);
+
+  // Every 2 hours across full 24-hour cycle
+  const hours = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-xs">
-      <div className="flex flex-wrap items-end gap-x-8 gap-y-3 px-5 py-4">
+    <section className="rounded-lg border border-border bg-surface shadow-xs">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
         <Stat label="Open jobs" value={vm.counts.ALL} />
         <Stat label="Unassigned" value={vm.counts.unassigned} tone={vm.counts.unassigned ? "warning" : undefined} />
         <Stat label="Tight" value={vm.counts.atRisk} tone={vm.counts.atRisk ? "warning" : undefined} />
         <Stat label="Late" value={vm.counts.late} tone={vm.counts.late ? "danger" : undefined} />
         <Stat label="To inspect" value={vm.toInspect.length} tone={vm.toInspect.length ? "info" : undefined} />
-        {next ? (
-          <button
-            type="button"
-            onClick={() => focus(next.task._id)}
-            className="ml-auto rounded-md bg-secondary px-3 py-2 text-left text-secondary-foreground transition-colors hover:bg-secondary/80"
-          >
-            <span className="block text-[11px] opacity-70">Next deadline</span>
-            <span className="text-[13px] font-medium">
-              {next.task.housekeeping
-                ? `Room ${next.task.housekeeping.roomNumber} ready`
-                : `${next.task.pickup?.flightNumber} lands`}{" "}
-              {clock(next.at)} · {next.minutesLeft !== null ? countdown(next.minutesLeft) : ""}
-            </span>
-          </button>
-        ) : null}
+
+        <div className="ml-auto flex items-center gap-2">
+          {nowX !== null ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={centerOnNow}
+              className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+            >
+              <Clock className="size-3.5 text-destructive" />
+              <span>Jump to now</span>
+            </Button>
+          ) : null}
+
+          {next ? (
+            <button
+              type="button"
+              onClick={() => focus(next.task._id)}
+              className="rounded-md bg-secondary px-3 py-2 text-left text-secondary-foreground transition-colors hover:bg-secondary/80"
+            >
+              <span className="block text-[11px] opacity-70">Next deadline</span>
+              <span className="text-[13px] font-medium">
+                {next.task.housekeeping
+                  ? `Room ${next.task.housekeeping.roomNumber} ready`
+                  : `${next.task.pickup?.flightNumber} lands`}{" "}
+                {clock(next.at)} · {next.minutesLeft !== null ? countdown(next.minutesLeft) : ""}
+              </span>
+            </button>
+          ) : null}
+        </div>
       </div>
-      <div className="border-t border-border px-5 pb-3 pt-4">
-        <div ref={trackRef} className="relative" style={{ height: `${Math.max(1, lanes.length) * 30 + 26}px` }}>
+
+      <div
+        ref={scrollContainerRef}
+        className="border-t border-border overflow-x-auto overscroll-x-contain px-5 pb-4 pt-5 select-none"
+      >
+        <div
+          ref={trackRef}
+          className="relative min-w-[1000px] lg:min-w-[1280px]"
+          style={{ height: `${Math.max(1, lanes.length) * 32 + 30}px` }}
+        >
           {/* the part of the day already gone */}
           {nowX !== null ? (
             <div
@@ -226,58 +275,75 @@ function Runway({ vm }: { vm: DispatchPageVm }) {
               aria-hidden
             />
           ) : null}
-          {[6, 9, 12, 15, 18, 21].map((h) => {
-            const x = pos(new Date(`${vm.today}T${String(h).padStart(2, "0")}:00:00+07:00`).getTime());
+
+          {hours.map((h) => {
+            const x = (h / 24) * 100;
             const nearNow = nowX !== null && Math.abs(x - nowX) < (48 / Math.max(1, trackWidth)) * 100;
+            const labelTransform = h === 0 ? "translateX(0%)" : h === 24 ? "translateX(-100%)" : "translateX(-50%)";
             return (
               <div
                 key={h}
-                className="absolute inset-y-0"
-                style={{
-                  left: `${pos(new Date(`${vm.today}T${String(h).padStart(2, "0")}:00:00+07:00`).getTime())}%`,
-                }}
+                className="absolute inset-y-0 pointer-events-none"
+                style={{ left: `${x}%` }}
               >
                 <div className="h-full w-px bg-border" />
                 {nearNow ? null : (
-                  <span className="absolute bottom-0 -translate-x-1/2 text-[10px] tabular-nums text-muted-foreground">
-                    {String(h).padStart(2, "0")}:00
+                  <span
+                    className="absolute bottom-0 text-[10px] tabular-nums text-muted-foreground whitespace-nowrap"
+                    style={{ transform: labelTransform }}
+                  >
+                    {h === 24 ? "24:00" : `${String(h).padStart(2, "0")}:00`}
                   </span>
                 )}
               </div>
             );
           })}
+
+          {/* Current time red line */}
           {nowX !== null ? (
-            <div className="absolute inset-y-0 z-10" style={{ left: `${nowX}%` }}>
+            <div className="absolute inset-y-0 z-10 pointer-events-none" style={{ left: `${nowX}%` }}>
               <div className="h-[calc(100%-14px)] w-0.5 bg-destructive/70" />
-              <span className="absolute bottom-0 -translate-x-1/2 rounded bg-destructive px-1 text-[10px] font-medium tabular-nums text-white">
+              <span
+                className="absolute bottom-0 rounded bg-destructive px-1 text-[10px] font-medium tabular-nums text-white whitespace-nowrap"
+                style={{
+                  transform: nowX < 4 ? "translateX(0%)" : nowX > 96 ? "translateX(-100%)" : "translateX(-50%)",
+                }}
+              >
                 {clock(new Date(vm.now).toISOString())}
               </span>
             </div>
           ) : null}
+
+          {/* Task markers */}
           {markers.map((m) => {
             const isRoom = Boolean(m.task.housekeeping);
+            const translateX = m.x < 3 ? "0%" : m.x > 97 ? "-100%" : "-50%";
             return (
               <button
                 key={m.task._id}
                 type="button"
                 onClick={() => focus(m.task._id)}
                 title={`${m.task.title} · ${URGENCY_STYLE[m.urgency].label}`}
-                style={{ left: `${m.x}%`, top: `${m.lane * 30 + 2}px` }}
+                style={{
+                  left: `${m.x}%`,
+                  top: `${m.lane * 32 + 2}px`,
+                  transform: `translateX(${translateX})`,
+                }}
                 className={cn(
-                  "absolute z-20 flex h-6 -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded px-2 text-[11px] font-medium ring-1 transition-transform hover:scale-105",
+                  "absolute z-20 flex h-6 items-center gap-1 whitespace-nowrap rounded px-2 text-[11px] font-medium ring-1 transition-transform hover:scale-105 active:scale-95 shadow-2xs",
                   m.urgency === "DONE" && "bg-success-soft text-success ring-success/30",
                   (m.urgency === "ON_TRACK" || m.urgency === "NO_DEADLINE") &&
                     "bg-primary text-primary-foreground ring-primary",
                   m.urgency === "AT_RISK" && "bg-warning-soft text-warning ring-warning/40",
-                  m.urgency === "LATE" && "bg-danger-soft text-destructive ring-destructive/40",
+                  m.urgency === "LATE" && "bg-danger-soft text-destructive ring-destructive/40"
                 )}
               >
                 {m.urgency === "DONE" ? (
-                  <CheckCircle2 className="size-3" />
+                  <CheckCircle2 className="size-3 shrink-0" />
                 ) : isRoom ? (
-                  <BedDouble className="size-3" />
+                  <BedDouble className="size-3 shrink-0" />
                 ) : (
-                  <Plane className="size-3" />
+                  <Plane className="size-3 shrink-0" />
                 )}
                 <span className="font-mono">
                   {isRoom ? m.task.housekeeping!.roomNumber : m.task.pickup!.flightNumber}
@@ -286,6 +352,7 @@ function Runway({ vm }: { vm: DispatchPageVm }) {
               </button>
             );
           })}
+
           {!markers.length ? (
             <p className="absolute inset-x-0 top-1 text-center text-[13px] text-muted-foreground">
               No arrivals or pickups with a deadline today
