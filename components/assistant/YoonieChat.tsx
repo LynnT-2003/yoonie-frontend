@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Mic, MicOff } from "lucide-react";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 import { ApiError } from "@/lib/domain/api/ApiError";
 import { cn } from "@/lib/utils";
@@ -53,6 +53,10 @@ export function YoonieChat({
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [draft, setDraft] = React.useState("");
   const [thinking, setThinking] = React.useState(false);
+  const [listening, setListening] = React.useState(false);
+  const recognitionRef = React.useRef<any>(null);
+  const silenceTimerRef = React.useRef<any>(null);
+  const latestTextRef = React.useRef("");
   const endRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
 
@@ -60,7 +64,61 @@ export function YoonieChat({
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, thinking]);
 
-  const ask = async (text: string) => {
+  const toggleListening = () => {
+    if (listening) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      recognitionRef.current?.stop();
+      setListening(false);
+      const textToSend = latestTextRef.current.trim();
+      if (textToSend) {
+        ask(textToSend, true);
+      }
+      return;
+    }
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input requires Google Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      setListening(true);
+      latestTextRef.current = "";
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => {
+      setListening(false);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      setDraft(transcript);
+      latestTextRef.current = transcript;
+
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        const textToSend = latestTextRef.current.trim();
+        if (textToSend) {
+          recognitionRef.current?.stop();
+          setListening(false);
+          ask(textToSend, true);
+        }
+      }, 1800);
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const ask = async (text: string, forceVoice?: boolean) => {
     const message = text.trim();
     if (!message || thinking) return;
     setDraft("");
@@ -69,6 +127,15 @@ export function YoonieChat({
     try {
       const reply = await send(message);
       setMessages((m) => [...m, { role: "yoonie", text: reply }]);
+
+      if (forceVoice && typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const clean = reply.replace(/\*\*/g, "").replace(/\n/g, " ");
+        const u = new SpeechSynthesisUtterance(clean);
+        u.lang = "en-US";
+        window.speechSynthesis.speak(u);
+      }
+
       onReply?.();
     } catch (err) {
       const text =
@@ -171,6 +238,21 @@ export function YoonieChat({
           aria-label="Message Yoonie"
           className="max-h-32 min-h-10 flex-1 resize-none rounded-xl border border-input bg-surface px-3 py-2.5 text-[13px] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
         />
+
+        <button
+          type="button"
+          onClick={toggleListening}
+          aria-label={listening ? "Stop listening" : "Speak to Yoonie"}
+          title={listening ? "Listening... click to stop" : "Click to speak"}
+          className={cn(
+            "inline-flex size-10 shrink-0 items-center justify-center rounded-xl transition-all",
+            listening
+              ? "bg-red-500 text-white animate-pulse shadow-md"
+              : "border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
+        >
+          {listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+        </button>
         <button
           type="submit"
           disabled={!draft.trim() || thinking}

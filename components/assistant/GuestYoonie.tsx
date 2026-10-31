@@ -19,6 +19,12 @@ export function GuestYoonie({ hotelName, className }: { hotelName?: string; clas
   const [open, setOpen] = React.useState(false);
   const sessionId = useChatSession("yoonie:guest-session");
 
+  React.useEffect(() => {
+    if (!open && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, [open]);
+
   return (
     <>
       {open ? (

@@ -12,7 +12,12 @@ import {
   Compass,
   CornerDownLeft,
   LayoutGrid,
+  Download,
   MessageSquarePlus,
+  Pause,
+  Play,
+  Mic,
+  MicOff,
   Send,
   Sparkles,
   Users,
@@ -89,7 +94,7 @@ export function useYoonieFocus(roomNumber?: string) {
 
 export const useYoonie = () => React.useContext(Ctx);
 
-type Turn = { question: string; answer?: string; failed?: boolean };
+type Turn = { question: string; answer?: string; failed?: boolean; audio?: string; isVoice?: boolean };
 
 export function YoonieProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -153,6 +158,44 @@ function YooniePalette({
   const here = PAGES.find((p) => p.page === page);
 
   const [query, setQuery] = React.useState("");
+  const [listening, setListening] = React.useState(false);
+  const recognitionRef = React.useRef<any>(null);
+  const silenceTimerRef = React.useRef<any>(null);
+  const latestQueryRef = React.useRef("");
+  const micUsedRef = React.useRef(false);
+  const currentAudioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [playingTurnIndex, setPlayingTurnIndex] = React.useState<number | null>(null);
+
+  const togglePlayTurn = (index: number, audioBase64?: string, answerText?: string) => {
+    if (playingTurnIndex === index) {
+      currentAudioRef.current?.pause();
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setPlayingTurnIndex(null);
+      return;
+    }
+    currentAudioRef.current?.pause();
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    if (audioBase64) {
+      const sound = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+      currentAudioRef.current = sound;
+      setPlayingTurnIndex(index);
+      sound.onended = () => setPlayingTurnIndex(null);
+      sound.onerror = () => setPlayingTurnIndex(null);
+      sound.play().catch(() => setPlayingTurnIndex(null));
+    } else if (answerText && typeof window !== "undefined" && "speechSynthesis" in window) {
+      setPlayingTurnIndex(index);
+      const clean = answerText.replace(/\*\*/g, "").replace(/\n/g, " ");
+      const u = new SpeechSynthesisUtterance(clean);
+      u.lang = "en-US";
+      u.onend = () => setPlayingTurnIndex(null);
+      u.onerror = () => setPlayingTurnIndex(null);
+      window.speechSynthesis.speak(u);
+    }
+  };
   const [turns, setTurns] = React.useState<Turn[]>([]);
   const [active, setActive] = React.useState(0);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -178,23 +221,121 @@ function YooniePalette({
   React.useEffect(() => setActive(0), [query, turns.length]);
   // never carry half-typed text into the next opening: Enter would send it
   React.useEffect(() => {
-    if (!open) setQuery("");
-  }, [open]);
+    if (!open) {
+      setQuery("");
+      latestQueryRef.current = "";
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (listening) {
+        recognitionRef.current?.stop();
+        setListening(false);
+      }
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      setPlayingTurnIndex(null);
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  }, [open, listening]);
   React.useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
   }, [turns]);
 
-  const ask = async (question: string) => {
-    if (!question.trim() || thinking) return;
+  const toggleListening = () => {
+    if (listening) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      recognitionRef.current?.stop();
+      setListening(false);
+      const textToSend = latestQueryRef.current.trim();
+      if (textToSend) {
+        ask(textToSend, true);
+      }
+      return;
+    }
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input requires Google Chrome.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true; // Stay listening through short pauses
+
+    recognition.onstart = () => {
+      setListening(true);
+      micUsedRef.current = true;
+      latestQueryRef.current = "";
+    };
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => {
+      setListening(false);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; ++i) {
+        transcript += event.results[i][0].transcript;
+      }
+      setQuery(transcript);
+      latestQueryRef.current = transcript;
+
+      // Allow a 1.8-second natural pause while thinking before sending
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = setTimeout(() => {
+        const textToSend = latestQueryRef.current.trim();
+        if (textToSend) {
+          recognitionRef.current?.stop();
+          setListening(false);
+          ask(textToSend, true);
+        }
+      }, 1800);
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const ask = async (question: string, forceVoice?: boolean) => {
+    const q = question.trim();
+    if (!q || thinking) return;
+    const shouldUseVoice = forceVoice === true || micUsedRef.current;
+    micUsedRef.current = false;
+    const turnIndex = turns.length;
     setQuery("");
-    setTurns((t) => [...t, { question }]);
+    setTurns((t) => [...t, { question: q, isVoice: shouldUseVoice }]);
     try {
-      const { reply } = await askStaffYoonie({
+      const { reply, audio } = await askStaffYoonie({
         sessionId,
-        message: question,
+        message: q,
+        voice: shouldUseVoice,
         context: { page, ...(focusRoom ? { roomNumber: focusRoom } : {}) },
       });
-      setTurns((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, answer: reply } : x)));
+      setTurns((t) => t.map((x, i) => (i === t.length - 1 ? { ...x, answer: reply, audio, isVoice: shouldUseVoice } : x)));
+
+      if (shouldUseVoice) {
+        setPlayingTurnIndex(turnIndex);
+        if (audio) {
+          currentAudioRef.current?.pause();
+          const sound = new Audio(`data:audio/mp3;base64,${audio}`);
+          currentAudioRef.current = sound;
+          sound.onended = () => setPlayingTurnIndex(null);
+          sound.onerror = () => setPlayingTurnIndex(null);
+          sound.play().catch(() => setPlayingTurnIndex(null));
+        } else if (typeof window !== "undefined" && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          const clean = reply.replace(/\*\*/g, "").replace(/\n/g, " ");
+          const u = new SpeechSynthesisUtterance(clean);
+          u.lang = "en-US";
+          u.onend = () => setPlayingTurnIndex(null);
+          u.onerror = () => setPlayingTurnIndex(null);
+          window.speechSynthesis.speak(u);
+        }
+      }
+
       // Yoonie acts as you: anything it changed shows on the boards straight away
       void queryClient.invalidateQueries({ queryKey: hospitalityKeys.all });
     } catch (err) {
@@ -267,6 +408,20 @@ function YooniePalette({
               <ChipIcon className="size-3.5" />
               {chip}
             </span>
+            <button
+              type="button"
+              onClick={toggleListening}
+              aria-label={listening ? "Stop listening" : "Speak to Yoonie"}
+              title={listening ? "Listening... click to stop" : "Click to speak"}
+              className={cn(
+                "inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition active:scale-95",
+                listening
+                  ? "bg-red-500 text-white animate-pulse shadow-md"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              {listening ? <MicOff className="size-4" /> : <Mic className="size-4" />}
+            </button>
             {query.trim() && (
               <button
                 type="button"
@@ -304,14 +459,42 @@ function YooniePalette({
                       ))}
                     </p>
                   ) : (
-                    <p
+                    <div
                       className={cn(
-                        "border-l-2 pl-3 text-[13px] leading-relaxed",
+                        "border-l-2 pl-3 space-y-2.5",
                         t.failed ? "border-destructive text-destructive" : "border-primary/40 text-foreground"
                       )}
                     >
-                      <Rich text={t.answer} />
-                    </p>
+                      <p className="text-[13px] leading-relaxed">
+                        <Rich text={t.answer} />
+                      </p>
+                      {(t.audio || t.isVoice) && (
+                        <div className="flex items-center gap-2 rounded-lg bg-secondary/60 border border-border/60 px-2.5 py-1.5 w-fit shadow-xs">
+                          <button
+                            type="button"
+                            onClick={() => togglePlayTurn(i, t.audio, t.answer)}
+                            className="inline-flex size-6 items-center justify-center rounded-full bg-[#28594E] text-[#F5EBDD] hover:bg-[#1E433A] transition active:scale-95"
+                            aria-label={playingTurnIndex === i ? "Pause audio" : "Play audio"}
+                            title={playingTurnIndex === i ? "Pause audio" : "Play audio"}
+                          >
+                            {playingTurnIndex === i ? <Pause className="size-3" /> : <Play className="size-3 ml-0.5" />}
+                          </button>
+                          <span className="text-[11px] text-muted-foreground font-medium">
+                            {playingTurnIndex === i ? "Playing briefing..." : "Voice briefing"}
+                          </span>
+                          {t.audio ? (
+                            <a
+                              href={`data:audio/mp3;base64,${t.audio}`}
+                              download={`yoonie-briefing-${i + 1}.mp3`}
+                              className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition ml-1"
+                              title="Download audio (MP3)"
+                            >
+                              <Download className="size-3.5" />
+                            </a>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
