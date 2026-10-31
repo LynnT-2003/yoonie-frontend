@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Clock, Plane, ShieldCheck, Users, X } from "lucide-react";
+import { Bed, Check, Clock, Plane, ShieldCheck, Sparkles, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,8 +31,7 @@ import { serviceIssue, type CartItem, type HomePageVm } from "@/modules/home/vie
 import { GuestYoonie } from "@/components/assistant/GuestYoonie";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 
-const HERO_FALLBACK =
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=2000&q=80";
+const HERO_FALLBACK = "";
 
 const CATEGORY_LABELS: Record<string, string> = {
   TOURS: "Experience",
@@ -168,10 +167,12 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
     <div className={cn("bg-background text-foreground", cart.length > 0 ? "pb-28 lg:pb-24" : "pb-24")}>
       <GuestYoonie hotelName={hotelName} className={cart.length > 0 ? "bottom-28 lg:bottom-24" : undefined} />
       {/* ─── Hero ──────────────────────────────────────────────────────────────── */}
-      <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden bg-foreground">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-linear-to-t from-black/65 via-black/20 to-black/10" />
+      <section className="relative h-[56vh] min-h-[420px] w-full overflow-hidden bg-stone-900">
+        {heroImage ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        ) : null}
+        <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/35 to-black/20" />
         <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-4 pb-24 sm:px-6">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/80">
             {locationLabel}
@@ -296,12 +297,19 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
                       className="group relative aspect-4/3 overflow-hidden bg-subtle sm:aspect-auto sm:min-h-full"
                       aria-label={`View ${room.title}`}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={room.image}
-                        alt={room.title}
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                      />
+                      {room.image ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={room.image}
+                          alt={room.title}
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                        />
+                      ) : (
+                        <div className="h-full w-full min-h-[220px] bg-stone-100 flex flex-col items-center justify-center text-stone-400 gap-2 p-6 text-center select-none">
+                          <Bed className="size-8 stroke-[1.5] text-stone-300" />
+                          <span className="text-xs font-medium text-stone-400">No room photo uploaded</span>
+                        </div>
+                      )}
                     </button>
 
                     <div className="flex flex-col gap-4 p-6">
@@ -372,14 +380,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
 
             <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
               {services.map((svc) => {
-                const svcImg =
-                  svc.coverImage ||
-                  svc.images?.[0] ||
-                  (svc.kind === "AIRPORT_TRANSFER"
-                    ? "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800"
-                    : svc.category === "WELLNESS"
-                    ? "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800"
-                    : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800");
+                const svcImg = svc.coverImage || svc.images?.[0] || "";
 
                 return (
                   <AddOnCard
@@ -401,10 +402,7 @@ export function HomePageView({ vm }: { vm: HomePageVm }) {
               })}
 
               {restaurants.map((rest) => {
-                const restImg =
-                  rest.coverImage ||
-                  rest.images?.[0] ||
-                  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800";
+                const restImg = rest.coverImage || rest.images?.[0] || "";
                 const shift = rest.shifts?.[1] || rest.shifts?.[0];
                 const shiftLabel = shift?.label || shift?.name || "Dinner";
 
@@ -697,13 +695,18 @@ function AddOnCard({
   onOpen?: () => void;
   onAdd: () => void;
 }) {
-  const imageEl = (
+  const imageEl = image ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={image}
       alt={title}
       className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
     />
+  ) : (
+    <div className="h-full w-full min-h-[160px] bg-stone-100 flex flex-col items-center justify-center text-stone-400 gap-1.5 p-4 text-center select-none">
+      <Sparkles className="size-6 stroke-[1.5] text-stone-300" />
+      <span className="text-[11px] font-medium text-stone-400">No photo uploaded</span>
+    </div>
   );
 
   return (

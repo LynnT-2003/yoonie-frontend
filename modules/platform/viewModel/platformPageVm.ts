@@ -29,6 +29,12 @@ export interface WorkspaceFormState {
   heroImageUrl?: string;
 }
 
+export interface FloorConfig {
+  floor: number;
+  keyCount: number;
+  startRoomNumber: string;
+}
+
 export interface RoomDraftState {
   title: string;
   baseRateThb: number;
@@ -40,6 +46,7 @@ export interface RoomDraftState {
   keyCount: number;
   startRoomNumber: string;
   floor: number;
+  floors: FloorConfig[];
   coverImage: string;
   amenities: string[];
 }
@@ -82,7 +89,10 @@ export function computeRoomKeysFromDraft(draft: RoomDraftState): string[] {
     const key = draft.singleUnitName.trim() || draft.title.trim() || "Pool House";
     return [key];
   }
-  return computeGeneratedRoomKeys(draft.startRoomNumber, draft.keyCount);
+  const floors = draft.floors && draft.floors.length > 0
+    ? draft.floors
+    : [{ floor: draft.floor || 1, keyCount: draft.keyCount || 10, startRoomNumber: draft.startRoomNumber || "101" }];
+  return floors.flatMap((fl) => computeGeneratedRoomKeys(fl.startRoomNumber, fl.keyCount));
 }
 
 export function mapTitleToRoomType(title: string): "STANDARD_KING" | "DELUXE_BALCONY" | "POOL_VILLA" {
@@ -99,7 +109,7 @@ export function mapTitleToRoomType(title: string): "STANDARD_KING" | "DELUXE_BAL
 const DEFAULT_FORM: WorkspaceFormState = {
   hotelName: "Sedona Heritage Resort",
   brandName: "",
-  slug: "sedona-resort",
+  slug: `sedona-${Math.floor(100 + Math.random() * 900)}`,
   city: "Bangkok",
   country: "TH",
   currency: "THB",
@@ -112,23 +122,24 @@ const DEFAULT_FORM: WorkspaceFormState = {
   ownerName: "Lynn Tan",
   ownerEmail: "lynn@sedonahotel.example",
   ownerPassword: "Password123!",
-  logoUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200",
-  heroImageUrl: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600",
+  logoUrl: "",
+  heroImageUrl: "",
 };
 
 export const DEFAULT_ROOM_DRAFT: RoomDraftState = {
-  title: "Pool House & Terrace",
+  title: "Standard Room",
   baseRateThb: 3200,
   maxAdults: 2,
-  areaSqm: 50,
+  areaSqm: 36,
   bedConfig: "1 King Bed",
-  isSingleUnit: true,
-  singleUnitName: "Pool House",
-  keyCount: 1,
+  isSingleUnit: false,
+  singleUnitName: "",
+  keyCount: 2,
   startRoomNumber: "101",
   floor: 1,
-  coverImage: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1600&q=80",
-  amenities: ["High-Speed WiFi", "Air Conditioning", "Private Pool", "Private Bathroom"],
+  floors: [{ floor: 1, keyCount: 2, startRoomNumber: "101" }],
+  coverImage: "",
+  amenities: ["High-Speed WiFi", "Air Conditioning", "Private Bathroom"],
 };
 
 export function usePlatformPageVm() {
@@ -140,14 +151,21 @@ export function usePlatformPageVm() {
     queryFn: getBranches,
   });
 
-  const [isWizardOpen, setIsWizardOpen] = React.useState(false);
+  const [isWizardOpen, setIsWizardOpen] = React.useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("wizard") === "true";
+  });
   // 5-Stage Guided Hospitality Studio:
   // 1: Get started (Account & domain)
   // 2: Property details (Location, type, counts)
   // 3: Rooms & inventory (Types, counts)
   // 4: Add-ons & services (Experiences, rentals)
   // 5: Review & submit (Final check & launch)
-  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5>(1);
+  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5>(() => {
+    if (typeof window === "undefined") return 1;
+    const s = parseInt(new URLSearchParams(window.location.search).get("step") || "1", 10);
+    return (s >= 1 && s <= 5 ? s : 1) as 1 | 2 | 3 | 4 | 5;
+  });
   const [form, setForm] = React.useState<WorkspaceFormState>(DEFAULT_FORM);
   const [onboardingError, setOnboardingError] = React.useState<string | null>(null);
 
@@ -162,6 +180,11 @@ export function usePlatformPageVm() {
 
   // Room Setup State
   const [roomDraft, setRoomDraft] = React.useState<RoomDraftState>(DEFAULT_ROOM_DRAFT);
+  const [roomScreen, setRoomScreen] = React.useState<1 | 2 | 3>(() => {
+    if (typeof window === "undefined") return 1;
+    const scr = parseInt(new URLSearchParams(window.location.search).get("screen") || "1", 10);
+    return (scr >= 1 && scr <= 3 ? scr : 1) as 1 | 2 | 3;
+  });
   const [customAmenityInput, setCustomAmenityInput] = React.useState("");
   const [isCreatingRoom, setIsCreatingRoom] = React.useState(false);
   const [guidedRoomError, setGuidedRoomError] = React.useState<string | null>(null);
@@ -189,6 +212,32 @@ export function usePlatformPageVm() {
     type: "ROOMS" | "SERVICE";
   }>({ isOpen: false, type: "ROOMS" });
 
+  const existingSlugs = React.useMemo(() => {
+    return (branchesQuery.data || []).map((b) => b.code?.toLowerCase() || "");
+  }, [branchesQuery.data]);
+
+  const isSlugTaken = React.useMemo(() => {
+    const s = form.slug.trim().toLowerCase();
+    if (!s) return false;
+    return existingSlugs.includes(s);
+  }, [form.slug, existingSlugs]);
+
+  const suggestedSlug = React.useMemo(() => {
+    const base = (form.slug || "stay").replace(/-[0-9]+$/, "").toLowerCase().trim();
+    let count = Math.floor(10 + Math.random() * 90);
+    let candidate = `${base}-${count}`;
+    while (existingSlugs.includes(candidate)) {
+      count++;
+      candidate = `${base}-${count}`;
+    }
+    return candidate;
+  }, [form.slug, existingSlugs]);
+
+  const handleAutoFixSlug = () => {
+    setForm((prev) => ({ ...prev, slug: suggestedSlug }));
+    setOnboardingError(null);
+  };
+
   // Auto-slugify
   const handleHotelNameChange = (name: string) => {
     const autoSlug = name
@@ -201,6 +250,7 @@ export function usePlatformPageVm() {
       hotelName: name,
       slug: autoSlug || prev.slug,
     }));
+    if (onboardingError) setOnboardingError(null);
   };
 
   // Real backend workspace onboarding mutation
@@ -260,11 +310,68 @@ export function usePlatformPageVm() {
   });
 
   const handleAdvanceToRooms = () => {
+    const isVilla = form.propertyType === "CONDO";
+    setRoomDraft((prev) => ({
+      ...prev,
+      isSingleUnit: isVilla,
+      title: prev.title || (isVilla ? "Private Villa" : "Standard Room"),
+      singleUnitName: isVilla ? (prev.singleUnitName || "Private Villa") : "",
+      keyCount: isVilla ? 1 : (prev.keyCount || 10),
+      floor: isVilla ? 1 : (prev.floor || 1),
+      floors: isVilla
+        ? [{ floor: 1, keyCount: 1, startRoomNumber: "Villa" }]
+        : (prev.floors && prev.floors.length > 0 ? prev.floors : [{ floor: 1, keyCount: 10, startRoomNumber: "101" }]),
+      startRoomNumber: isVilla ? "Villa" : (prev.startRoomNumber || "101"),
+    }));
+    setRoomScreen(1);
     if (createdWorkspace) {
       setWizardStep(3);
     } else {
       createWorkspaceMutation.mutate(form);
     }
+  };
+
+  // Multi-floor builder methods
+  const addFloor = () => {
+    setRoomDraft((prev) => {
+      const currentFloors =
+        prev.floors && prev.floors.length > 0
+          ? prev.floors
+          : [{ floor: prev.floor || 1, keyCount: prev.keyCount || 10, startRoomNumber: prev.startRoomNumber || "101" }];
+      const maxFloor = Math.max(...currentFloors.map((f) => f.floor), 0);
+      const nextFloor = maxFloor + 1;
+      const lastCount = currentFloors[currentFloors.length - 1]?.keyCount || 10;
+      return {
+        ...prev,
+        floors: [
+          ...currentFloors,
+          { floor: nextFloor, keyCount: lastCount, startRoomNumber: `${nextFloor}01` },
+        ],
+      };
+    });
+  };
+
+  const removeFloor = (floorNum: number) => {
+    setRoomDraft((prev) => {
+      if (!prev.floors || prev.floors.length <= 1) return prev;
+      return {
+        ...prev,
+        floors: prev.floors.filter((f) => f.floor !== floorNum),
+      };
+    });
+  };
+
+  const updateFloorConfig = (floorNum: number, update: Partial<FloorConfig>) => {
+    setRoomDraft((prev) => {
+      const currentFloors =
+        prev.floors && prev.floors.length > 0
+          ? prev.floors
+          : [{ floor: prev.floor || 1, keyCount: prev.keyCount || 10, startRoomNumber: prev.startRoomNumber || "101" }];
+      return {
+        ...prev,
+        floors: currentFloors.map((f) => (f.floor === floorNum ? { ...f, ...update } : f)),
+      };
+    });
   };
 
   // Toggle amenity
@@ -297,31 +404,42 @@ export function usePlatformPageVm() {
     }));
   };
 
-  // Real backend Room creation in batch
+  // Real backend Room creation in batch across all configured floors
   const handleProvisionRoomKeys = async (stayOnStep = false) => {
     if (!createdWorkspace) return;
     setIsCreatingRoom(true);
     setGuidedRoomError(null);
     try {
-      const keys = computeRoomKeysFromDraft(roomDraft);
       const roomType = mapTitleToRoomType(roomDraft.title);
       const created: RoomItem[] = [];
 
-      for (const key of keys) {
-        const res = await postRequest<RoomItem, Record<string, unknown>>(
-          apiPath("rooms"),
-          {
-            branchId: createdWorkspace.id,
-            roomNumber: key,
-            roomType,
-            baseRateThb: Number(roomDraft.baseRateThb) || 1000,
-            maxOccupancy: Number(roomDraft.maxAdults) || 2,
-            floor: Number(roomDraft.floor) || 1,
-            amenities: roomDraft.amenities,
-            coverImage: roomDraft.coverImage,
-          }
-        );
-        created.push(res);
+      const floorsToCreate: FloorConfig[] = roomDraft.isSingleUnit
+        ? [{ floor: 1, keyCount: 1, startRoomNumber: roomDraft.singleUnitName.trim() || roomDraft.title.trim() || "Villa" }]
+        : (roomDraft.floors && roomDraft.floors.length > 0
+            ? roomDraft.floors
+            : [{ floor: roomDraft.floor || 1, keyCount: roomDraft.keyCount || 10, startRoomNumber: roomDraft.startRoomNumber || "101" }]);
+
+      for (const fl of floorsToCreate) {
+        const keys = roomDraft.isSingleUnit
+          ? [fl.startRoomNumber]
+          : computeGeneratedRoomKeys(fl.startRoomNumber, fl.keyCount);
+
+        for (const key of keys) {
+          const res = await postRequest<RoomItem, Record<string, unknown>>(
+            apiPath("rooms"),
+            {
+              branchId: createdWorkspace.id,
+              roomNumber: key,
+              roomType,
+              baseRateThb: Number(roomDraft.baseRateThb) || 1000,
+              maxOccupancy: Number(roomDraft.maxAdults) || 2,
+              floor: Number(fl.floor) || 1,
+              amenities: roomDraft.amenities,
+              coverImage: roomDraft.coverImage,
+            }
+          );
+          created.push(res);
+        }
       }
 
       setCreatedRooms((prev) => [...prev, ...created]);
@@ -330,21 +448,25 @@ export function usePlatformPageVm() {
       });
 
       if (stayOnStep) {
-        // Reset form for next space
+        // Reset form for next room type & reset to Screen 1
+        const maxFloor = Math.max(...floorsToCreate.map((f) => f.floor), 0);
+        const nextFloor = maxFloor + 1;
         setRoomDraft({
           title: "",
           baseRateThb: 2500,
           maxAdults: 2,
           areaSqm: 40,
           bedConfig: "1 King Bed",
-          isSingleUnit: false,
+          isSingleUnit: form.propertyType === "CONDO",
           singleUnitName: "",
-          keyCount: 2,
-          startRoomNumber: "201",
-          floor: 2,
-          coverImage: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1600&q=80",
+          keyCount: form.propertyType === "CONDO" ? 1 : 10,
+          startRoomNumber: `${nextFloor}01`,
+          floor: nextFloor,
+          floors: [{ floor: nextFloor, keyCount: 10, startRoomNumber: `${nextFloor}01` }],
+          coverImage: "",
           amenities: ["High-Speed WiFi", "Air Conditioning", "Private Bathroom"],
         });
+        setRoomScreen(1);
       } else {
         // Move to Stage 4: Add-ons & services
         setWizardStep(4);
@@ -560,12 +682,20 @@ export function usePlatformPageVm() {
     handleAdvanceToRooms,
     isLaunching: createWorkspaceMutation.isPending,
     onboardingError,
+    isSlugTaken,
+    suggestedSlug,
+    handleAutoFixSlug,
     createdWorkspace,
     resetWizard,
 
     // Room Setup
     roomDraft,
     setRoomDraft,
+    roomScreen,
+    setRoomScreen,
+    addFloor,
+    removeFloor,
+    updateFloorConfig,
     customAmenityInput,
     setCustomAmenityInput,
     toggleAmenity,

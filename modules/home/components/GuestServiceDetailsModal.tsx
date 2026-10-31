@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,15 +49,12 @@ export function GuestServiceDetailsModal({
 
   if (!service) return null;
 
-  const fallbackPhoto =
-    service.kind === "AIRPORT_TRANSFER"
-      ? "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1200"
-      : service.category === "WELLNESS"
-      ? "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=1200"
-      : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1200";
-
   const photos =
-    service.images && service.images.length > 0 ? service.images : [service.coverImage || fallbackPhoto];
+    service.images && service.images.length > 0
+      ? service.images.filter(Boolean)
+      : service.coverImage
+      ? [service.coverImage]
+      : [];
 
   const specs: Array<[string, string]> = [];
   if (service.tour) {
@@ -99,13 +96,20 @@ export function GuestServiceDetailsModal({
         <DialogBody className="p-0">
           <div className="grid lg:grid-cols-2">
             <div className="flex flex-col gap-2 bg-subtle p-4 sm:p-5">
-              <div className="aspect-4/3 overflow-hidden rounded-md bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photos[activePhotoIndex]}
-                  alt={`${service.name}, photo ${activePhotoIndex + 1}`}
-                  className="h-full w-full object-cover"
-                />
+              <div className="aspect-4/3 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+                {photos[activePhotoIndex] ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={photos[activePhotoIndex]}
+                    alt={`${service.name}, photo ${activePhotoIndex + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-stone-400 gap-2 p-6 text-center select-none">
+                    <Sparkles className="size-10 stroke-[1.5] text-stone-300" />
+                    <span className="text-xs font-medium text-stone-400">No photos uploaded for this experience</span>
+                  </div>
+                )}
               </div>
               {photos.length > 1 ? (
                 <div className="grid grid-cols-4 gap-2">

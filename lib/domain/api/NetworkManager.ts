@@ -90,9 +90,16 @@ const responseHandler = async <T>(response: Response): Promise<T> => {
   let data: unknown;
   try {
     const text = await response.text();
-    data = text ? JSON.parse(text) : {};
-  } catch (e) {
-    console.error("Failed to parse response as JSON:", e);
+    if (!text) {
+      data = {};
+    } else {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
+  } catch {
     data = {};
   }
 
