@@ -157,10 +157,10 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
   const isVilla = form.propertyType === "CONDO";
 
   return (
-    <div className="min-h-screen bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth overflow-x-hidden">
+    <div className="min-h-screen w-full max-w-full bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth overflow-x-hidden">
       {/* ─── Top Platform Navigation ────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-[#28594E]/10 bg-[#F5EBDD]/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 py-3">
+      <header className="sticky top-0 z-40 w-full border-b border-[#28594E]/10 bg-[#F5EBDD]/90 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
           <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <img
               src="/brand/mascot/yoonie-calm.png"
@@ -225,21 +225,21 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
       </header>
 
       {/* ─── Hero Section ───────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <div className="lg:col-span-7 space-y-6 text-left">
+      <section className="relative overflow-hidden pt-8 pb-16 sm:pt-20 sm:pb-28">
+        <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-6 text-left">
               <div className="inline-flex items-center gap-2 rounded-full bg-[#E8A45B]/15 px-3 py-1 text-xs font-semibold text-[#E8A45B]">
                 <Sparkles className="size-3.5" /> Direct Booking Engine & Hospitality OS
               </div>
 
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-[#28594E] leading-[1.1]">
+              <h1 className="text-3xl sm:text-6xl font-extrabold tracking-tight text-[#28594E] leading-[1.12]">
                 Own your guest relationships.
                 <br />
                 <span className="text-[#E8A45B]">Zero commissions to OTAs.</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-[#7A8B84] max-w-xl font-normal leading-relaxed">
+              <p className="text-sm sm:text-lg text-[#7A8B84] max-w-xl font-normal leading-relaxed">
                 Empower your property with a dedicated tenant direct booking engine, central housekeeping board, and instant frontline concierge dispatch.
               </p>
 
@@ -261,24 +261,24 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-3 gap-6 pt-6 border-t border-[#28594E]/10">
+              <div className="grid grid-cols-3 gap-2 sm:gap-6 pt-5 sm:pt-6 border-t border-[#28594E]/10">
                 <div>
-                  <div className="text-2xl font-extrabold text-[#28594E]">0%</div>
-                  <div className="text-xs text-[#7A8B84] font-medium">OTA Commission Loss</div>
+                  <div className="text-lg sm:text-2xl font-extrabold text-[#28594E]">0%</div>
+                  <div className="text-[11px] sm:text-xs text-[#7A8B84] font-medium leading-snug">OTA Commission Loss</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-[#28594E]">100%</div>
-                  <div className="text-xs text-[#7A8B84] font-medium">Guest Data Ownership</div>
+                  <div className="text-lg sm:text-2xl font-extrabold text-[#28594E]">100%</div>
+                  <div className="text-[11px] sm:text-xs text-[#7A8B84] font-medium leading-snug">Guest Data Ownership</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-[#28594E]">05:30 AM</div>
-                  <div className="text-xs text-[#7A8B84] font-medium">Auto Daily Dispatch</div>
+                  <div className="text-lg sm:text-2xl font-extrabold text-[#28594E]">05:30 AM</div>
+                  <div className="text-[11px] sm:text-xs text-[#7A8B84] font-medium leading-snug">Auto Daily Dispatch</div>
                 </div>
               </div>
             </div>
 
             <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-sm rounded-3xl bg-white/80 p-6 shadow-2xl backdrop-blur-xl border border-white/60 space-y-5">
+              <div className="relative mx-auto w-full max-w-sm rounded-3xl bg-white/80 p-5 sm:p-6 shadow-2xl backdrop-blur-xl border border-white/60 space-y-4 sm:space-y-5">
                 <div className="flex items-center justify-between pb-3 border-b border-black/5">
                   <div className="flex items-center gap-2.5">
                     <img
