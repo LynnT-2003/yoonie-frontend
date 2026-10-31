@@ -59,6 +59,13 @@ export const hospitalityKeys = {
     [...hospitalityKeys.all, "order", orderId] as const,
 };
 
+/**
+ * Global polling interval for ops boards in milliseconds.
+ * Configurable via NEXT_PUBLIC_OPS_POLL_INTERVAL_MS in .env / Vercel. Default is 10,000ms (10s).
+ */
+export const OPS_POLL_INTERVAL_MS =
+  Number(process.env.NEXT_PUBLIC_OPS_POLL_INTERVAL_MS) || 10_000;
+
 // ─── Branches ─────────────────────────────────────────────────────────────────
 
 export async function getBranches(): Promise<Branch[]> {
@@ -170,7 +177,7 @@ export function useHousekeepingBoardQuery(branchId: string, options?: { refetchI
     queryKey: hospitalityKeys.housekeeping(branchId),
     queryFn: () => getHousekeepingBoard(branchId),
     enabled: Boolean(branchId),
-    refetchInterval: options?.refetchInterval ?? 15_000,
+    refetchInterval: options?.refetchInterval ?? OPS_POLL_INTERVAL_MS,
   });
 }
 
@@ -483,7 +490,7 @@ export function useDispatchTasksQuery(branchId: string, serviceDate: string) {
     queryKey: hospitalityKeys.dispatch(branchId, serviceDate),
     queryFn: () => getDispatchTasks(branchId, serviceDate),
     enabled: Boolean(branchId && serviceDate),
-    refetchInterval: 15_000,
+    refetchInterval: OPS_POLL_INTERVAL_MS,
   });
 }
 
@@ -565,7 +572,7 @@ export function useLiveRoomOccupancyQuery(
     queryKey: hospitalityKeys.liveOccupancy(branchId, params),
     queryFn: () => getLiveRoomOccupancy(branchId, params),
     enabled: Boolean(branchId),
-    refetchInterval: options?.refetchInterval ?? 10_000,
+    refetchInterval: options?.refetchInterval ?? OPS_POLL_INTERVAL_MS,
     placeholderData: keepPreviousData,
   });
 }
@@ -580,7 +587,7 @@ export function useServicesBoardQuery(branchId: string, date: string) {
         apiPath(`ops-board/services?branchId=${encodeURIComponent(branchId)}&date=${encodeURIComponent(date)}`)
       ),
     enabled: Boolean(branchId && date),
-    refetchInterval: 15_000,
+    refetchInterval: OPS_POLL_INTERVAL_MS,
     placeholderData: keepPreviousData,
   });
 }
@@ -593,7 +600,7 @@ export function useGuestsBoardQuery(branchId: string, date: string) {
         apiPath(`ops-board/guests?branchId=${encodeURIComponent(branchId)}&date=${encodeURIComponent(date)}`)
       ),
     enabled: Boolean(branchId && date),
-    refetchInterval: 15_000,
+    refetchInterval: OPS_POLL_INTERVAL_MS,
     placeholderData: keepPreviousData,
   });
 }

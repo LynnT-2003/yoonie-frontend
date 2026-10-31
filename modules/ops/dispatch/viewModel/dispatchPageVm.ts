@@ -68,6 +68,50 @@ export function useDispatchPageVm() {
   const tasks = React.useMemo(() => tasksQuery.data ?? [], [tasksQuery.data]);
   const myId = user?._id;
 
+  // Background sync notification: diff against previous poll snapshot and notify via bottom-right toast
+  const prevTasksRef = React.useRef<DispatchTask[] | null>(null);
+  React.useEffect(() => {
+    if (!tasksQuery.data) return;
+    if (prevTasksRef.current === null) {
+      prevTasksRef.current = tasksQuery.data;
+      return;
+    }
+    const prev = prevTasksRef.current;
+    const curr = tasksQuery.data;
+    prevTasksRef.current = curr;
+
+    const prevMap = new Map(prev.map((t) => [t._id, t]));
+    const added = curr.filter((t) => !prevMap.has(t._id));
+    const changed = curr.filter((t) => {
+      const old = prevMap.get(t._id);
+      return (
+        old &&
+        (old.status !== t.status ||
+          old.assigneeUserId !== t.assigneeUserId ||
+          old.pickup?.stage !== t.pickup?.stage)
+      );
+    });
+
+    if (added.length > 0 || changed.length > 0) {
+      const parts: string[] = [];
+      if (added.length > 0) {
+        parts.push(`${added.length} new ${added.length === 1 ? "task" : "tasks"}`);
+      }
+      if (changed.length > 0) {
+        const sample = changed[0];
+        const name = sample.housekeeping
+          ? `Room ${sample.housekeeping.roomNumber}`
+          : sample.pickup
+            ? `${sample.pickup.flightNumber}`
+            : sample.title;
+        parts.push(changed.length === 1 ? `${name} updated` : `${name} +${changed.length - 1} updated`);
+      }
+      toast.info("Dispatch updated", {
+        description: parts.join(" · "),
+      });
+    }
+  }, [tasksQuery.data]);
+
   const open = React.useMemo(
     () =>
       tasks

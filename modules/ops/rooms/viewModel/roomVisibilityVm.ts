@@ -10,6 +10,7 @@ import type { LiveRoomItem } from "@/lib/types/hospitality";
 import { useNow } from "@/modules/ops/components/OpsPage";
 import { businessDate } from "@/modules/ops/components/format";
 import { toastRoomMoved } from "@/modules/ops/components/feedback";
+import { toast } from "sonner";
 
 export type ViewMode = "BOARD" | "FLOOR" | "TIMELINE";
 export type RoomFilter = "ALL" | "ARRIVING" | "IN_HOUSE" | "DEPARTED" | "VACANT" | "HOUSEKEEPING" | "READY";
@@ -71,6 +72,41 @@ export function useRoomVisibilityVm() {
   const now = useNow();
 
   const data = occupancyQuery.data;
+
+  // Background sync notification: diff against previous poll snapshot and notify via bottom-right toast
+  const prevRoomsRef = React.useRef<LiveRoomItem[] | null>(null);
+  React.useEffect(() => {
+    const currRooms = data?.rooms;
+    if (!currRooms) return;
+    if (prevRoomsRef.current === null) {
+      prevRoomsRef.current = currRooms;
+      return;
+    }
+    const prev = prevRoomsRef.current;
+    prevRoomsRef.current = currRooms;
+
+    const prevMap = new Map(prev.map((r) => [r._id, r]));
+    const changed = currRooms.filter((r) => {
+      const old = prevMap.get(r._id);
+      return (
+        old &&
+        (old.cleaningStatus !== r.cleaningStatus ||
+          old.occupancyStatus !== r.occupancyStatus ||
+          old.currentStay?.guestName !== r.currentStay?.guestName)
+      );
+    });
+
+    if (changed.length > 0) {
+      const sample = changed[0];
+      const desc =
+        changed.length === 1
+          ? `Room ${sample.roomNumber} status: ${sample.cleaningStatus.toLowerCase().replace(/_/g, " ")}`
+          : `Room ${sample.roomNumber} +${changed.length - 1} rooms updated`;
+      toast.info("Rooms updated", {
+        description: desc,
+      });
+    }
+  }, [data?.rooms]);
 
   const rooms = React.useMemo(() => {
     const q = search.trim().toLowerCase();
