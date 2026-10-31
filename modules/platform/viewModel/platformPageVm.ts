@@ -151,21 +151,14 @@ export function usePlatformPageVm() {
     queryFn: getBranches,
   });
 
-  const [isWizardOpen, setIsWizardOpen] = React.useState(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("wizard") === "true";
-  });
+  const [isWizardOpen, setIsWizardOpen] = React.useState(false);
   // 5-Stage Guided Hospitality Studio:
   // 1: Get started (Account & domain)
   // 2: Property details (Location, type, counts)
   // 3: Rooms & inventory (Types, counts)
   // 4: Add-ons & services (Experiences, rentals)
   // 5: Review & submit (Final check & launch)
-  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5>(() => {
-    if (typeof window === "undefined") return 1;
-    const s = parseInt(new URLSearchParams(window.location.search).get("step") || "1", 10);
-    return (s >= 1 && s <= 5 ? s : 1) as 1 | 2 | 3 | 4 | 5;
-  });
+  const [wizardStep, setWizardStep] = React.useState<1 | 2 | 3 | 4 | 5>(1);
   const [form, setForm] = React.useState<WorkspaceFormState>(DEFAULT_FORM);
   const [onboardingError, setOnboardingError] = React.useState<string | null>(null);
 
@@ -180,11 +173,19 @@ export function usePlatformPageVm() {
 
   // Room Setup State
   const [roomDraft, setRoomDraft] = React.useState<RoomDraftState>(DEFAULT_ROOM_DRAFT);
-  const [roomScreen, setRoomScreen] = React.useState<1 | 2 | 3>(() => {
-    if (typeof window === "undefined") return 1;
-    const scr = parseInt(new URLSearchParams(window.location.search).get("screen") || "1", 10);
-    return (scr >= 1 && scr <= 3 ? scr : 1) as 1 | 2 | 3;
-  });
+  const [roomScreen, setRoomScreen] = React.useState<1 | 2 | 3>(1);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("wizard") === "true") {
+      setIsWizardOpen(true);
+      const s = parseInt(params.get("step") || "1", 10);
+      if (s >= 1 && s <= 5) setWizardStep(s as 1 | 2 | 3 | 4 | 5);
+      const scr = parseInt(params.get("screen") || "1", 10);
+      if (scr >= 1 && scr <= 3) setRoomScreen(scr as 1 | 2 | 3);
+    }
+  }, []);
   const [customAmenityInput, setCustomAmenityInput] = React.useState("");
   const [isCreatingRoom, setIsCreatingRoom] = React.useState(false);
   const [guidedRoomError, setGuidedRoomError] = React.useState<string | null>(null);

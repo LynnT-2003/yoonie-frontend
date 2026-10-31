@@ -427,7 +427,7 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
       </footer>
 
       {/* ─── FULL YOONIE WHITE-LABEL PROPERTY SETUP STUDIO ─────────────────── */}
-      {isWizardOpen && (
+      {mounted && isWizardOpen && (
         <div className="fixed inset-0 z-50 bg-[#FAF8F5] flex flex-col overflow-y-auto animate-in fade-in-0 duration-200 text-[#1F2925]">
           {/* Top Bar - Yoonie White-Label Studio */}
           <header className="sticky top-0 z-40 border-b border-[#28594E]/10 bg-white/95 backdrop-blur-md px-6 py-3.5 flex items-center justify-between shadow-2xs">
