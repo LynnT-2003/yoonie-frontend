@@ -157,17 +157,17 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
   const isVilla = form.propertyType === "CONDO";
 
   return (
-    <div className="min-h-screen bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth">
+    <div className="min-h-screen bg-[#F5EBDD] text-[#303A36] selection:bg-[#E8A45B]/30 font-sans scroll-smooth overflow-x-hidden">
       {/* ─── Top Platform Navigation ────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-[#28594E]/10 bg-[#F5EBDD]/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <img
               src="/brand/mascot/yoonie-calm.png"
               alt="Yoonie"
-              className="size-8 object-contain"
+              className="size-7 sm:size-8 object-contain"
             />
-            <span className="font-extrabold text-xl tracking-tight text-[#28594E]">
+            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-[#28594E]">
               yoonie
             </span>
             <span className="hidden sm:inline-flex rounded-full bg-[#28594E]/10 px-2.5 py-0.5 text-[11px] font-semibold text-[#28594E]">
@@ -203,21 +203,22 @@ export function PlatformPageView({ vm }: { vm: PlatformPageVm }) {
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Button
               size="sm"
               variant="outline"
               asChild
-              className="hidden sm:inline-flex text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5"
+              className="inline-flex text-xs font-bold border-[#28594E]/20 text-[#28594E] hover:bg-[#28594E]/5 px-2.5 sm:px-3 h-8"
             >
               <a href={getSubdomainUrl("ops")} suppressHydrationWarning>Sign In</a>
             </Button>
             <Button
               size="sm"
               onClick={() => setIsWizardOpen(true)}
-              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-md"
+              className="bg-[#28594E] hover:bg-[#1E433A] text-[#F5EBDD] font-bold text-xs shadow-md whitespace-nowrap px-3 sm:px-4 h-8"
             >
-              Setup Your Property
+              <span className="sm:hidden">Setup</span>
+              <span className="hidden sm:inline">Setup Property</span>
             </Button>
           </div>
         </div>
