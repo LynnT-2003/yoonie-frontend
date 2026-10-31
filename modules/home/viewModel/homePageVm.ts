@@ -168,8 +168,7 @@ export function useHomePageVm(branchCode?: string) {
         pricePerNight: 2200,
         capacity: "2 Guests · 32 sqm",
         features: ["King Bed", "Rain Shower", "High-speed WiFi", "Organic Tea Bar"],
-        image:
-          "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80",
+        image: "",
       },
       DELUXE_BALCONY: {
         type: "DELUXE_BALCONY",
@@ -183,8 +182,7 @@ export function useHomePageVm(branchCode?: string) {
           "Sofa Daybed",
           "Complimentary Sunset Drink",
         ],
-        image:
-          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=800&q=80",
+        image: "",
       },
       POOL_VILLA: {
         type: "POOL_VILLA",
@@ -198,8 +196,7 @@ export function useHomePageVm(branchCode?: string) {
           "Twin Loft Suite",
           "Express Airport VIP Lane",
         ],
-        image:
-          "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80",
+        image: "",
       },
     };
 
@@ -218,7 +215,7 @@ export function useHomePageVm(branchCode?: string) {
         pricePerNight: firstRoom?.baseRateThb || 2000,
         capacity: `${firstRoom?.maxOccupancy || 2} Guests`,
         features: firstRoom?.amenities || ["King Bed", "High-speed WiFi"],
-        image: firstRoom?.coverImage || firstRoom?.images?.[0] || specs.STANDARD_KING.image,
+        image: firstRoom?.coverImage || firstRoom?.images?.[0] || "",
       };
 
       const customSpec = { ...template };

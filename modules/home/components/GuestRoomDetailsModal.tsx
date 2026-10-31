@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Clock, ShieldCheck } from "lucide-react";
+import { Bed, Check, Clock, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,13 +63,10 @@ export function GuestRoomDetailsModal({
 
   const photos =
     room.gallery && room.gallery.length > 0
-      ? room.gallery
-      : [
-          room.image,
-          "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
-          "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
-          "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80",
-        ];
+      ? room.gallery.filter(Boolean)
+      : room.image
+      ? [room.image]
+      : [];
 
   const sizeSqm =
     room.sizeSqm || (room.type === "POOL_VILLA" ? 110 : room.type === "DELUXE_BALCONY" ? 54 : 38);
@@ -90,13 +87,20 @@ export function GuestRoomDetailsModal({
           <div className="grid lg:grid-cols-2">
             {/* Gallery */}
             <div className="flex flex-col gap-2 bg-subtle p-4 sm:p-5">
-              <div className="aspect-4/3 overflow-hidden rounded-md bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photos[activePhotoIndex]}
-                  alt={`${room.title}, photo ${activePhotoIndex + 1} of ${photos.length}`}
-                  className="h-full w-full object-cover"
-                />
+              <div className="aspect-4/3 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+                {photos[activePhotoIndex] ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={photos[activePhotoIndex]}
+                    alt={`${room.title}, photo ${activePhotoIndex + 1} of ${photos.length}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-stone-400 gap-2 p-6 text-center select-none">
+                    <Bed className="size-10 stroke-[1.5] text-stone-300" />
+                    <span className="text-xs font-medium text-stone-400">No photos uploaded for this room</span>
+                  </div>
+                )}
               </div>
               {photos.length > 1 ? (
                 <div className="grid grid-cols-4 gap-2">
