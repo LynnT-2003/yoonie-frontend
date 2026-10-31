@@ -43,12 +43,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${geistSans.className} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground">
+      <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden max-w-full">
         <AppQueryProvider>
           <AuthProvider>
             <OnboardingProvider>
               <Navbar />
-              <main className="flex flex-1 flex-col">{children}</main>
+              <main className="flex flex-1 flex-col min-w-0 max-w-full overflow-x-hidden">{children}</main>
               <YoonieSpotlightTour />
               <Toaster />
             </OnboardingProvider>
