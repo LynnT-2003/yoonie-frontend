@@ -8,11 +8,14 @@ import type { ChatBody } from "@/lib/types/studio";
  * POST { messages, dataset } → streamed plain text.
  *
  * With OPENROUTER_API_KEY the model answers through tools over the owner's dataset
- * (OPENROUTER_MODEL, default anthropic/claude-sonnet-5.5). Without a key it falls back to
+ * (Claude Haiku 5.5: cheap, fast, good at tool calls). Without a key it falls back to
  * scripted, data-templated answers so the demo still works.
  */
 
 export const maxDuration = 60;
+
+/** $0.10 / $0.50 per million tokens on OpenRouter, with tool calling: about $0.001–0.003 per question. */
+const MODEL = "anthropic/claude-haiku-5.5";
 
 export async function POST(req: Request) {
   const denied = await requireUser(req);
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
 
   const openrouter = createOpenRouter({ apiKey, appName: "Yoonie", appUrl: "https://yoonie.app" });
   const result = streamText({
-    model: openrouter(process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-5.5"),
+    model: openrouter(MODEL),
     instructions: instructions(dataset),
     messages,
     tools: studioTools(dataset),

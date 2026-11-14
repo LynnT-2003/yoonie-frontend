@@ -16,8 +16,7 @@ Sign-in still uses `yoonie-backend` (the `/api/*` rewrite in `next.config.ts`). 
 | Variable | Purpose |
 |---|---|
 | `NEXT_PUBLIC_API_BASE_URL` / `BACKEND_URL` | Backend for sign-in (unchanged) |
-| `OPENROUTER_API_KEY` | Enables LLM chat. Without it, chat answers from fixed templates over the same data |
-| `OPENROUTER_MODEL` | Default `anthropic/claude-sonnet-5.5` |
+| `OPENROUTER_API_KEY` | Enables LLM chat (model: Claude Haiku 5.5, set in `app/api/studio/chat/route.ts`). Without it, chat answers from fixed templates over the same data |
 | `N8N_PIPELINE_WEBHOOK_URL` | Optional. Forward uploads to an n8n flow instead of the built-in pipeline |
 | `PIPELINE_PACE` | Delay multiplier for the live stream (`1` default, `0` instant) |
 | `STUDIO_AUTH` | `off` skips the sign-in check on studio API routes (local demos only) |

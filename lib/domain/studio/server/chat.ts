@@ -98,6 +98,48 @@ export function studioTools(ds: Dataset) {
         return out;
       },
     }),
+    get_patterns: tool({
+      description:
+        "Patterns for a month range: occupancy by night of the week (Sun–Sat), bookings by length of stay, reviews by star rating, and complaint mentions by theme. Use for questions like 'which night is quietest', 'how long do guests stay', 'what do guests complain about'.",
+      inputSchema: z.object({ from: monthRe.optional(), to: monthRe.optional() }),
+      execute: async ({ from, to }) => {
+        const ms = inRange(ds, from, to);
+        const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const sold = [0, 0, 0, 0, 0, 0, 0];
+        const avail = [0, 0, 0, 0, 0, 0, 0];
+        const stays = [0, 0, 0, 0, 0, 0];
+        const stars = [0, 0, 0, 0, 0];
+        const themes: Record<string, number> = {};
+        for (const m of ms) {
+          const [y, mo] = m.month.split("-").map(Number);
+          const days = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+          const rooms = m.roomsAvailable / days;
+          for (let d = 1; d <= days; d++) avail[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()] += rooms;
+          m.dowNights?.forEach((n, i) => (sold[i] += n));
+          m.stayLengths?.forEach((n, i) => (stays[i] += n));
+          m.ratingCounts?.forEach((n, i) => (stars[i] += n));
+          for (const [k, v] of Object.entries(m.complaints)) themes[k] = (themes[k] ?? 0) + (v ?? 0);
+        }
+        return {
+          range: `${ms[0]?.month ?? "?"}..${ms[ms.length - 1]?.month ?? "?"}`,
+          occupancyByNight: Object.fromEntries(DOW.map((d, i) => [d, r(avail[i] ? sold[i] / avail[i] : null)])),
+          bookingsByLengthOfStay: Object.fromEntries(["1 night", "2 nights", "3 nights", "4 nights", "5-6 nights", "7+ nights"].map((l, i) => [l, stays[i]])),
+          reviewsByStars: Object.fromEntries([1, 2, 3, 4, 5].map((s, i) => [`${s} star`, stars[i]])),
+          complaintMentionsByTheme: themes,
+        };
+      },
+    }),
+    get_yearly_summary: tool({
+      description: "One row per calendar year: occupancy, room nights, revenue, ADR, RevPAR, operating costs, margin, average rating. Note the latest year may be partial.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const years = [...new Set(ds.months.map((m) => m.month.slice(0, 4)))];
+        return years.map((y) => {
+          const ms = ds.months.filter((m) => m.month.startsWith(y));
+          return { year: y, monthsWithData: ms.length, ...aggregate(ms) };
+        });
+      },
+    }),
     get_insights: tool({
       description: "The findings Yoonie detected, with evidence, confidence and caveats (what each does NOT prove).",
       inputSchema: z.object({}),
@@ -130,6 +172,7 @@ Last 12 months (${ds.kpiWindow.current}): occupancy ${k.occupancy?.current != nu
 Findings: ${ds.insights.map((i) => i.title).join("; ") || "none"}.
 Top actions: ${ds.recommendations.map((x) => `#${x.rank} ${x.title}`).join("; ") || "none"}.
 Data quality: ${ds.stats.rowsRead} rows read, ${ds.stats.rowsExcluded} set aside, ${ds.stats.needsOwner} values waiting for the owner to confirm.
+What you can see: the cleaned and structured monthly data built from the owner's files (occupancy, revenue, costs by type, channels, reviews, patterns), the findings and the actions. You cannot see individual bookings, guest names or single rows. If asked for those, say so and suggest the Data tab.
 
 Rules:
 - Every number you state must come from a tool result in this conversation. Call a tool before answering any question about numbers. Never estimate, round up or invent figures, customers or results.
