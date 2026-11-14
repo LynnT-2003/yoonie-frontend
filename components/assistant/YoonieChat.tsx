@@ -45,7 +45,8 @@ export function YoonieChat({
   greeting: string;
   suggestions: string[];
   placeholder: string;
-  send: (message: string) => Promise<string>;
+  /** `history` is the conversation so far (before this message); call `onDelta` with the text so far to stream */
+  send: (message: string, history: { role: "user" | "assistant"; content: string }[], onDelta: (textSoFar: string) => void) => Promise<string>;
   /** after every answer, e.g. to refresh boards the assistant may have changed */
   onReply?: () => void;
   className?: string;
@@ -122,11 +123,22 @@ export function YoonieChat({
     const message = text.trim();
     if (!message || thinking) return;
     setDraft("");
+    const history = messages
+      .filter((m) => !m.failed)
+      .map((m) => ({ role: m.role === "user" ? ("user" as const) : ("assistant" as const), content: m.text }));
     setMessages((m) => [...m, { role: "user", text: message }]);
     setThinking(true);
+    let streamed = false;
     try {
-      const reply = await send(message);
-      setMessages((m) => [...m, { role: "yoonie", text: reply }]);
+      const reply = await send(message, history, (soFar) => {
+        if (!soFar) return;
+        setThinking(false);
+        setMessages((m) =>
+          streamed ? [...m.slice(0, -1), { role: "yoonie", text: soFar }] : [...m, { role: "yoonie", text: soFar }]
+        );
+        streamed = true;
+      });
+      setMessages((m) => (streamed ? [...m.slice(0, -1), { role: "yoonie", text: reply }] : [...m, { role: "yoonie", text: reply }]));
 
       if (forceVoice && typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -138,8 +150,11 @@ export function YoonieChat({
 
       onReply?.();
     } catch (err) {
+      if (streamed) setMessages((m) => m.slice(0, -1));
       const text =
-        err instanceof ApiError && err.statusCode === 429
+        err instanceof Error && !(err instanceof ApiError) && err.message
+          ? err.message
+          : err instanceof ApiError && err.statusCode === 429
           ? "You're sending messages a little fast. Give me a moment and try again."
           : err instanceof ApiError && err.statusCode === 401
             ? "Please sign in again to keep chatting."

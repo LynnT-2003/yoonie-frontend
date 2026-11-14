@@ -102,27 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const auth = await loginRequest({ email, password });
       applyAuthResponse(auth);
 
-      let target = redirectTo;
-      if (!target || target === "/") {
-        const isOpsHost =
-          typeof window !== "undefined" &&
-          window.location.hostname.startsWith("ops.");
-        const role = auth.user?.role || "";
-        const isOperatorRole = [
-          "ADMIN",
-          "BRANCH_MGR",
-          "DISPATCHER",
-          "HOUSEKEEPER",
-          "MAINTENANCE",
-          "STAFF",
-        ].includes(role);
-
-        if (isOpsHost || isOperatorRole) {
-          target = "/ops/dispatch";
-        } else {
-          target = "/account";
-        }
-      }
+      const target = !redirectTo || redirectTo === "/" ? "/studio/dashboard" : redirectTo;
 
       if (target) {
         router.push(target);
@@ -135,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (body: RegisterBody) => {
       const auth = await registerRequest(body);
       applyAuthResponse(auth);
-      router.push("/account");
+      router.push("/studio");
     },
     [applyAuthResponse, router]
   );

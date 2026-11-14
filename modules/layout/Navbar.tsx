@@ -3,102 +3,85 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
-import { useOnboarding } from "@/providers/onboarding-provider";
+import { cn } from "@/lib/utils";
+
+const STUDIO_LINKS = [
+  { href: "/studio", label: "Upload", exact: true },
+  { href: "/studio/dashboard", label: "Strategy" },
+  { href: "/studio/data", label: "Data quality", short: "Data" },
+];
 
 export function Navbar() {
   const { user, ready, logout } = useAuth();
-  const { openTour } = useOnboarding();
   const [loggingOut, setLoggingOut] = React.useState(false);
   const pathname = usePathname();
 
-  const onLogout = React.useCallback(() => {
+  if (pathname.startsWith("/login") || pathname.startsWith("/register") || pathname.startsWith("/auth")) return null;
+
+  const onLogout = () => {
     setLoggingOut(true);
-    void (async () => {
-      try {
-        await logout();
-      } finally {
-        setLoggingOut(false);
-      }
-    })();
-  }, [logout]);
-
-  const navLinks = [
-    { href: "/", label: "Booking engine" },
-    { href: "/ops/dispatch", label: "Dispatch" },
-    { href: "/admin", label: "Content" },
-  ];
-
-  if (
-    pathname === "/" ||
-    pathname.startsWith("/ops") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register")
-  ) {
-    return null;
-  }
+    void logout().finally(() => setLoggingOut(false));
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-8">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5" id="nav-logo">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+          <Link href={user ? "/studio/dashboard" : "/"} className="flex shrink-0 items-center gap-2" id="nav-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/mascot/yoonie-calm.png" alt="" className="size-7 rounded-md object-contain" />
-            <span className="text-[15px] font-semibold tracking-tight text-foreground">yoonie</span>
+            <img src="/brand/mascot/yoonie-calm.png" alt="" className="size-8 object-contain" />
+            <span className={cn("text-[15px] font-bold tracking-tight text-primary", user && "hidden sm:inline")}>yoonie</span>
           </Link>
 
-          <nav className="hidden h-14 items-center gap-1 md:flex" aria-label="Primary">
-            {navLinks.map((link) => {
-              const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`relative flex h-14 items-center px-3 text-sm transition-colors ${
-                    isActive
-                      ? "font-medium text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
-          </nav>
+          {user ? (
+            <nav className="flex h-14 items-center gap-0.5 overflow-x-auto" aria-label="Studio">
+              {STUDIO_LINKS.map((link) => {
+                const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    className={cn(
+                      "relative flex h-14 shrink-0 items-center px-2.5 text-sm transition-colors sm:px-3",
+                      active
+                        ? "font-semibold text-foreground after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {"short" in link ? (
+                      <>
+                        <span className="sm:hidden">{link.short}</span>
+                        <span className="hidden sm:inline">{link.label}</span>
+                      </>
+                    ) : (
+                      link.label
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          ) : null}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => openTour()}
-            className="hidden text-muted-foreground md:inline-flex"
-          >
-            <CircleHelp /> Guide
-          </Button>
-
+        <div className="flex shrink-0 items-center gap-1.5">
           {!ready ? (
             <span className="h-8 w-20 animate-pulse rounded-md bg-subtle" />
           ) : user ? (
             <>
               <Link
                 href="/account"
-                className={`flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors hover:bg-muted ${
-                  pathname === "/account" ? "text-foreground" : "text-muted-foreground"
-                }`}
+                aria-label="Account"
+                className="flex h-8 items-center gap-2 rounded-md px-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
               >
                 <span className="flex size-6 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground">
                   {(user.displayName || "U").charAt(0).toUpperCase()}
                 </span>
-                <span className="hidden max-w-32 truncate sm:inline">{user.displayName || "Account"}</span>
+                <span className="hidden max-w-32 truncate lg:inline">{user.displayName || "Account"}</span>
               </Link>
-              <Button type="button" variant="ghost" size="sm" onClick={() => void onLogout()} disabled={loggingOut}>
+              <Button type="button" variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={onLogout} disabled={loggingOut}>
                 {loggingOut ? "Signing out…" : "Sign out"}
               </Button>
             </>
@@ -108,7 +91,7 @@ export function Navbar() {
                 <Link href="/login">Sign in</Link>
               </Button>
               <Button asChild size="sm">
-                <Link href="/register">Create account</Link>
+                <Link href="/login?next=/studio">Try the demo</Link>
               </Button>
             </>
           )}

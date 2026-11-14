@@ -1,0 +1,412 @@
+Date,Category,Description,Amount
+2024-01-25,Salaries,Staff salaries (14),262000
+2024-01-25,Staff,Social security,8750
+2024-01-31,Elec,PEA monthly bill,32907
+2024-01-31,Water,PWA water,6657
+2024-01-31,Internet,Internet (3BB fibre),1890
+2024-01-28,Laundry,Linen & towel laundry,22806
+2024-01-28,Amenities,Guest amenities & toiletries,9774
+2024-01-15,Food,Breakfast ingredients,46427
+2024-01-25,Maintenance,General repairs,13551
+2024-01-31,OTA commission,Booking.com / Agoda / Expedia commission,213036
+2024-01-05,Marketing,Facebook ads,3500
+2024-01-01,Garden,Garden service,2500
+2024-02-25,Salaries,Staff salaries (14),262000
+2024-02-25,Staff,Social security,8750
+2024-02-29,Elec,PEA monthly bill,33345
+2024-02-29,Water,PWA water,5881
+2024-02-29,Internet,Internet (3BB fibre),1890
+2024-02-28,Laundry,Linen & towel laundry,21630
+2024-02-28,Amenities,Guest amenities & toiletries,9270
+2024-02-15,Food,Breakfast ingredients,44033
+2024-02-21,Maintenance,Plumbing,5078
+2024-02-29,OTA commission,Booking.com / Agoda / Expedia commission,204203
+2024-02-05,Marketing,Facebook ads,3500
+2024-02-01,Garden,Garden service,2500
+2024-03-25,Salaries,Staff salaries (14),262000
+2024-03-25,Staff,Social security,8750
+2024-03-31,PEA electricity bill,PEA monthly bill,40281
+2024-03-31,Water,PWA water,5725
+2024-03-31,Internet,Internet (3BB fibre),1890
+2024-03-28,Laundry,Linen & towel laundry,20034
+2024-03-28,Amenities,Guest amenities & toiletries,8586
+2024-03-15,Food,Breakfast ingredients,40784
+2024-03-24,Maintenance,Garden lights,14833
+2024-03-31,OTA commission,Booking.com / Agoda / Expedia commission,156558
+2024-03-05,Marketing,Facebook ads,3500
+2024-03-01,Garden,Garden service,2500
+2024-04-25,Salaries,Staff salaries (14),262000
+2024-04-25,Staff,Social security,8750
+2024-04-30,Electricity,PEA monthly bill,47280
+2024-04-30,Water,PWA water,6723
+2024-04-30,Internet,Internet (3BB fibre),1890
+2024-04-28,Laundry,Linen & towel laundry,18900
+2024-04-28,Amenities,Guest amenities & toiletries,8100
+2024-04-15,Food,Breakfast ingredients,38475
+2024-04-14,Maintenance,Plumbing,5914
+2024-04-30,OTA commission,Booking.com / Agoda / Expedia commission,138463
+2024-04-05,Marketing,Facebook ads,3500
+2024-04-01,Garden,Garden service,2500
+2024-05-25,Salaries,Staff salaries (14),262000
+2024-05-25,Staff,Social security,8750
+2024-05-31,Electricity,PEA monthly bill,46040
+2024-05-31,Water,PWA water,6774
+2024-05-31,Internet,Internet (3BB fibre),1890
+2024-05-28,Laundry,Linen & towel laundry,15204
+2024-05-28,Amenities,Guest amenities & toiletries,6516
+2024-05-15,Food,Breakfast ingredients,30951
+2024-05-30,Maintenance,Air-con service,8808
+2024-05-31,OTA commission,Booking.com / Agoda / Expedia commission,93153
+2024-05-05,Marketing,Facebook ads,3500
+2024-05-01,Garden,Garden service,2500
+2024-06-25,Salaries,Staff salaries (14),262000
+2024-06-25,Staff,Social security,8750
+2024-06-30,Elec,PEA monthly bill,42165
+2024-06-30,Water,PWA water,6296
+2024-06-30,Internet,Internet (3BB fibre),1890
+2024-06-28,Laundry,Linen & towel laundry,16968
+2024-06-28,Amenities,Guest amenities & toiletries,7272
+2024-06-15,Food,Breakfast ingredients,34542
+2024-06-25,Maintenance,Air-con service,10255
+2024-06-30,OTA commission,Booking.com / Agoda / Expedia commission,117029
+2024-06-05,Marketing,Facebook ads,3500
+2024-06-01,Garden,Garden service,2500
+2024-07-25,Salaries,Staff salaries (14),262000
+2024-07-25,Staff,Social security,8750
+2024-07-31,Electricity,PEA monthly bill,39414
+2024-07-31,Water,PWA water,6169
+2024-07-31,Internet,Internet (3BB fibre),1890
+2024-07-28,Laundry,Linen & towel laundry,18354
+2024-07-28,Amenities,Guest amenities & toiletries,7866
+2024-07-15,Food,Breakfast ingredients,37364
+2024-07-29,Maintenance,Garden lights,13853
+2024-07-31,OTA commission,Booking.com / Agoda / Expedia commission,107136
+2024-07-05,Marketing,Facebook ads,3500
+2024-07-01,Garden,Garden service,2500
+2024-08-25,Salaries,Staff salaries (14),262000
+2024-08-25,Staff,Social security,8750
+2024-08-31,Elec,PEA monthly bill,38826
+2024-08-31,Water,PWA water,6174
+2024-08-31,Internet,Internet (3BB fibre),1890
+2024-08-28,Laundry,Linen & towel laundry,18228
+2024-08-28,Amenities,Guest amenities & toiletries,7812
+2024-08-15,Food,Breakfast ingredients,37107
+2024-08-17,Maintenance,Air-con service,12767
+2024-08-31,OTA commission,Booking.com / Agoda / Expedia commission,104119
+2024-08-05,Marketing,Facebook ads,3500
+2024-08-01,Garden,Garden service,2500
+2024-09-25,Salaries,Staff salaries (14),262000
+2024-09-25,Staff,Social security,8750
+2024-09-30,Electricity,PEA monthly bill,37805
+2024-09-30,Water,PWA water,6300
+2024-09-30,Internet,Internet (3BB fibre),1890
+2024-09-28,Laundry,Linen & towel laundry,15036
+2024-09-28,Amenities,Guest amenities & toiletries,6444
+2024-09-15,Food,Breakfast ingredients,30609
+2024-09-30,Maintenance,General repairs,14210
+2024-09-30,OTA commission,Booking.com / Agoda / Expedia commission,101068
+2024-09-05,Marketing,Facebook ads,3500
+2024-09-01,Garden,Garden service,2500
+2024-10-25,Salaries,Staff salaries (14),262000
+2024-10-25,Staff,Social security,8750
+2024-10-31,Elec,PEA monthly bill,36558
+2024-10-31,Water,PWA water,6624
+2024-10-31,Internet,Internet (3BB fibre),1890
+2024-10-28,Laundry,Linen & towel laundry,17934
+2024-10-28,Amenities,Guest amenities & toiletries,7686
+2024-10-15,Food,Breakfast ingredients,36509
+2024-10-28,Maintenance,Garden lights,7823
+2024-10-31,OTA commission,Booking.com / Agoda / Expedia commission,124169
+2024-10-05,Marketing,Facebook ads,3500
+2024-10-01,Garden,Garden service,2500
+2024-11-25,Salaries,Staff salaries (14),262000
+2024-11-25,Staff,Social security,8750
+2024-11-30,Electricity,PEA monthly bill,34385
+2024-11-30,Water,PWA water,5352
+2024-11-30,Internet,Internet (3BB fibre),1890
+2024-11-28,Laundry,Linen & towel laundry,20790
+2024-11-28,Amenities,Guest amenities & toiletries,8910
+2024-11-15,Food,Breakfast ingredients,42323
+2024-11-15,Maintenance,Plumbing,14572
+2024-11-30,OTA commission,Booking.com / Agoda / Expedia commission,206085
+2024-11-05,Marketing,Facebook ads,3500
+2024-11-01,Garden,Garden service,2500
+2024-12-25,Salaries,Staff salaries (14),262000
+2024-12-25,Staff,Social security,8750
+2024-12-31,PEA electricity bill,PEA monthly bill,33293
+2024-12-31,Water,PWA water,6731
+2024-12-31,Internet,Internet (3BB fibre),1890
+2024-12-28,Laundry,Linen & towel laundry,23184
+2024-12-28,Amenities,Guest amenities & toiletries,9936
+2024-12-15,Food,Breakfast ingredients,47196
+2024-12-30,Maintenance,Garden lights,7129
+2024-12-31,OTA commission,Booking.com / Agoda / Expedia commission,192896
+2024-12-05,Marketing,Facebook ads,3500
+2024-12-01,Garden,Garden service,2500
+25/1/2025,Salaries,Staff salaries (14),"฿ 272,000.00"
+25/1/2025,Staff,Social security,"฿ 8,750.00"
+31/1/2025,PEA electricity bill,PEA monthly bill,"฿ 34,302.00"
+31/1/2025,Water,PWA water,"฿ 5,682.00"
+31/1/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/1/2025,Laundry,Linen & towel laundry,"22,218"
+28/1/2025,Amenities,Guest amenities & toiletries,"9,522"
+15/1/2025,Food,Breakfast ingredients,"฿ 45,230.00"
+23/1/2025,Maintenance,Air-con service,"8,824"
+31/1/2025,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 217,857.00"
+5/1/2025,Marketing,Facebook ads,"3,500"
+1/1/2025,Garden,Garden service,"2,500"
+25/2/2025,Salaries,Staff salaries (14),"272,000"
+25/2/2025,Staff,Social security,"฿ 8,750.00"
+28/2/2025,Elec,PEA monthly bill,"35,788"
+28/2/2025,Water,PWA water,"6,275"
+28/2/2025,Internet,Internet (3BB fibre),"1,890"
+28/2/2025,Laundry,Linen & towel laundry,"฿ 20,076.00"
+28/2/2025,Amenities,Guest amenities & toiletries,"8,604"
+15/2/2025,Food,Breakfast ingredients,"฿ 40,869.00"
+17/2/2025,Maintenance,General repairs,"11,965"
+28/2/2025,OTA commission,Booking.com / Agoda / Expedia commission,"178,556"
+5/2/2025,Marketing,Facebook ads,"3,500"
+1/2/2025,Garden,Garden service,"฿ 2,500.00"
+25/3/2025,Salaries,Staff salaries (14),"฿ 272,000.00"
+25/3/2025,Staff,Social security,"฿ 8,750.00"
+31/3/2025,PEA electricity bill,PEA monthly bill,"฿ 42,688.00"
+31/3/2025,PEA electricity bill,PEA monthly bill,"42,688"
+31/3/2025,Water,PWA water,"5,333"
+31/3/2025,Internet,Internet (3BB fibre),"1,890"
+28/3/2025,Laundry,Linen & towel laundry,"18,564"
+28/3/2025,Amenities,Guest amenities & toiletries,"7,956"
+15/3/2025,Food,Breakfast ingredients,"37,791"
+6/3/2025,Maintenance,Air-con service,"฿ 6,405.00"
+31/3/2025,OTA commission,Booking.com / Agoda / Expedia commission,"141,795"
+5/3/2025,Marketing,Facebook ads,"3,500"
+1/3/2025,Garden,Garden service,"2,500"
+25/4/2025,Salaries,Staff salaries (14),"272,000"
+25/4/2025,Staff,Social security,"8,750"
+30/4/2025,Elec,PEA monthly bill,"฿ 47,193.00"
+30/4/2025,Water,PWA water,"฿ 6,433.00"
+30/4/2025,Internet,Internet (3BB fibre),"1,890"
+28/4/2025,Laundry,Linen & towel laundry,"19,194"
+28/4/2025,Amenities,Guest amenities & toiletries,"฿ 8,226.00"
+15/4/2025,Food,Breakfast ingredients,"฿ 39,074.00"
+26/4/2025,Maintenance,Plumbing,"฿ 6,190.00"
+30/4/2025,OTA commission,Booking.com / Agoda / Expedia commission,"135,309"
+5/4/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/4/2025,Garden,Garden service,"2,500"
+25/5/2025,Salaries,Staff salaries (14),"272,000"
+25/5/2025,Staff,Social security,"฿ 8,750.00"
+31/5/2025,PEA electricity bill,PEA monthly bill,"45,880"
+31/5/2025,Water,PWA water,"6,321"
+31/5/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/5/2025,Laundry,Linen & towel laundry,"17,346"
+28/5/2025,Amenities,Guest amenities & toiletries,"7,434"
+15/5/2025,Food,Breakfast ingredients,"35,312"
+10/5/2025,Maintenance,Air-con service,"8,823"
+31/5/2025,OTA commission,Booking.com / Agoda / Expedia commission,"121,698"
+5/5/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/5/2025,Garden,Garden service,"2,500"
+25/6/2025,Salaries,Staff salaries (14),"272,000"
+25/6/2025,Staff,Social security,"8,750"
+30/6/2025,Elec,PEA monthly bill,"44,377"
+30/6/2025,Water,PWA water,"6,578"
+30/6/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/6/2025,Laundry,Linen & towel laundry,"฿ 15,792.00"
+28/6/2025,Amenities,Guest amenities & toiletries,"฿ 6,768.00"
+15/6/2025,Food,Breakfast ingredients,"32,148"
+8/6/2025,Maintenance,Plumbing,"10,000"
+30/6/2025,OTA commission,Booking.com / Agoda / Expedia commission,"99,431"
+5/6/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/6/2025,Garden,Garden service,"฿ 2,500.00"
+20/6/2025,Laundry,Refund - laundry overcharge,"฿ -1,200.00"
+25/7/2025,Salaries,Staff salaries (14),"272,000"
+25/7/2025,Staff,Social security,"฿ 8,750.00"
+31/7/2025,PEA electricity bill,PEA monthly bill,"฿ 41,073.00"
+31/7/2025,Water,PWA water,"6,543"
+31/7/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/7/2025,Laundry,Linen & towel laundry,"฿ 18,102.00"
+28/7/2025,Amenities,Guest amenities & toiletries,"฿ 7,758.00"
+15/7/2025,Food,Breakfast ingredients,"฿ 36,851.00"
+5/7/2025,Maintenance,Garden lights,"9,708"
+31/7/2025,OTA commission,Booking.com / Agoda / Expedia commission,"112,248"
+5/7/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/7/2025,Garden,Garden service,"2,500"
+25/8/2025,Salaries,Staff salaries (14),"272,000"
+25/8/2025,Staff,Social security,"8,750"
+31/8/2025,Electricity,PEA monthly bill,"฿ 40,988.00"
+31/8/2025,Water,PWA water,"6,699"
+31/8/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/8/2025,Laundry,Linen & towel laundry,"17,472"
+28/8/2025,Amenities,Guest amenities & toiletries,"฿ 7,488.00"
+15/8/2025,Food,Breakfast ingredients,"35,568"
+12/8/2025,Maintenance,Plumbing,"8,082"
+31/8/2025,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 108,503.00"
+5/8/2025,Marketing,Facebook ads,"3,500"
+1/8/2025,Garden,Garden service,"฿ 2,500.00"
+25/9/2025,Salaries,Staff salaries (14),"272,000"
+25/9/2025,Staff,Social security,"฿ 8,750.00"
+30/9/2025,PEA electricity bill,PEA monthly bill,"฿ 39,532.00"
+30/9/2025,Water,PWA water,"฿ 5,465.00"
+30/9/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/9/2025,Laundry,Linen & towel laundry,"16,128"
+28/9/2025,Amenities,Guest amenities & toiletries,"฿ 6,912.00"
+15/9/2025,Food,Breakfast ingredients,"฿ 32,832.00"
+16/9/2025,Maintenance,Air-con service,"5,035"
+30/9/2025,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 107,489.00"
+5/9/2025,Marketing,Facebook ads,"3,500"
+1/9/2025,Garden,Garden service,"2,500"
+25/10/2025,Salaries,Staff salaries (14),"272,000"
+25/10/2025,Staff,Social security,"฿ 8,750.00"
+31/10/2025,PEA electricity bill,PEA monthly bill,"฿ 38,663.00"
+31/10/2025,Water,PWA water,"฿ 5,420.00"
+31/10/2025,Internet,Internet (3BB fibre),"1,890"
+28/10/2025,Laundry,Linen & towel laundry,"฿ 18,102.00"
+28/10/2025,Amenities,Guest amenities & toiletries,"฿ 7,758.00"
+15/10/2025,Food,Breakfast ingredients,"36,851"
+11/10/2025,Maintenance,Plumbing,"฿ 5,547.00"
+31/10/2025,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 132,645.00"
+5/10/2025,Marketing,Facebook ads,"3,500"
+1/10/2025,Garden,Garden service,"2,500"
+25/11/2025,Salaries,Staff salaries (14),"฿ 272,000.00"
+25/11/2025,Staff,Social security,"฿ 8,750.00"
+30/11/2025,Electricity,PEA monthly bill,"33,976"
+30/11/2025,Water,PWA water,"฿ 5,524.00"
+30/11/2025,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/11/2025,Laundry,Linen & towel laundry,"฿ 21,084.00"
+28/11/2025,Amenities,Guest amenities & toiletries,"฿ 9,036.00"
+15/11/2025,Food,Breakfast ingredients,"42,921"
+12/11/2025,Maintenance,Garden lights,"11,394"
+30/11/2025,OTA commission,Booking.com / Agoda / Expedia commission,"204,629"
+5/11/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/11/2025,Garden,Garden service,"2,500"
+25/12/2025,Salaries,Staff salaries (14),"฿ 272,000.00"
+25/12/2025,Staff,Social security,"฿ 8,750.00"
+31/12/2025,Electricity,PEA monthly bill,"33,075"
+31/12/2025,Water,PWA water,"5,739"
+31/12/2025,Internet,Internet (3BB fibre),"1,890"
+28/12/2025,Laundry,Linen & towel laundry,"23,394"
+28/12/2025,Amenities,Guest amenities & toiletries,"10,026"
+15/12/2025,Food,Breakfast ingredients,"47,624"
+30/12/2025,Maintenance,Air-con service,"฿ 6,429.00"
+31/12/2025,OTA commission,Booking.com / Agoda / Expedia commission,"220,054"
+5/12/2025,Marketing,Facebook ads,"฿ 3,500.00"
+1/12/2025,Garden,Garden service,"฿ 2,500.00"
+25/1/2026,Salaries,Staff salaries (14),"280,000"
+25/1/2026,Staff,Social security,"฿ 8,750.00"
+31/1/2026,Elec,PEA monthly bill,"฿ 33,891.00"
+31/1/2026,Water,PWA water,"฿ 6,363.00"
+31/1/2026,Internet,Internet (3BB fibre),"1,890"
+28/1/2026,Laundry,Linen & towel laundry,"฿ 22,386.00"
+28/1/2026,Amenities,Guest amenities & toiletries,"9,594"
+15/1/2026,Food,Breakfast ingredients,"45,572"
+20/1/2026,Maintenance,Plumbing,"฿ 5,633.00"
+31/1/2026,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 218,931.00"
+5/1/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/1/2026,Garden,Garden service,"2,500"
+25/2/2026,Salaries,Staff salaries (14),"฿ 280,000.00"
+25/2/2026,Staff,Social security,"฿ 8,750.00"
+28/2/2026,PEA electricity bill,PEA monthly bill,"฿ 35,001.00"
+28/2/2026,Water,PWA water,"6,716"
+28/2/2026,Internet,Internet (3BB fibre),"1,890"
+28/2/2026,Laundry,Linen & towel laundry,"฿ 20,076.00"
+28/2/2026,Amenities,Guest amenities & toiletries,"฿ 8,604.00"
+15/2/2026,Food,Breakfast ingredients,"฿ 40,869.00"
+12/2/2026,Maintenance,Plumbing,"฿ 12,642.00"
+28/2/2026,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 190,385.00"
+5/2/2026,Marketing,Facebook ads,"3,500"
+1/2/2026,Garden,Garden service,"฿ 2,500.00"
+25/3/2026,Salaries,Staff salaries (14),"฿ 280,000.00"
+25/3/2026,Staff,Social security,"฿ 8,750.00"
+31/3/2026,PEA electricity bill,PEA monthly bill,"41,076"
+31/3/2026,Water,PWA water,"6,617"
+31/3/2026,Internet,Internet (3BB fibre),"1,890"
+28/3/2026,Laundry,Linen & towel laundry,"฿ 18,522.00"
+28/3/2026,Amenities,Guest amenities & toiletries,"฿ 7,938.00"
+15/3/2026,Food,Breakfast ingredients,"฿ 37,706.00"
+24/3/2026,Maintenance,General repairs,"฿ 12,744.00"
+31/3/2026,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 150,119.00"
+5/3/2026,Marketing,Facebook ads,"3,500"
+1/3/2026,Garden,Garden service,"2,500"
+25/4/2026,Salaries,Staff salaries (14),"280,000"
+25/4/2026,Staff,Social security,"8,750"
+30/4/2026,Elec,PEA monthly bill,"48,568"
+30/4/2026,Water,PWA water,"5,585"
+30/4/2026,Internet,Internet (3BB fibre),"1,890"
+28/4/2026,Laundry,Linen & towel laundry,"18,102"
+28/4/2026,Amenities,Guest amenities & toiletries,"7,758"
+15/4/2026,Food,Breakfast ingredients,"36,851"
+11/4/2026,Maintenance,General repairs,"฿ 4,320.00"
+30/4/2026,OTA commission,Booking.com / Agoda / Expedia commission,"141,407"
+5/4/2026,Marketing,Facebook ads,"3,500"
+1/4/2026,Garden,Garden service,"฿ 2,500.00"
+25/5/2026,Salaries,Staff salaries (14),"฿ 280,000.00"
+25/5/2026,Staff,Social security,"8,750"
+31/5/2026,Electricity,PEA monthly bill,"฿ 54,872.00"
+31/5/2026,Water,PWA water,"฿ 6,719.00"
+31/5/2026,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/5/2026,Laundry,Linen & towel laundry,"฿ 17,514.00"
+28/5/2026,Amenities,Guest amenities & toiletries,"7,506"
+15/5/2026,Food,Breakfast ingredients,"35,654"
+5/5/2026,Maintenance,Plumbing,"฿ 7,468.00"
+31/5/2026,OTA commission,Booking.com / Agoda / Expedia commission,"125,423"
+5/5/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/5/2026,Garden,Garden service,"฿ 2,500.00"
+25/6/2026,Salaries,Staff salaries (14),"280,000"
+25/6/2026,Staff,Social security,"8,750"
+30/6/2026,PEA electricity bill,PEA monthly bill,"51,352"
+30/6/2026,Water,PWA water,"7,231"
+30/6/2026,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/6/2026,Laundry,Linen & towel laundry,"16,128"
+28/6/2026,Amenities,Guest amenities & toiletries,"6,912"
+15/6/2026,Food,Breakfast ingredients,"32,832"
+24/6/2026,Maintenance,Plumbing,"฿ 13,432.00"
+12/6/2026,Maintenance,Shower repair room 204,"฿ 6,500.00"
+30/6/2026,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 119,206.00"
+5/6/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/6/2026,Garden,Garden service,"2,500"
+25/7/2026,Salaries,Staff salaries (14),"280,000"
+25/7/2026,Staff,Social security,"8,750"
+31/7/2026,Elec,PEA monthly bill,"฿ 50,977.00"
+31/7/2026,Water,PWA water,"6,543"
+31/7/2026,Internet,Internet (3BB fibre),"฿ 1,890.00"
+28/7/2026,Laundry,Linen & towel laundry,"฿ 14,574.00"
+28/7/2026,Amenities,Guest amenities & toiletries,"6,246"
+15/7/2026,Food,Breakfast ingredients,"29,669"
+19/7/2026,Maintenance,Garden lights,"10,011"
+31/7/2026,OTA commission,Booking.com / Agoda / Expedia commission,"฿ 105,464.00"
+5/7/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/7/2026,Garden,Garden service,"฿ 2,500.00"
+25/8/2026,Salaries,Staff salaries (14),"280,000"
+25/8/2026,Staff,Social security,"฿ 8,750.00"
+31/8/2026,Elec,PEA monthly bill,"71,400"
+31/8/2026,Water,PWA water,"฿ 7,326.00"
+31/8/2026,Internet,Internet (3BB fibre),"1,890"
+28/8/2026,Laundry,Linen & towel laundry,"18,858"
+28/8/2026,Amenities,Guest amenities & toiletries,"8,082"
+15/8/2026,Food,Breakfast ingredients,"฿ 38,390.00"
+6/8/2026,Maintenance,Plumbing,"฿ 13,415.00"
+31/8/2026,OTA commission,Booking.com / Agoda / Expedia commission,"129,385"
+5/8/2026,Marketing,Facebook ads,"3,500"
+1/8/2026,Garden,Garden service,"2,500"
+25/9/2026,Salaries,Staff salaries (14),"฿ 280,000.00"
+25/9/2026,Staff,Social security,"฿ 8,750.00"
+30/9/2026,Electricity,PEA monthly bill,"฿ 48,896.00"
+30/9/2026,Water,PWA water,
+30/9/2026,Internet,Internet (3BB fibre),"1,890"
+28/9/2026,Laundry,Linen & towel laundry,"฿ 15,666.00"
+28/9/2026,Amenities,Guest amenities & toiletries,"฿ 6,714.00"
+15/9/2026,Food,Breakfast ingredients,"31,892"
+29/9/2026,Maintenance,Garden lights,"฿ 10,667.00"
+30/9/2026,OTA commission,Booking.com / Agoda / Expedia commission,"105,960"
+5/9/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/9/2026,Garden,Garden service,"2,500"
+25/10/2026,Salaries,Staff salaries (14),"฿ 280,000.00"
+25/10/2026,Staff,Social security,"8,750"
+31/10/2026,Electricity,PEA monthly bill,"45,829"
+31/10/2026,Water,PWA water,"฿ 6,394.00"
+31/10/2026,Internet,Internet (3BB fibre),"1,890"
+28/10/2026,Laundry,Linen & towel laundry,"17,556"
+28/10/2026,Amenities,Guest amenities & toiletries,"7,524"
+15/10/2026,Food,Breakfast ingredients,"฿ 35,739.00"
+21/10/2026,Maintenance,General repairs,"10,966"
+31/10/2026,OTA commission,Booking.com / Agoda / Expedia commission,"130,712"
+5/10/2026,Marketing,Facebook ads,"฿ 3,500.00"
+1/10/2026,Garden,Garden service,"2,500"

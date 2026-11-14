@@ -7,10 +7,16 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-display-serif), ui-serif, Georgia, serif;
+  --font-heading: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --color-sage: var(--sage);
+  --color-linen: var(--linen);
+  --color-amber: var(--amber);
+  --color-chart-a: var(--chart-a);
+  --color-chart-b: var(--chart-b);
+  --color-chart-ref: var(--chart-ref);
+  --color-chart-grid: var(--chart-grid);
   --color-surface: var(--surface);
   --color-subtle: var(--subtle);
   --color-success: var(--success);
@@ -66,23 +72,26 @@
 }
 
 :root {
-  /* Neutral, warm-tinted canvas with the Yoonie forest as the single brand colour */
-  --background: #f7f6f3;
-  --foreground: #1b2420;
+  /* Yoonie: warm linen canvas, forest green as the single brand colour, honey amber as accent */
+  --background: #faf6ef;
+  --foreground: #253029;
   --surface: #ffffff;
-  --subtle: #f1efea;
+  --subtle: #f5ebdd;
   --card: #ffffff;
-  --card-foreground: #1b2420;
+  --card-foreground: #253029;
   --popover: #ffffff;
-  --popover-foreground: #1b2420;
-  --primary: #1f4a40;
+  --popover-foreground: #253029;
+  --primary: #28594e;
   --primary-foreground: #ffffff;
-  --secondary: #eef2ef;
+  --secondary: #d8e6da;
   --secondary-foreground: #1f4a40;
-  --muted: #f1efea;
+  --muted: #f3ede3;
   --muted-foreground: #66706b;
-  --accent: #f1efea;
-  --accent-foreground: #1b2420;
+  --accent: #f5ebdd;
+  --accent-foreground: #253029;
+  --sage: #d8e6da;
+  --linen: #f5ebdd;
+  --amber: #e8a45b;
   --gold: #a8803f;
   --destructive: #b42318;
   --danger-soft: #fdf0ee;
@@ -92,29 +101,37 @@
   --warning-soft: #fdf4e6;
   --info: #24518f;
   --info-soft: #edf2fa;
-  --border: #e4e1da;
-  --input: #dcd8d0;
-  --ring: #1f4a40;
-  --radius: 0.5rem;
+  --border: #e8e1d5;
+  --input: #ddd5c8;
+  --ring: #28594e;
+  --radius: 0.75rem;
+  /* chart series (validated: lightness band, chroma, CVD separation, contrast) */
+  --chart-a: #14896a;
+  --chart-b: #c47a2a;
+  --chart-ref: #9aa39e;
+  --chart-grid: #eee8de;
 }
 
 .dark {
-  --background: #121815;
+  --background: #141a17;
   --foreground: #eceae4;
-  --surface: #19211d;
-  --subtle: #1f2924;
-  --card: #19211d;
+  --surface: #1b231f;
+  --subtle: #212b26;
+  --card: #1b231f;
   --card-foreground: #eceae4;
-  --popover: #1c2520;
+  --popover: #1e2722;
   --popover-foreground: #eceae4;
   --primary: #8fc2ae;
   --primary-foreground: #0f1714;
-  --secondary: #223029;
+  --secondary: #24332c;
   --secondary-foreground: #cfe3da;
-  --muted: #1f2924;
+  --muted: #212b26;
   --muted-foreground: #8e9993;
-  --accent: #223029;
+  --accent: #24332c;
   --accent-foreground: #eceae4;
+  --sage: #24332c;
+  --linen: #2a2620;
+  --amber: #e8a45b;
   --gold: #d2ac6b;
   --destructive: #f07167;
   --danger-soft: #3a1f1c;
@@ -124,9 +141,13 @@
   --warning-soft: #33280f;
   --info: #8db4ec;
   --info-soft: #18263a;
-  --border: #2a3530;
-  --input: #34413b;
+  --border: #2c3732;
+  --input: #36433d;
   --ring: #8fc2ae;
+  --chart-a: #36a47f;
+  --chart-b: #bf7d3e;
+  --chart-ref: #6b7570;
+  --chart-grid: #26302b;
 }
 
 @layer base {

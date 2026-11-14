@@ -64,7 +64,7 @@ export function RegisterPageView({ vm }: { vm: RegisterPageVm }) {
             Create your Yoonie Account
           </h1>
           <p className="text-xs text-[#7A8B84] font-medium max-w-sm mx-auto">
-            Direct guest bookings, composite itinerary carts, and personal preferences.
+            Bring your spreadsheets. Yoonie tells you what they mean and what to do next.
           </p>
         </div>
 
