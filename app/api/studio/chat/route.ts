@@ -44,12 +44,14 @@ export async function POST(req: Request) {
 
   const openrouter = createOpenRouter({ apiKey, appName: "Yoonie", appUrl: "https://yoonie.app" });
   const result = streamText({
-    model: openrouter(MODEL),
+    // Haiku 5.5 thinks before answering, and thinking counts toward the output cap: keep it
+    // low and leave room, or answers get cut off ("finish: length") or come back empty.
+    model: openrouter(MODEL, { reasoning: { effort: "low", exclude: true } }),
     instructions: instructions(dataset),
     messages,
     tools: studioTools(dataset),
     stopWhen: isStepCount(6),
-    maxOutputTokens: 700,
+    maxOutputTokens: 2000,
     abortSignal: req.signal,
     onError: ({ error }) => console.error("[chat]", error),
   });

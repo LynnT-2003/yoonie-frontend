@@ -133,12 +133,14 @@ export function YoonieChat({
       const reply = await send(message, history, (soFar) => {
         if (!soFar) return;
         setThinking(false);
-        setMessages((m) =>
-          streamed ? [...m.slice(0, -1), { role: "yoonie", text: soFar }] : [...m, { role: "yoonie", text: soFar }]
-        );
+        // decide now, not inside the updater: React runs updaters later, by which time
+        // `streamed` is already true and the user's own message would be overwritten
+        const first = !streamed;
         streamed = true;
+        setMessages((m) => (first ? [...m, { role: "yoonie", text: soFar }] : [...m.slice(0, -1), { role: "yoonie", text: soFar }]));
       });
-      setMessages((m) => (streamed ? [...m.slice(0, -1), { role: "yoonie", text: reply }] : [...m, { role: "yoonie", text: reply }]));
+      const hadBubble = streamed;
+      setMessages((m) => (hadBubble ? [...m.slice(0, -1), { role: "yoonie", text: reply }] : [...m, { role: "yoonie", text: reply }]));
 
       if (forceVoice && typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
@@ -150,7 +152,8 @@ export function YoonieChat({
 
       onReply?.();
     } catch (err) {
-      if (streamed) setMessages((m) => m.slice(0, -1));
+      const hadBubble = streamed;
+      if (hadBubble) setMessages((m) => m.slice(0, -1));
       const text =
         err instanceof Error && !(err instanceof ApiError) && err.message
           ? err.message
