@@ -99,7 +99,7 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
           <YoonieMascot mood="sleeping" size="lg" />
           <p className="text-sm text-muted-foreground">Upload your spreadsheets first. Then I can answer questions from your own numbers.</p>
           <Button asChild size="sm" variant="secondary">
-            <Link href="/studio">Upload</Link>
+            <Link href="/studio/dashboard">Upload</Link>
           </Button>
         </div>
       )}

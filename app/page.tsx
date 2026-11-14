@@ -26,7 +26,7 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/studio">
+              <Link href="/studio/dashboard">
                 Try it with a sample hotel <ArrowRight />
               </Link>
             </Button>

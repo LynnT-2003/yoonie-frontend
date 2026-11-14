@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (body: RegisterBody) => {
       const auth = await registerRequest(body);
       applyAuthResponse(auth);
-      router.push("/studio");
+      router.push("/studio/dashboard");
     },
     [applyAuthResponse, router]
   );

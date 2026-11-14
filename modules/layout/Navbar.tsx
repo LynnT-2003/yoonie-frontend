@@ -106,7 +106,7 @@ export function Navbar() {
                 <Link href="/login">Sign in</Link>
               </Button>
               <Button asChild size="sm">
-                <Link href="/login?next=/studio">Try the demo</Link>
+                <Link href="/login?next=/studio/dashboard">Try the demo</Link>
               </Button>
             </>
           )}
