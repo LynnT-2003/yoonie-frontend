@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { StudioProvider } from "@/providers/studio-provider";
+import { StudioShell } from "@/modules/studio/components/ChatPanel";
 
 export const metadata = {
   title: "Studio · Yoonie",
@@ -7,5 +8,9 @@ export const metadata = {
 };
 
 export default function StudioLayout({ children }: { children: ReactNode }) {
-  return <StudioProvider>{children}</StudioProvider>;
+  return (
+    <StudioProvider>
+      <StudioShell>{children}</StudioShell>
+    </StudioProvider>
+  );
 }

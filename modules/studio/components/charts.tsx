@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import type { MonthMetric, ReviewTheme } from "@/lib/types/studio";
 import { money, monthLabel, monthShort, pct } from "@/lib/domain/studio/format";
+import { cn } from "@/lib/utils";
 
 /**
  * Chart colours come from validated CSS tokens (--chart-a / --chart-b / --chart-ref) so light
@@ -172,29 +173,125 @@ export function ComplaintBars({
   const before = months.slice(-12, -6);
   const count = (ms: MonthMetric[], t: ReviewTheme) => ms.reduce((s, m) => s + (m.complaints[t] ?? 0), 0);
   const rows = (Object.keys(labels) as ReviewTheme[])
-    .map((t) => ({ t, now: count(now, t), before: count(before, t) }))
+    .map((t) => ({ label: labels[t], now: count(now, t), before: count(before, t) }))
     .filter((r) => r.now || r.before)
     .sort((a, b) => b.now - a.now);
-  const max = Math.max(1, ...rows.map((r) => Math.max(r.now, r.before)));
   if (!rows.length) return <p className="text-sm text-muted-foreground">No recurring complaints found in the reviews.</p>;
+  return <CompareBars rows={rows} format={(n) => String(Math.round(n))} caption="Reviews mentioning a problem" nowLabel="Last 6 months" beforeLabel="6 months before" delta="absolute" />;
+}
+
+/* ------------------------------------------------------------- rating */
+
+export function RatingChart({ months }: { months: MonthMetric[] }) {
+  const data = months.map((m) => ({ month: m.month, rating: m.avgRating, reviews: m.reviewCount }));
   return (
     <figure className="space-y-3">
-      <figcaption className="text-xs text-muted-foreground">
-        Reviews mentioning a problem, last 6 months. Grey tick = the 6 months before.
+      <figcaption className="text-xs text-muted-foreground">Average guest rating per month, out of 5.</figcaption>
+      <div className="h-56 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -24 }}>
+            <CartesianGrid vertical={false} stroke={GRID} />
+            <XAxis dataKey="month" tickFormatter={tickMonth} tick={AXIS} tickLine={false} axisLine={{ stroke: GRID }} interval="preserveStartEnd" minTickGap={16} />
+            <YAxis domain={[3, 5]} ticks={[3, 3.5, 4, 4.5, 5]} tick={AXIS} tickLine={false} axisLine={false} />
+            <Tooltip
+              cursor={{ stroke: "var(--muted-foreground)", strokeWidth: 1, strokeOpacity: 0.4 }}
+              content={({ active, payload, label }) => {
+                if (!active || !payload?.length) return null;
+                const p = payload[0].payload as (typeof data)[number];
+                return (
+                  <TooltipBox
+                    title={monthLabel(String(label), true)}
+                    rows={[
+                      { label: "Average rating", value: p.rating === null ? "no reviews" : p.rating.toFixed(2), color: A },
+                      { label: "Reviews", value: String(p.reviews) },
+                    ]}
+                  />
+                );
+              }}
+            />
+            <Line dataKey="rating" stroke={A} strokeWidth={2} dot={false} connectNulls activeDot={{ r: 5, stroke: "var(--surface)", strokeWidth: 2 }} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </figure>
+  );
+}
+
+/* ------------------------------------------------- this year vs before */
+
+export type CompareRow = { label: string; now: number; before: number | null };
+
+/**
+ * Paired bars: the last 12 months (green) directly above the 12 before (beige), each with its
+ * value, so the comparison reads without decoding a marker.
+ */
+export function CompareBars({
+  rows,
+  format,
+  caption,
+  nowLabel = "Last 12 months",
+  beforeLabel = "12 months before",
+  delta = "relative",
+}: {
+  rows: CompareRow[];
+  format: (n: number) => string;
+  caption: string;
+  nowLabel?: string;
+  beforeLabel?: string;
+  /** "absolute" for small counts, where +1200% would mislead */
+  delta?: "relative" | "absolute";
+}) {
+  const max = Math.max(1e-9, ...rows.map((r) => Math.max(r.now, r.before ?? 0)));
+  const hasBefore = rows.some((r) => r.before !== null);
+  return (
+    <figure className="space-y-4">
+      <figcaption className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        {caption ? <span>{caption}</span> : null}
+        <span className="flex items-center gap-1.5">
+          <span className="h-2 w-3 rounded-sm bg-[var(--chart-a)]" /> {nowLabel}
+        </span>
+        {hasBefore ? (
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-3 rounded-sm bg-[var(--chart-base)]" /> {beforeLabel}
+          </span>
+        ) : null}
       </figcaption>
-      <ul className="space-y-2.5">
-        {rows.map((r) => (
-          <li key={r.t} className="group grid grid-cols-[88px_1fr_64px] items-center gap-3 text-sm" title={`${labels[r.t]}: ${r.now} (was ${r.before})`}>
-            <span className="truncate text-muted-foreground">{labels[r.t]}</span>
-            <span className="relative h-3">
-              <span className="absolute inset-y-0 left-0 rounded-r-[4px] bg-[var(--chart-a)] transition-opacity group-hover:opacity-80" style={{ width: `${(r.now / max) * 100}%` }} />
-              <span className="absolute -inset-y-0.5 w-0.5 rounded bg-[var(--chart-ref)]" style={{ left: `calc(${(r.before / max) * 100}% - 1px)` }} />
-            </span>
-            <span className="text-right text-xs tabular-nums">
-              <strong className="font-semibold text-foreground">{r.now}</strong> <span className="text-muted-foreground">(was {r.before})</span>
-            </span>
-          </li>
-        ))}
+      <ul className="space-y-3.5">
+        {rows.map((r) => {
+          const ch = r.before ? r.now / r.before - 1 : null;
+          const diff = r.before !== null ? r.now - r.before : null;
+          const text =
+            delta === "absolute"
+              ? diff === null || diff === 0 ? "" : `${diff > 0 ? "+" : "−"}${format(Math.abs(diff))}`
+              : ch === null || !Number.isFinite(ch) ? "" : `${ch >= 0 ? "+" : "−"}${Math.abs(ch * 100).toFixed(0)}%`;
+          return (
+            <li key={r.label} className="grid grid-cols-[minmax(84px,128px)_1fr_auto] items-center gap-x-3 text-sm">
+              <span className="truncate text-muted-foreground" title={r.label}>
+                {r.label}
+              </span>
+              <span className="space-y-1">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 rounded-r-[3px] bg-[var(--chart-a)]" style={{ width: `${r.now > 0 ? Math.max(0.6, (r.now / max) * 100) : 0}%` }} />
+                  <span className="whitespace-nowrap text-xs font-semibold tabular-nums">{format(r.now)}</span>
+                </span>
+                {r.before !== null ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-1.5 rounded-r-[3px] bg-[var(--chart-base)]" style={{ width: `${r.before > 0 ? Math.max(0.6, (r.before / max) * 100) : 0}%` }} />
+                    <span className="whitespace-nowrap text-[11px] tabular-nums text-muted-foreground">{format(r.before)}</span>
+                  </span>
+                ) : null}
+              </span>
+              <span
+                className={cn(
+                  "w-12 text-right text-xs tabular-nums",
+                  !text || text === "+0%" || text === "−0%" ? "text-muted-foreground" : "font-medium text-foreground"
+                )}
+              >
+                {text}
+              </span>
+            </li>
+          );
+        })}
       </ul>
     </figure>
   );

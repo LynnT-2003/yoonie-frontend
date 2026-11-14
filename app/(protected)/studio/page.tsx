@@ -1,5 +1,5 @@
-import { ImportPageView } from "@/modules/studio/view/ImportPageView";
+import { redirect } from "next/navigation";
 
-export default function StudioUploadPage() {
-  return <ImportPageView />;
+export default function StudioIndex() {
+  redirect("/studio/dashboard");
 }

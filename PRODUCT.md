@@ -43,7 +43,10 @@ Every recommendation follows **Cause → Action → Effect → Numbers ← Evide
 - Structuring: monthly occupancy (weekday/weekend split), ADR, RevPAR, room revenue, expenses by 8 categories, operating margin, channel mix, rating and complaint themes.
 - Insights: seasonal demand gap vs same-month baseline, a cost line outgrowing revenue (with and without flagged bills), rising complaint themes vs rating (Pearson r).
 - Recommendations: top 3, with arithmetic, measurement plan and assumptions.
-- Real-time streaming of every stage (NDJSON), a dashboard (KPIs, charts, insights), a data-quality page, an action detail page, and "Ask Yoonie" chat (OpenRouter, tool-grounded; scripted fallback without a key).
+- Two tabs only:
+  - **Dashboard**: upload → the live four-stage pipeline → full EDA (overview KPIs, data health with before/after tables and a downloadable fix list, demand incl. baseline bars, season heatmap, night-of-week and length-of-stay, money incl. cost per occupied night and channel mix, guests incl. rating spread and complaint themes, and the full monthly table as CSV).
+  - **Strategy**: the recommendations as an action plan, each shown as Observation → Evidence → Action → Target → Measure (as in the pitch deck), with a step checklist, status (to do / trying / done / not now), the arithmetic and a measurement scorecard.
+- "Ask Yoonie" sidebar (OpenRouter, tool-grounded; scripted fallback without a key). It only exists once an analysis has finished.
 
 ## Not built yet
 

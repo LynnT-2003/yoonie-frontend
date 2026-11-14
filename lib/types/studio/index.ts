@@ -51,6 +51,20 @@ export interface Anomaly {
   resolution: Resolution;
   /** how many rows this covers when several identical issues are grouped */
   count?: number;
+  /** for tidied groups: a few real before → after pairs from the owner's file */
+  examples?: { before: string; after: string }[];
+}
+
+/** Per-sheet bookkeeping so the owner can see where every row went. */
+export interface SheetStat {
+  file: string;
+  sheet: string;
+  kind: SheetKind;
+  rows: number;
+  setAside: number;
+  needsYou: number;
+  tidied: number;
+  flagged: number;
 }
 
 export interface SourceFile {
@@ -65,6 +79,8 @@ export interface ExtractedField {
   source: string;
   /** share of the period with usable data, 0–1 */
   coverage: number;
+  /** the latest value, so the owner sees a real number, e.g. "Oct 2026: 73%" */
+  sample?: string;
 }
 
 export type ExpenseCategory =
@@ -109,7 +125,15 @@ export interface MonthMetric {
   reviewCount: number;
   avgRating: number | null;
   complaints: Partial<Record<ReviewTheme, number>>;
+  /** room nights sold by night of week, Sunday = 0 */
+  dowNights: number[];
+  /** bookings by length of stay (by check-in month): 1, 2, 3, 4, 5–6, 7+ nights */
+  stayLengths: number[];
+  /** reviews by star rating, 1★ … 5★ (rounded) */
+  ratingCounts: number[];
 }
+
+export const STAY_BUCKETS = ["1 night", "2 nights", "3 nights", "4 nights", "5–6 nights", "7+ nights"];
 
 export interface Evidence {
   label: string;
@@ -130,6 +154,8 @@ export interface Insight {
   caveat: string;
   /** the month the finding is about, when there is one (YYYY-MM) */
   focusMonth?: string;
+  /** the one number to read first */
+  headline: { value: string; label: string };
 }
 
 export interface NumberLine {
@@ -160,7 +186,15 @@ export interface Recommendation {
     metrics: { label: string; baseline: string }[];
   };
   assumptions: string[];
+  /** one-line versions of each part, for compact cards */
+  strip: { observation: string; evidence: string; action: string; target: string; measure: string };
+  /** the comparison behind the finding, drawn as two bars */
+  seen: { label: string; now: { label: string; value: number }; usual: { label: string; value: number }; format: NumberFormat };
+  /** where the owner is today and where the target is, drawn as a track */
+  goal: { metric: string; from: number; to: number; format: NumberFormat };
 }
+
+export type NumberFormat = "percent" | "currency" | "count" | "decimal";
 
 export interface Kpi {
   key: "occupancy" | "adr" | "revpar" | "margin" | "rating";
@@ -179,6 +213,7 @@ export interface Dataset {
     to: string;
   };
   files: SourceFile[];
+  sheets: SheetStat[];
   anomalies: Anomaly[];
   fields: ExtractedField[];
   months: MonthMetric[];
@@ -200,7 +235,14 @@ export type PipelineEvent =
   | { type: "log"; stage: StageId; message: string }
   | { type: "file"; file: SourceFile }
   | { type: "anomaly"; anomaly: Anomaly }
-  | { type: "progress"; stage: StageId; pct: number; label: string }
+  | {
+      type: "progress";
+      stage: StageId;
+      pct: number;
+      label: string;
+      /** the month just structured, so the UI can draw it as it arrives */
+      month?: { month: string; occupancy: number; revenue: number; costs: number | null };
+    }
   | { type: "field"; field: ExtractedField }
   | { type: "insight"; insight: Insight }
   | { type: "recommendation"; recommendation: Recommendation }

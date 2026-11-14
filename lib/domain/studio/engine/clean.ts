@@ -70,6 +70,14 @@ export interface CleanResult {
 }
 
 let seq = 0;
+
+type Example = { before: string; after: string };
+/** keep up to `max` distinct before → after pairs */
+function sample(list: Example[], before: string, after: string, max = 4) {
+  if (list.length < max && before !== after && !list.some((e) => e.before === before)) list.push({ before, after });
+}
+const num = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+const showRaw = (raw: string, format: DateFormat | null) => (format === "serial" ? `Excel date ${raw}` : raw);
 const nextId = () => `a${(++seq).toString(36)}`;
 
 function anomaly(a: Omit<Anomaly, "id">): Anomaly {
@@ -111,6 +119,11 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
     const formats = new Map<DateFormat, number>();
     let amountsAsText = 0;
     let derivedCheckout = 0;
+    let cancelledHere = 0;
+    const dateEx: Example[] = [];
+    const amountEx: Example[] = [];
+    const checkoutEx: Example[] = [];
+    const seenFormats = new Set<DateFormat>();
 
     for (const { row, cells } of s.rows) {
       read++;
@@ -118,12 +131,17 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
       const status = text(cell(s, cells, "status")).toLowerCase();
       if (/cancel|no.?show|void/.test(status)) {
         cancelled++;
+        cancelledHere++;
         continue;
       }
       const ci = parseDate(cell(s, cells, "checkIn"));
       const co = parseDate(cell(s, cells, "checkOut"));
       if (ci.format) formats.set(ci.format, (formats.get(ci.format) ?? 0) + 1);
       if (co.format) formats.set(co.format, (formats.get(co.format) ?? 0) + 1);
+      if (ci.value && ci.format && !seenFormats.has(ci.format)) {
+        seenFormats.add(ci.format);
+        sample(dateEx, showRaw(ci.raw, ci.format), dayKey(ci.value));
+      }
       const room = text(cell(s, cells, "room"));
       const guest = text(cell(s, cells, "guest"));
 
@@ -149,6 +167,7 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
       if (!checkOut && Number.isFinite(nightsCell) && nightsCell > 0) {
         checkOut = addDays(ci.value, nightsCell);
         derivedCheckout++;
+        sample(checkoutEx, `(blank), ${nightsCell} night${nightsCell > 1 ? "s" : ""} from ${dayKey(ci.value)}`, dayKey(checkOut), 3);
       }
       if (!checkOut) {
         excluded++;
@@ -199,7 +218,10 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
       }
 
       const amt = parseAmount(cell(s, cells, "amount"));
-      if (amt.wasText && amt.value !== null) amountsAsText++;
+      if (amt.wasText && amt.value !== null) {
+        amountsAsText++;
+        sample(amountEx, amt.raw, num(amt.value), 3);
+      }
       if (amt.value === null) {
         out.push(
           anomaly({
@@ -239,6 +261,7 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
           detail: `Found ${list}. Read as day-first (DD/MM), the usual format in Thailand. Tell us if your sheet uses month-first.`,
           resolution: "normalised",
           count: [...formats.values()].reduce((a, b) => a + b, 0),
+          examples: dateEx,
         })
       );
     }
@@ -255,6 +278,7 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
           detail: `${amountsAsText} amounts like "฿1,850" were read as numbers. Same values, nothing changed.`,
           resolution: "normalised",
           count: amountsAsText,
+          examples: amountEx,
         })
       );
     }
@@ -271,6 +295,23 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
           detail: `${derivedCheckout} bookings had no departure date but did have a night count, so departure = arrival + nights.`,
           resolution: "normalised",
           count: derivedCheckout,
+          examples: checkoutEx,
+        })
+      );
+    }
+    if (cancelledHere) {
+      out.push(
+        anomaly({
+          file: s.file,
+          sheet: s.sheet,
+          row: null,
+          kind: "invalid",
+          severity: "info",
+          field: "Status",
+          title: "Cancelled bookings set aside",
+          detail: `${cancelledHere} rows are marked cancelled or no-show. They never used a room, so they don't count toward occupancy or revenue.`,
+          resolution: "excluded",
+          count: cancelledHere,
         })
       );
     }
@@ -352,6 +393,7 @@ function cleanBookings(sheets: RawSheet[], out: Anomaly[]) {
         detail: `${spellings} spellings grouped into ${merged.length} channels (e.g. ${[...example[1]].slice(0, 3).map((s) => `"${s}"`).join(", ")} → ${example[0]}).`,
         resolution: "normalised",
         count: spellings,
+        examples: merged.flatMap(([ch, v]) => [...v].filter((x) => x !== ch).map((x) => ({ before: x, after: ch }))).slice(0, 8),
       })
     );
   }
@@ -381,10 +423,14 @@ function cleanExpenses(sheets: RawSheet[], out: Anomaly[]) {
     let asText = 0;
     const formats = new Set<DateFormat>();
     const unknown = new Set<string>();
+    const dateEx: Example[] = [];
+    const amountEx: Example[] = [];
+    const grouped = new Map<string, ExpenseCategory>();
     for (const { row, cells } of s.rows) {
       read++;
       const at = { file: s.file, sheet: s.sheet, row };
       const d = parseDate(cell(s, cells, "date"));
+      if (d.format && d.value && !formats.has(d.format)) sample(dateEx, showRaw(d.raw, d.format), dayKey(d.value), 2);
       if (d.format) formats.add(d.format);
       const rawCat = text(cell(s, cells, "category"));
       const desc = text(cell(s, cells, "description"));
@@ -407,8 +453,12 @@ function cleanExpenses(sheets: RawSheet[], out: Anomaly[]) {
       }
       const category = CATEGORIES.find(([re]) => re.test(`${rawCat} ${desc}`))?.[1] ?? "other";
       if (category === "other" && label) unknown.add(label);
+      else if (rawCat && !grouped.has(rawCat)) grouped.set(rawCat, category);
       const amt = parseAmount(cell(s, cells, "amount"));
-      if (amt.wasText && amt.value !== null) asText++;
+      if (amt.wasText && amt.value !== null) {
+        asText++;
+        sample(amountEx, amt.raw, num(amt.value), 2);
+      }
       if (amt.value === null) {
         out.push(
           anomaly({
@@ -451,6 +501,24 @@ function cleanExpenses(sheets: RawSheet[], out: Anomaly[]) {
           detail: `${asText} amounts typed as text and dates in ${formats.size} formats, read without changing any values.`,
           resolution: "normalised",
           count: asText,
+          examples: [...amountEx, ...dateEx],
+        })
+      );
+    }
+    if (grouped.size) {
+      out.push(
+        anomaly({
+          file: s.file,
+          sheet: s.sheet,
+          row: null,
+          kind: "format",
+          severity: "info",
+          field: "Category",
+          title: "Expense names grouped into types",
+          detail: `${grouped.size} different expense names sorted into ${new Set(grouped.values()).size} types, so costs can be compared month to month.`,
+          resolution: "normalised",
+          count: grouped.size,
+          examples: [...grouped].slice(0, 8).map(([before, c]) => ({ before, after: CATEGORY_LABEL[c] })),
         })
       );
     }
@@ -556,6 +624,7 @@ function cleanReviews(sheets: RawSheet[], out: Anomaly[]) {
   let excluded = 0;
   for (const s of sheets) {
     let tenPoint = 0;
+    const ratingEx: Example[] = [];
     for (const { row, cells } of s.rows) {
       read++;
       const at = { file: s.file, sheet: s.sheet, row };
@@ -580,6 +649,7 @@ function cleanReviews(sheets: RawSheet[], out: Anomaly[]) {
       if (rating !== null && rating > 5 && rating <= 10) {
         rating = rating / 2;
         tenPoint++;
+        sample(ratingEx, `${r.value} / 10`, `${num(rating)} / 5`, 3);
       } else if (rating !== null && (rating < 0 || rating > 10)) {
         rating = null;
       }
@@ -604,6 +674,7 @@ function cleanReviews(sheets: RawSheet[], out: Anomaly[]) {
           detail: `${tenPoint} ratings were out of 10 (e.g. Booking.com) and were halved to fit the 5-point scale.`,
           resolution: "normalised",
           count: tenPoint,
+          examples: ratingEx,
         })
       );
     }

@@ -1,5 +1,5 @@
-import { DataQualityPageView } from "@/modules/studio/view/DataQualityPageView";
+import { DataPageView } from "@/modules/studio/view/DataPageView";
 
 export default function StudioDataPage() {
-  return <DataQualityPageView />;
+  return <DataPageView />;
 }

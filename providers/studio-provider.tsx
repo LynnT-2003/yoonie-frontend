@@ -19,7 +19,6 @@ import { streamPipeline } from "@/lib/domain/studio/studio-api";
  */
 
 export type StageState = { status: "waiting" | "running" | "done"; summary?: string; pct?: number; label?: string };
-export type RecStatus = "suggested" | "trying" | "dismissed";
 
 export type RunState = {
   status: "idle" | "running" | "done" | "error";
@@ -30,8 +29,12 @@ export type RunState = {
   insights: Insight[];
   recommendations: Recommendation[];
   logs: string[];
+  /** months as Structuring produces them, for the live chart */
+  months: LiveMonth[];
   error?: string;
 };
+
+export type LiveMonth = { month: string; occupancy: number; revenue: number; costs: number | null };
 
 const fresh = (): RunState => ({
   status: "idle",
@@ -47,6 +50,7 @@ const fresh = (): RunState => ({
   insights: [],
   recommendations: [],
   logs: [],
+  months: [],
 });
 
 function reduce(s: RunState, e: PipelineEvent): RunState {
@@ -66,7 +70,11 @@ function reduce(s: RunState, e: PipelineEvent): RunState {
     case "anomaly":
       return { ...s, anomalies: [...s.anomalies, e.anomaly] };
     case "progress":
-      return { ...s, stages: { ...s.stages, [e.stage]: { ...s.stages[e.stage], pct: e.pct, label: e.label } } };
+      return {
+        ...s,
+        months: e.month ? [...s.months, e.month] : s.months,
+        stages: { ...s.stages, [e.stage]: { ...s.stages[e.stage], pct: e.pct, label: e.label } },
+      };
     case "field":
       return { ...s, fields: [...s.fields, e.field] };
     case "insight":
@@ -80,8 +88,7 @@ function reduce(s: RunState, e: PipelineEvent): RunState {
   }
 }
 
-const DATASET_KEY = "yoonie.studio.dataset.v1";
-const STATUS_KEY = "yoonie.studio.recStatus.v1";
+const DATASET_KEY = "yoonie.studio.dataset.v4";
 
 function load<T>(key: string): T | null {
   try {
@@ -107,8 +114,6 @@ type StudioContextValue = {
   start: (input: { files: File[] } | { demo: true }) => Promise<void>;
   cancel: () => void;
   clear: () => void;
-  recStatus: Record<string, RecStatus>;
-  setRecStatus: (id: string, status: RecStatus) => void;
 };
 
 const Ctx = React.createContext<StudioContextValue | null>(null);
@@ -116,13 +121,11 @@ const Ctx = React.createContext<StudioContextValue | null>(null);
 export function StudioProvider({ children }: { children: React.ReactNode }) {
   const [run, setRun] = React.useState<RunState>(fresh);
   const [dataset, setDataset] = React.useState<Dataset | null>(null);
-  const [recStatus, setRecStatusState] = React.useState<Record<string, RecStatus>>({});
   const [ready, setReady] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
 
   React.useEffect(() => {
     setDataset(load<Dataset>(DATASET_KEY));
-    setRecStatusState(load<Record<string, RecStatus>>(STATUS_KEY) ?? {});
     setReady(true);
   }, []);
 
@@ -140,8 +143,6 @@ export function StudioProvider({ children }: { children: React.ReactNode }) {
           if (e.type === "result") {
             setDataset(e.dataset);
             save(DATASET_KEY, e.dataset);
-            setRecStatusState({});
-            save(STATUS_KEY, {});
           }
         },
         ac.signal
@@ -163,23 +164,13 @@ export function StudioProvider({ children }: { children: React.ReactNode }) {
     setRun(fresh());
     setDataset(null);
     save(DATASET_KEY, null);
-    setRecStatusState({});
-    save(STATUS_KEY, null);
-  }, []);
-
-  const setRecStatus = React.useCallback((id: string, status: RecStatus) => {
-    setRecStatusState((prev) => {
-      const next = { ...prev, [id]: status };
-      save(STATUS_KEY, next);
-      return next;
-    });
   }, []);
 
   React.useEffect(() => () => abortRef.current?.abort(), []);
 
   const value = React.useMemo(
-    () => ({ run, dataset, ready, start, cancel, clear, recStatus, setRecStatus }),
-    [run, dataset, ready, start, cancel, clear, recStatus, setRecStatus]
+    () => ({ run, dataset, ready, start, cancel, clear }),
+    [run, dataset, ready, start, cancel, clear]
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

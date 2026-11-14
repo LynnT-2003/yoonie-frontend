@@ -104,11 +104,13 @@
   --border: #e8e1d5;
   --input: #ddd5c8;
   --ring: #28594e;
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   /* chart series (validated: lightness band, chroma, CVD separation, contrast) */
   --chart-a: #14896a;
   --chart-b: #c47a2a;
   --chart-ref: #9aa39e;
+  /* baseline / "usual" reference, from the deck's beige; neutral on purpose, always labelled */
+  --chart-base: #a89b84;
   --chart-grid: #eee8de;
 }
 
@@ -147,6 +149,7 @@
   --chart-a: #36a47f;
   --chart-b: #bf7d3e;
   --chart-ref: #6b7570;
+  --chart-base: #7c705d;
   --chart-grid: #26302b;
 }
 

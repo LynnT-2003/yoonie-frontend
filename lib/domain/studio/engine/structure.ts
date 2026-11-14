@@ -8,7 +8,8 @@ import type {
 } from "@/lib/types/studio";
 import type { CleanResult, ReviewRec } from "./clean";
 import { addDays, daysInMonth, monthKey, nextMonth } from "./parse";
-import { monthLabel } from "../format";
+import { money, monthLabel, pct } from "../format";
+import { CATEGORY_LABEL } from "../labels";
 import { THEME_LABEL } from "../labels";
 
 /**
@@ -57,7 +58,12 @@ type Acc = {
   ratings: number[];
   reviews: number;
   complaints: Partial<Record<ReviewTheme, number>>;
+  dow: number[];
+  stays: number[];
+  stars: number[];
 };
+
+const stayBucket = (n: number) => (n <= 4 ? n - 1 : n <= 6 ? 4 : 5);
 
 const isWeekendNight = (d: Date) => d.getUTCDay() === 5 || d.getUTCDay() === 6; // Fri, Sat nights
 
@@ -76,6 +82,7 @@ export function structure(c: CleanResult): StructureResult {
       acc.set(k, {
         nights: 0, weekdayNights: 0, weekendNights: 0, revenue: 0, unpriced: 0, bookings: 0,
         channels: {}, expenses: {}, hasExpenses: false, ratings: [], reviews: 0, complaints: {},
+        dow: [0, 0, 0, 0, 0, 0, 0], stays: [0, 0, 0, 0, 0, 0], stars: [0, 0, 0, 0, 0],
       });
     return acc.get(k)!;
   };
@@ -94,13 +101,16 @@ export function structure(c: CleanResult): StructureResult {
   const lastComplete = monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)));
   if (last > lastComplete) last = lastComplete;
   for (const b of c.bookings) {
-    get(monthKey(b.checkIn)).bookings++;
+    const start = get(monthKey(b.checkIn));
+    start.bookings++;
+    start.stays[stayBucket(b.nights)]++;
     const perNight = b.amount !== null ? b.amount / b.nights : null;
     for (let i = 0; i < b.nights; i++) {
       const d = addDays(b.checkIn, i);
       const k = monthKey(d);
       const a = get(k);
       a.nights++;
+      a.dow[d.getUTCDay()]++;
       if (isWeekendNight(d)) a.weekendNights++;
       else a.weekdayNights++;
       if (perNight === null) a.unpriced++;
@@ -118,7 +128,10 @@ export function structure(c: CleanResult): StructureResult {
   for (const r of c.reviews) {
     const a = get(monthKey(r.date));
     a.reviews++;
-    if (r.rating !== null) a.ratings.push(r.rating);
+    if (r.rating !== null) {
+      a.ratings.push(r.rating);
+      a.stars[Math.min(4, Math.max(0, Math.round(r.rating) - 1))]++;
+    }
     for (const t of complaintThemes(r.text)) a.complaints[t] = (a.complaints[t] ?? 0) + 1;
   }
 
@@ -152,6 +165,9 @@ export function structure(c: CleanResult): StructureResult {
         reviewCount: a.reviews,
         avgRating: a.ratings.length ? a.ratings.reduce((x, y) => x + y, 0) / a.ratings.length : null,
         complaints: a.complaints,
+        dowNights: a.dow,
+        stayLengths: a.stays,
+        ratingCounts: a.stars,
       });
     }
 
@@ -171,6 +187,37 @@ export function structure(c: CleanResult): StructureResult {
     { key: "rating", label: "Guest satisfaction", source: "Review ratings, on a 5-point scale", coverage: months.filter((m) => m.avgRating !== null).length / n },
     { key: "themes", label: "Guest complaint themes", source: "Review text: 8 recurring topics", coverage: c.reviews.length ? c.reviews.filter((r: ReviewRec) => r.text).length / c.reviews.length : 0 },
   ].filter((f) => f.coverage > 0);
+
+  // a real, recent number for each field
+  const latest = months[months.length - 1];
+  const last12 = months.slice(-12);
+  if (latest) {
+    const at = monthLabel(latest.month);
+    const chan = Object.entries(last12.reduce<Record<string, number>>((acc, m) => {
+      for (const [k, v] of Object.entries(m.channelRevenue)) acc[k] = (acc[k] ?? 0) + v;
+      return acc;
+    }, {})).sort((x, y) => y[1] - x[1]);
+    const chanTotal = chan.reduce((s, [, v]) => s + v, 0);
+    const exp = Object.entries(latest.expenses).sort((x, y) => (y[1] ?? 0) - (x[1] ?? 0))[0];
+    const themes = Object.entries(last12.reduce<Record<string, number>>((acc, m) => {
+      for (const [k, v] of Object.entries(m.complaints)) acc[k] = (acc[k] ?? 0) + (v ?? 0);
+      return acc;
+    }, {})).sort((x, y) => y[1] - x[1]);
+    const samples: Record<string, string | undefined> = {
+      occupancy: `${at}: ${pct(latest.occupancy)}`,
+      available: `${at}: ${latest.roomsAvailable.toLocaleString("en-US")} nights`,
+      revenue: `${at}: ${money(latest.roomRevenue)}`,
+      adr: `${at}: ${money(latest.adr)}`,
+      revpar: `${at}: ${money(latest.revpar)}`,
+      weekday: `${at}: ${pct(latest.weekdayOccupancy)} weekday · ${pct(latest.weekendOccupancy)} weekend`,
+      channels: chan[0] && chanTotal ? `${chan[0][0]} ${pct(chan[0][1] / chanTotal)} of revenue` : undefined,
+      expenses: latest.totalExpenses !== null ? `${at}: ${money(latest.totalExpenses)}${exp ? `, most on ${CATEGORY_LABEL[exp[0] as ExpenseCategory].toLowerCase()}` : ""}` : undefined,
+      margin: latest.margin !== null ? `${at}: ${pct(latest.margin)}` : undefined,
+      rating: latest.avgRating !== null ? `${at}: ${latest.avgRating.toFixed(1)} / 5` : undefined,
+      themes: themes[0] ? `Most mentioned: ${THEME_LABEL[themes[0][0] as ReviewTheme].toLowerCase()} (${themes[0][1]})` : undefined,
+    };
+    for (const f of fields) f.sample = samples[f.key];
+  }
 
   // KPIs: last 12 months vs the 12 before
   const cur = months.slice(-12);

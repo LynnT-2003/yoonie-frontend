@@ -1,4 +1,4 @@
-import type { Anomaly, Dataset, PipelineEvent, SourceFile } from "@/lib/types/studio";
+import type { Anomaly, Dataset, PipelineEvent, SheetStat, SourceFile } from "@/lib/types/studio";
 import { readWorkbook, type RawSheet } from "./parse";
 import { clean } from "./clean";
 import { structure } from "./structure";
@@ -12,6 +12,32 @@ export interface InputFile {
 }
 
 const SEVERITY_ORDER = { critical: 0, review: 1, info: 2 } as const;
+
+/** How the owner would name each column we matched. */
+const FIELD_NAME: Record<string, string> = {
+  ref: "Booking ref", guest: "Guest", room: "Room", checkIn: "Check-in", checkOut: "Check-out", nights: "Nights",
+  amount: "Amount", channel: "Channel", status: "Status", date: "Date", category: "Category",
+  description: "Description", rating: "Rating", text: "Review", source: "Source",
+};
+
+function sheetStats(files: SourceFile[], anomalies: Anomaly[]): SheetStat[] {
+  return files.flatMap((f) =>
+    f.sheets.map((s) => {
+      const here = anomalies.filter((a) => a.file === f.name && a.sheet === s.name);
+      const rowsOf = (r: Anomaly["resolution"]) => here.filter((a) => a.resolution === r).reduce((n, a) => n + (a.row === null ? (a.count ?? 1) : 1), 0);
+      return {
+        file: f.name,
+        sheet: s.name,
+        kind: s.kind,
+        rows: s.rows,
+        setAside: s.kind === "unknown" ? s.rows : rowsOf("excluded"),
+        needsYou: rowsOf("needs_owner"),
+        tidied: rowsOf("normalised"),
+        flagged: here.filter((a) => a.resolution === "kept_flagged" && a.row !== null).length,
+      };
+    })
+  );
+}
 
 /**
  * Runs Clean → Structure → Insights → Recommendations and yields progress as it goes.
@@ -67,6 +93,14 @@ export async function* runPipeline(
     if (of.length > 1 && variants.size > 1) {
       const field = kind === "bookings" ? "checkIn" : "date";
       const names = [...new Set(of.map((s) => s.headers[s.columns[field]]).filter(Boolean))];
+      const examples: { before: string; after: string }[] = [];
+      for (const s of of)
+        for (const [f, i] of Object.entries(s.columns)) {
+          const before = s.headers[i];
+          const after = FIELD_NAME[f] ?? f;
+          if (before && before.toLowerCase() !== after.toLowerCase() && !examples.some((e) => e.before === before) && examples.length < 8)
+            examples.push({ before: `${before} (sheet ${s.sheet})`, after });
+        }
       headerNotes.push({
         id: `hdr-${kind}`,
         kind: "format",
@@ -78,6 +112,7 @@ export async function* runPipeline(
         detail: `${variants.size} different layouts across ${of.length} sheets${names.length > 1 ? ` (e.g. ${names.map((n) => `"${n}"`).join(" vs ")})` : ""}. Matched automatically.`,
         resolution: "normalised",
         count: of.length,
+        examples,
       });
     }
   }
@@ -106,11 +141,13 @@ export async function* runPipeline(
   const fieldEvery = Math.max(1, Math.floor(total / st.fields.length));
   let fi = 0;
   for (let i = 0; i < total; i++) {
+    const m = st.months[i];
     yield {
       type: "progress",
       stage: "structure",
       pct: (i + 1) / total,
-      label: `${monthLabel(st.months[i].month)}: ${st.months[i].roomNightsSold} room nights, ${st.months[i].reviewCount} reviews`,
+      label: `${monthLabel(m.month)}: ${m.roomNightsSold} room nights, ${m.reviewCount} reviews`,
+      month: { month: m.month, occupancy: m.occupancy, revenue: m.roomRevenue, costs: m.totalExpenses },
     };
     if ((i + 1) % fieldEvery === 0 && fi < st.fields.length) yield { type: "field", field: st.fields[fi++] };
     await wait(110);
@@ -173,6 +210,7 @@ export async function* runPipeline(
       to: st.months[st.months.length - 1]?.month ?? "",
     },
     files: sourceFiles,
+    sheets: sheetStats(sourceFiles, anomalies),
     anomalies,
     fields: st.fields,
     months: st.months,

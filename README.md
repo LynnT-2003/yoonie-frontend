@@ -27,7 +27,8 @@ Sign-in still uses `yoonie-backend` (the `/api/*` rewrite in `next.config.ts`). 
 ```
 app/
   page.tsx                          landing
-  (protected)/studio/               upload · dashboard · actions/[id] · data
+  (protected)/studio/dashboard      Dashboard tab: upload → live pipeline → full EDA
+  (protected)/studio/strategy       Strategy tab: the action plan (observation → evidence → action → target → measure)
   api/studio/pipeline/route.ts      POST files → NDJSON PipelineEvent stream
   api/studio/chat/route.ts          POST {messages, dataset} → streamed text
 lib/
@@ -39,6 +40,7 @@ providers/studio-provider.tsx       run state + latest result (localStorage)
 modules/studio/                     views and components
 scripts/                            sample data generator, pipeline smoke run
 public/demo/                        generated sample files (hypothetical hotel)
+public/brand/sam/                   Sam artwork, taken from the team's pitch deck (not regenerated)
 ```
 
 ## The n8n contract

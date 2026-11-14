@@ -126,6 +126,20 @@ function demandRec(s: Signals): Omit<Recommendation, "rank"> | null {
         : "No expense data for this month, so variable costs are not deducted.",
       `${name} ${nextYear} demand looks roughly like ${monthLabel(m.month)}.`,
     ],
+    seen: {
+      label: `${name} occupancy`,
+      now: { label: monthLabel(m.month), value: m.occupancy },
+      usual: { label: `Usual ${name} (${g.baselineYears.join(" & ")})`, value: g.baseline },
+      format: "percent",
+    },
+    goal: { metric: "Room nights sold on the 7 promotion nights", from: Math.round(promoBase), to: Math.round(promoBase * (1 + PROMO.uplift)), format: "count" },
+    strip: {
+      observation: `${name} occupancy ${Math.abs(Math.round(g.relative * 100))}% below baseline (${pct(m.occupancy)} vs ${pct(g.baseline)})`,
+      evidence: `${g.baselineYears.length} years of ${name} bookings; the gap is on weekdays (${pct(m.weekdayOccupancy)} vs ${pct(g.baselineWeekday)})`,
+      action: "Test a 7-day promotion on low-demand weekdays",
+      target: `+${Math.round(PROMO.uplift * 100)}% bookings vs a comparable baseline`,
+      measure: "Bookings, ADR, net room revenue, contribution",
+    },
   };
 }
 
@@ -212,6 +226,20 @@ function costRec(s: Signals): Omit<Recommendation, "rank"> | null {
       "Tariffs are the same as last year. If they rose, part of the gap can't be recovered.",
       "Per-night comparison assumes similar room mix and length of stay.",
     ],
+    seen: {
+      label: `${label} per occupied room night`,
+      now: { label: c.window, value: c.perNightNow },
+      usual: { label: c.priorWindow, value: c.perNightBefore },
+      format: "currency",
+    },
+    goal: { metric: `${label} per occupied room night`, from: Math.round(c.perNightNow), to: Math.round(target), format: "currency" },
+    strip: {
+      observation: `${label} ${change(c.driverGrowth)} while revenue moved ${change(c.revenueGrowth)}`,
+      evidence: `${money(c.perNightBefore)} → ${money(c.perNightNow)} per occupied night${c.flagged ? `, plus an unusual ${monthLabel(c.flagged.month)} bill` : ""}`,
+      action: c.driver === "utilities" ? "Check the flagged bill, service air-con and water heaters" : `Review ${lower} line by line`,
+      target: `Back to ≈ ${money(target)} per occupied night`,
+      measure: `${label} per occupied night, monthly`,
+    },
   };
 }
 
@@ -278,6 +306,20 @@ function guestRec(s: Signals): Omit<Recommendation, "rank"> | null {
       "Ratings and complaints move together here, but that doesn't prove one causes the other.",
       "No revenue effect is claimed: we don't have data linking ratings to bookings for this property yet.",
     ],
+    seen: {
+      label: `Reviews mentioning ${names} problems`,
+      now: { label: g.window, value: g.now },
+      usual: { label: g.priorWindow, value: g.before },
+      format: "count",
+    },
+    goal: { metric: `${names[0].toUpperCase()}${names.slice(1)} complaints per month`, from: Math.round((g.now / 6) * 10) / 10, to: Math.round((g.now / 12) * 10) / 10, format: "decimal" },
+    strip: {
+      observation: `${names[0].toUpperCase()}${names.slice(1)} complaints up: ${g.now} vs ${g.before}`,
+      evidence: `${pct(g.now / g.reviewsNow)} of recent reviews${g.ratingNow !== null && g.ratingBefore !== null ? `; rating ${g.ratingBefore.toFixed(1)} → ${g.ratingNow.toFixed(1)}` : ""}`,
+      action: bathroom ? "Bathroom check on every turnover + one deep clean" : `Add ${names} checks to every turnover`,
+      target: `Halve these complaints in 3 months`,
+      measure: "Complaints per month, average rating",
+    },
   };
 }
 

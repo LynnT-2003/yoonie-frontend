@@ -138,6 +138,7 @@ Rules:
 - Targets (like "+10% bookings") are things to test, not forecasts or results.
 - The owner decides; you suggest. When useful, end with one concrete next step.
 - Write for a busy hotel owner, not an analyst: short (under 120 words unless asked for detail), plain words, no tables, no headings. Use **bold** for the one or two key numbers. Percentages like 56%, money like ฿12,400.
+- The app has two tabs: Dashboard (charts, data health, monthly table) and Strategy (the action plan). Point the owner to the right one when useful.
 - If asked about anything unrelated to running this hotel, briefly steer back.`;
 }
 
@@ -152,13 +153,13 @@ export function scriptedAnswer(ds: Dataset, question: string): string {
 
   if (/(what|which).*(do|should|first|next)|recommend|action|priorit|focus/.test(q))
     return ds.recommendations.length
-      ? `Here's where I'd start:\n\n${ds.recommendations.map((x) => `**${x.rank}. ${x.title}**: ${x.effect.target}.`).join("\n")}\n\nOpen any action to see the numbers behind it and how to measure it.`
+      ? `Here's where I'd start:\n\n${ds.recommendations.map((x) => `**${x.rank}. ${x.title}**: ${x.effect.target}.`).join("\n")}\n\nEach one is on the Strategy tab, with the numbers behind it and how to measure it.`
       : "Nothing stands out yet. Add a few more months of data and I'll look again.";
   if (/occup|july|demand|booking|empty|busy|season/.test(q)) return say(find("demand"));
   if (/cost|expens|utilit|electric|water|bill|margin|profit|spend/.test(q)) return say(find("cost"));
   if (/review|complain|rating|guest|clean|bathroom|shower/.test(q)) return say(find("guest"));
   if (/data|issue|anomal|missing|duplicate|wrong|error|clean/.test(q))
-    return `I read **${ds.stats.rowsRead.toLocaleString("en-US")} rows** and set aside ${ds.stats.rowsExcluded} (duplicates, cancelled stays, impossible dates). **${ds.stats.needsOwner} values** need you to confirm them before they count. They're listed on the Data quality page.`;
+    return `I read **${ds.stats.rowsRead.toLocaleString("en-US")} rows** and set aside ${ds.stats.rowsExcluded} (duplicates, cancelled stays, impossible dates). **${ds.stats.needsOwner} values** need you to confirm them before they count. They're listed under Data health on the Dashboard.`;
   const occ = ds.kpis.find((x) => x.key === "occupancy");
   const adr = ds.kpis.find((x) => x.key === "adr");
   return `Over the last 12 months occupancy was **${occ?.current != null ? pct(occ.current) : "n/a"}**${occ?.current != null && occ.previous != null ? ` (${change(occ.current / occ.previous - 1)} vs the year before)` : ""} at an average rate of **${adr?.current != null ? money(adr.current) : "n/a"}**.\n\nAsk me about occupancy, costs, reviews, or what to do first.\n\n(Scripted answer: set OPENROUTER_API_KEY for free-form questions.)`;

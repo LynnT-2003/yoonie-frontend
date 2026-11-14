@@ -66,7 +66,8 @@ export async function POST(req: Request) {
   }
 
   const name = String(form.get("propertyName") ?? "").slice(0, 80) || (demo ? "Sam's Garden House (sample)" : "Your hotel");
-  const pace = Number(process.env.PIPELINE_PACE ?? "1");
+  // real speed by default; PIPELINE_PACE > 0 adds staged delays (demo recordings only)
+  const pace = Number(process.env.PIPELINE_PACE ?? "0");
   const encoder = new TextEncoder();
   let cancelled = false;
 
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     async start(controller) {
       const send = (e: PipelineEvent) => controller.enqueue(encoder.encode(JSON.stringify(e) + "\n"));
       try {
-        for await (const event of runPipeline(files, { propertyName: name, pace: Number.isFinite(pace) ? pace : 1 })) {
+        for await (const event of runPipeline(files, { propertyName: name, pace: Number.isFinite(pace) ? pace : 0 })) {
           if (cancelled) break;
           send(event);
         }

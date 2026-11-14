@@ -5,6 +5,7 @@ import { AuthProvider } from "../providers/auth-provider";
 import { AppQueryProvider } from "../providers/query-provider";
 import { Navbar } from "@/modules/layout/Navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { AssistantDockProvider } from "@/providers/assistant-dock";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -34,9 +35,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden max-w-full">
         <AppQueryProvider>
           <AuthProvider>
-            <Navbar />
-            <main className="flex flex-1 flex-col min-w-0 max-w-full overflow-x-hidden">{children}</main>
-            <Toaster />
+            <AssistantDockProvider>
+              <Navbar />
+              <main className="flex flex-1 flex-col min-w-0 max-w-full">{children}</main>
+              <Toaster />
+            </AssistantDockProvider>
           </AuthProvider>
         </AppQueryProvider>
       </body>

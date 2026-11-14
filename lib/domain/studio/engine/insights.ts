@@ -123,6 +123,7 @@ function demandGap(months: MonthMetric[]): { insight: Insight; signal: DemandGap
       id: "demand-gap",
       kind: "anomaly",
       focusMonth: m.month,
+      headline: { value: change(worst.relative), label: `${name} occupancy vs usual` },
       area: "demand",
       title: `${name} occupancy was ${Math.abs(Math.round(worst.relative * 100))}% below its usual level`,
       detail: `${pct(m.occupancy)} of room nights sold in ${monthLabel(m.month, true)}, against ${pct(worst.baseline)} on average for ${name} in ${years}. That's about ${lostNights} empty room nights${weekdayLed ? ", mostly on weekdays" : ""}.`,
@@ -208,6 +209,7 @@ function costSqueeze(months: MonthMetric[], expenses: ExpenseRec[]): { insight: 
       id: "cost-squeeze",
       kind: "trend",
       area: "cost",
+      headline: { value: change(signal.driverGrowth), label: `${label} vs last year` },
       title: `${label} spending is rising faster than revenue`,
       detail: `${signal.window}: ${label.toLowerCase()} ${change(signal.driverGrowth)} on the same months last year, while room revenue moved ${change(revenueGrowth)}. Total operating costs ${change(expenseGrowth)}.`,
       evidence: [
@@ -277,6 +279,7 @@ function guestComplaints(months: MonthMetric[]): { insight: Insight; signal: Gue
       id: "guest-complaints",
       kind: "correlation",
       area: "guest",
+      headline: { value: `${nowN} vs ${beforeN}`, label: "complaints, last 6 months vs the 6 before" },
       title: `${names[0].toUpperCase()}${names.slice(1)} complaints are rising`,
       detail: `${nowN} reviews mentioned ${names} problems in ${signal.window}, up from ${beforeN} in the six months before${rating}.`,
       evidence: [
