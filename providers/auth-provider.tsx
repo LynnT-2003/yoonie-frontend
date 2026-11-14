@@ -19,6 +19,7 @@ import {
 import { getCurrentUser, userQueryKeys } from "../lib/domain/user/user-api";
 import { setSessionExpiredHandler } from "../lib/domain/api/NetworkManager";
 import type { RegisterBody } from "../lib/types/auth";
+import { clearStudioSession } from "./studio-provider";
 
 export type AuthContextValue = {
   user: User | null;
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearClientSession = React.useCallback(() => {
+    clearStudioSession();
     tokenStore.clear();
     clearPersistedSession();
     setUser(null);
@@ -100,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       redirectTo?: string | null
     ) => {
       const auth = await loginRequest({ email, password });
+      clearStudioSession(); // every sign-in starts on an empty upload screen
       applyAuthResponse(auth);
 
       const target = !redirectTo || redirectTo === "/" ? "/studio/dashboard" : redirectTo;

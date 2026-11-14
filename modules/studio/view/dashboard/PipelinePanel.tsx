@@ -91,7 +91,8 @@ export function PipelinePanel() {
   const { run, cancel } = useStudio();
   const order: StageId[] = ["clean", "structure", "insights", "recommend"];
   const done = order.filter((k) => run.stages[k].status === "done").length;
-  const progress = Math.min(1, (done + (run.stages.structure.status === "running" ? (run.stages.structure.pct ?? 0) : 0)) / order.length);
+  // a step that's under way counts as half, so the bar moves steadily step by step
+  const progress = Math.min(1, (done + (order.some((k) => run.stages[k].status === "running") ? 0.5 : 0)) / order.length);
 
   return (
     <div className="flex flex-1 items-center justify-center px-4 py-16">
@@ -123,9 +124,17 @@ export function PipelinePanel() {
                 >
                   {state.status === "done" ? <Check className="size-3" /> : state.status === "running" ? <Loader2 className="size-3 animate-spin" /> : null}
                 </span>
-                <div className="min-w-0">
-                  <p className={cn("text-sm font-semibold", state.status === "waiting" && "text-muted-foreground")}>{st.label}</p>
-                  <p className="truncate text-xs text-muted-foreground">{state.summary ?? st.purpose}</p>
+                <div className="min-w-0 flex-1">
+                  <p className={cn("flex items-baseline justify-between gap-3 text-sm font-semibold", state.status === "waiting" && "text-muted-foreground")}>
+                    <span>
+                      {st.label}
+                      {state.status === "running" ? "…" : ""}
+                    </span>
+                    {state.status === "done" ? <span className="text-xs font-medium text-success">done</span> : null}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {state.status === "done" ? state.summary : state.status === "running" ? st.purpose : "Waiting"}
+                  </p>
                 </div>
               </li>
             );

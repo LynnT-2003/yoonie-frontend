@@ -90,9 +90,24 @@ function reduce(s: RunState, e: PipelineEvent): RunState {
 
 const DATASET_KEY = "yoonie.studio.dataset.v4";
 
+/** Forget any analysis in this browser: called on sign-in and sign-out. */
+export function clearStudioSession() {
+  for (const store of [sessionStorage, localStorage]) {
+    try {
+      for (const k of Object.keys(store)) if (k.startsWith("yoonie.studio.")) store.removeItem(k);
+    } catch {
+      /* blocked storage */
+    }
+  }
+}
+
+/**
+ * Results live in sessionStorage: they survive a reload in the same tab, but every new sign-in
+ * (or new tab) starts empty. A judge signing in with the demo account always sees the upload.
+ */
 function load<T>(key: string): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = sessionStorage.getItem(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
     return null;
@@ -100,8 +115,8 @@ function load<T>(key: string): T | null {
 }
 function save(key: string, value: unknown) {
   try {
-    if (value === null) localStorage.removeItem(key);
-    else localStorage.setItem(key, JSON.stringify(value));
+    if (value === null) sessionStorage.removeItem(key);
+    else sessionStorage.setItem(key, JSON.stringify(value));
   } catch {
     /* storage full or blocked: the result just won't survive a reload */
   }

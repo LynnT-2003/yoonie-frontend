@@ -13,6 +13,12 @@ export interface InputFile {
 
 const SEVERITY_ORDER = { critical: 0, review: 1, info: 2 } as const;
 
+/**
+ * Each stage is held on screen for about this long (× pace) so a person can follow
+ * "Cleaning… done → Structuring… done → …". The analysis itself takes well under a second.
+ */
+const STAGE_MS = 1500;
+
 /** How the owner would name each column we matched. */
 const FIELD_NAME: Record<string, string> = {
   ref: "Booking ref", guest: "Guest", room: "Room", checkIn: "Check-in", checkOut: "Check-out", nights: "Nights",
@@ -43,8 +49,8 @@ function sheetStats(files: SourceFile[], anomalies: Anomaly[]): SheetStat[] {
  * Runs Clean → Structure → Insights → Recommendations and yields progress as it goes.
  *
  * This is the stand-in for the n8n flow. The analysis itself is real and deterministic.
- * Only the pacing is staged, so a person can watch each step happen. `pace` scales every
- * delay (0 = instant, e.g. for tests).
+ * Only the pacing is staged: one short pause per stage, so a person can watch each step
+ * finish. `pace` scales it (0 = instant, e.g. for tests).
  */
 export async function* runPipeline(
   files: InputFile[],
@@ -56,7 +62,6 @@ export async function* runPipeline(
   /* ---------------- 1. Cleaning */
   yield { type: "stage", stage: "clean", status: "start" };
   yield { type: "log", stage: "clean", message: `Reading ${files.length} file${files.length > 1 ? "s" : ""}…` };
-  await wait(500);
 
   const sheets: RawSheet[] = [];
   const sourceFiles: SourceFile[] = [];
@@ -75,7 +80,6 @@ export async function* runPipeline(
     } catch {
       yield { type: "log", stage: "clean", message: `${f.name}: couldn't be opened as a spreadsheet. Skipped.` };
     }
-    await wait(350);
   }
   if (!sheets.some((s) => s.kind === "bookings")) {
     yield {
@@ -123,16 +127,15 @@ export async function* runPipeline(
   const ordered = [...anomalies].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
   for (const a of ordered) {
     yield { type: "anomaly", anomaly: a };
-    await wait(a.severity === "info" ? 160 : 260);
   }
   const needsOwner = anomalies.filter((a) => a.resolution === "needs_owner").length;
+  await wait(STAGE_MS);
   yield {
     type: "stage",
     stage: "clean",
     status: "done",
     summary: `${cleaned.rowsRead.toLocaleString("en-US")} rows read · ${anomalies.length} findings · ${cleaned.rowsExcluded} rows set aside · ${needsOwner} need you`,
   };
-  await wait(500);
 
   /* ---------------- 2. Structuring */
   yield { type: "stage", stage: "structure", status: "start" };
@@ -150,50 +153,45 @@ export async function* runPipeline(
       month: { month: m.month, occupancy: m.occupancy, revenue: m.roomRevenue, costs: m.totalExpenses },
     };
     if ((i + 1) % fieldEvery === 0 && fi < st.fields.length) yield { type: "field", field: st.fields[fi++] };
-    await wait(110);
   }
   while (fi < st.fields.length) {
     yield { type: "field", field: st.fields[fi++] };
-    await wait(120);
   }
   for (const a of st.assumptions) {
     anomalies.push(a);
     yield { type: "anomaly", anomaly: a };
   }
+  await wait(STAGE_MS);
   yield {
     type: "stage",
     stage: "structure",
     status: "done",
     summary: `${total} months · ${st.rooms} rooms · ${st.fields.length} business fields`,
   };
-  await wait(500);
 
   /* ---------------- 3. Insights */
   yield { type: "stage", stage: "insights", status: "start" };
   yield { type: "log", stage: "insights", message: "Comparing each month with the same month in earlier years…" };
-  await wait(700);
   const { insights, signals } = findInsights(st.months, cleaned.expenses, st.rooms);
   for (const ins of insights) {
     yield { type: "insight", insight: ins };
-    await wait(700);
   }
+  await wait(STAGE_MS);
   yield {
     type: "stage",
     stage: "insights",
     status: "done",
     summary: insights.length ? `${insights.length} things worth your attention` : "Nothing unusual found",
   };
-  await wait(400);
 
   /* ---------------- 4. Recommendations */
   yield { type: "stage", stage: "recommend", status: "start" };
   yield { type: "log", stage: "recommend", message: "Turning each finding into an action you can measure…" };
-  await wait(700);
   const recommendations = recommend(signals);
   for (const r of recommendations) {
     yield { type: "recommendation", recommendation: r };
-    await wait(800);
   }
+  await wait(STAGE_MS);
   yield {
     type: "stage",
     stage: "recommend",
