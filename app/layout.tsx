@@ -1,19 +1,15 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../providers/auth-provider";
 import { AppQueryProvider } from "../providers/query-provider";
 import { Navbar } from "@/modules/layout/Navbar";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
+import { Toaster } from "@/components/ui/sonner";
+import { AssistantDockProvider } from "@/providers/assistant-dock";
 
-const displaySerif = Cormorant_Garamond({
-  variable: "--font-display-serif",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
-  weight: ["500", "600"],
   display: "swap",
 });
 
@@ -24,14 +20,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yoonie · Hospitality Operating System",
+  title: "Yoonie · Your Pocket Strategist",
   description:
-    "Direct booking engine, master guest CDP, and frontline dispatch operations for boutique hotels.",
+    "Your hotel already has the data. Yoonie cleans it, makes sense of it, and tells you what to do next.",
 };
-
-import { OnboardingProvider } from "@/providers/onboarding-provider";
-import { YoonieSpotlightTour } from "@/components/onboarding/YoonieSpotlightTour";
-import { Toaster } from "@/components/ui/sonner";
 
 export default function RootLayout({
   children,
@@ -39,19 +31,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${displaySerif.variable} ${geistSans.className} h-full antialiased`}
-    >
+    <html lang="en" className={`${jakarta.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground overflow-x-hidden max-w-full">
         <AppQueryProvider>
           <AuthProvider>
-            <OnboardingProvider>
+            <AssistantDockProvider>
               <Navbar />
-              <main className="flex flex-1 flex-col min-w-0 max-w-full overflow-x-hidden">{children}</main>
-              <YoonieSpotlightTour />
+              <main className="flex flex-1 flex-col min-w-0 max-w-full">{children}</main>
               <Toaster />
-            </OnboardingProvider>
+            </AssistantDockProvider>
           </AuthProvider>
         </AppQueryProvider>
       </body>

@@ -1,21 +1,16 @@
 import type { NextConfig } from "next";
+import { resolveBackendUrl } from "./lib/config/backend-url";
 
-const rawBackendUrl = process.env.BACKEND_URL || "";
-const isProd =
-  process.env.NODE_ENV === "production" ||
-  Boolean(process.env.VERCEL) ||
-  Boolean(process.env.NEXT_PUBLIC_VERCEL_ENV);
-
-const BACKEND_URL = (
-  !rawBackendUrl || (isProd && rawBackendUrl.includes("localhost"))
-    ? isProd
-      ? "https://yoonie-backend.vercel.app"
-      : "http://localhost:8080"
-    : rawBackendUrl
-).replace(/\/+$/, "");
+const BACKEND_URL = resolveBackendUrl();
 
 const nextConfig: NextConfig = {
+  // /studio has no page of its own. Redirect before rendering: a redirect() thrown from a page
+  // inside the client studio layout broke the App Router's state ("Rendered more hooks").
+  async redirects() {
+    return [{ source: "/studio", destination: "/studio/dashboard", permanent: false }];
+  },
   async rewrites() {
+    // Filesystem routes (app/api/studio/*) are matched before this rewrite.
     return [
       {
         source: "/api/:path*",

@@ -26,12 +26,6 @@ const DEMO_ACCOUNTS = [
     email: "anan@riverside-bkk.example",
     badgeColor: "bg-[#28594E]/15 text-[#28594E]",
   },
-  {
-    name: "Eleanor Whitfield",
-    role: "Direct Guest (VIP)",
-    email: "eleanor.whitfield@example.com",
-    badgeColor: "bg-[#E8A45B]/20 text-[#303A36]",
-  },
 ];
 
 export function LoginPageView({
@@ -64,7 +58,7 @@ export function LoginPageView({
             Sign in to Yoonie
           </h1>
           <p className="text-xs text-[#7A8B84] font-medium max-w-sm mx-auto">
-            Autonomous multi-tenant hospitality operating system & direct booking engine.
+            Your pocket strategist: from messy hotel data to better decisions.
           </p>
         </div>
 

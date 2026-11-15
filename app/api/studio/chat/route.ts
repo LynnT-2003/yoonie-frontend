@@ -1,0 +1,59 @@
+import { streamText, isStepCount } from "ai";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { requireUser } from "@/lib/domain/studio/server/guard";
+import { instructions, scriptedAnswer, studioTools } from "@/lib/domain/studio/server/chat";
+import type { ChatBody } from "@/lib/types/studio";
+
+/**
+ * POST { messages, dataset } → streamed plain text.
+ *
+ * With OPENROUTER_API_KEY the model answers through tools over the owner's dataset
+ * (Claude Haiku 5.5: cheap, fast, good at tool calls). Without a key it falls back to
+ * scripted, data-templated answers so the demo still works.
+ */
+
+export const maxDuration = 60;
+
+/** $0.10 / $0.50 per million tokens on OpenRouter, with tool calling: about $0.001–0.003 per question. */
+const MODEL = "anthropic/claude-haiku-5.5";
+
+export async function POST(req: Request) {
+  const denied = await requireUser(req);
+  if (denied) return denied;
+
+  let body: ChatBody;
+  try {
+    body = (await req.json()) as ChatBody;
+  } catch {
+    return Response.json({ message: "Invalid request." }, { status: 400 });
+  }
+  const { dataset } = body;
+  const messages = (body.messages ?? [])
+    .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .slice(-12)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+  if (!dataset?.months?.length || !Array.isArray(dataset.recommendations) || messages.at(-1)?.role !== "user")
+    return Response.json({ message: "Upload your data first, then ask a question." }, { status: 400 });
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    return new Response(scriptedAnswer(dataset, messages.at(-1)!.content), {
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  const openrouter = createOpenRouter({ apiKey, appName: "Yoonie", appUrl: "https://yoonie.app" });
+  const result = streamText({
+    // Haiku 5.5 thinks before answering, and thinking counts toward the output cap: keep it
+    // low and leave room, or answers get cut off ("finish: length") or come back empty.
+    model: openrouter(MODEL, { reasoning: { effort: "low", exclude: true } }),
+    instructions: instructions(dataset),
+    messages,
+    tools: studioTools(dataset),
+    stopWhen: isStepCount(6),
+    maxOutputTokens: 2000,
+    abortSignal: req.signal,
+    onError: ({ error }) => console.error("[chat]", error),
+  });
+  return result.toTextStreamResponse({ headers: { "Cache-Control": "no-store" } });
+}

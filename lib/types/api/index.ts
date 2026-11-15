@@ -27,8 +27,3 @@ export type {
   UserProviderDetail,
   UserRole,
 } from "../user";
-export type {
-  DeleteImageBody,
-  DeleteImageResult,
-  UploadImageResult,
-} from "../upload";
