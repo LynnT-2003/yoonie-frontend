@@ -2,7 +2,9 @@ import "server-only";
 import { tool } from "ai";
 import { z } from "zod";
 import type { Dataset, MonthMetric } from "@/lib/types/studio";
+import type { ChatChart } from "../chat-charts";
 import { change, money, monthLabel, pct } from "../format";
+import { buildChart, chartRequest } from "./chat-charts";
 
 /**
  * Yoonie chat is grounded: the model reads numbers only through these tools, which compute
@@ -62,7 +64,34 @@ function aggregate(ms: MonthMetric[]) {
 
 const monthRe = z.string().regex(/^\d{4}-\d{2}$/).describe("YYYY-MM");
 
-export function studioTools(ds: Dataset) {
+/** At most this many charts per answer. */
+export const MAX_TOOL_CHARTS = 2;
+
+/**
+ * `charts` collects what `show_chart` builds; pass `null` to leave the tool out (the suggested
+ * prompts get fixed charts instead).
+ */
+export function studioTools(ds: Dataset, charts: ChatChart[] | null) {
+  const tools = dataTools(ds);
+  if (!charts) return tools;
+  return {
+    ...tools,
+    show_chart: tool({
+      description:
+        "Attach one small chart under your answer, drawn from the owner's data. Use it when a trend or a comparison backs up your point (at most 2 per answer). You only choose what to show; the numbers are filled in for you. Call it together with your other tools, before you write the answer, and pass the same from/to as the period you talk about (without them it shows the last 12 months).",
+      inputSchema: chartRequest,
+      execute: async (req) => {
+        if (charts.length >= MAX_TOOL_CHARTS) return { shown: false, reason: "chart limit reached" };
+        const c = buildChart(ds, req);
+        if (!c) return { shown: false, reason: "no data for that chart" };
+        if (!charts.some((x) => x.title === c.title)) charts.push(c);
+        return { shown: true, title: c.title };
+      },
+    }),
+  };
+}
+
+function dataTools(ds: Dataset) {
   return {
     get_monthly_metrics: tool({
       description:
@@ -71,12 +100,23 @@ export function studioTools(ds: Dataset) {
       execute: async ({ from, to }) => inRange(ds, from, to).map(slim),
     }),
     compare_periods: tool({
-      description: "Aggregate two month ranges (inclusive) and return both, e.g. this July vs last July, or a quarter vs the same quarter last year.",
+      description:
+        "Aggregate two month ranges (inclusive) and return both, plus `changeAvsB`: the relative change of each figure (0.04 = +4%) and `pointsAvsB` for ratios. E.g. this July vs last July, or a quarter vs the same quarter last year. Quote these changes rather than working them out.",
       inputSchema: z.object({ aFrom: monthRe, aTo: monthRe, bFrom: monthRe, bTo: monthRe }),
-      execute: async ({ aFrom, aTo, bFrom, bTo }) => ({
-        a: { range: `${aFrom}..${aTo}`, ...aggregate(inRange(ds, aFrom, aTo)) },
-        b: { range: `${bFrom}..${bTo}`, ...aggregate(inRange(ds, bFrom, bTo)) },
-      }),
+      execute: async ({ aFrom, aTo, bFrom, bTo }) => {
+        const a = aggregate(inRange(ds, aFrom, aTo));
+        const b = aggregate(inRange(ds, bFrom, bTo));
+        const changeAvsB: Record<string, number | null> = {};
+        const pointsAvsB: Record<string, number | null> = {};
+        for (const k of Object.keys(a) as (keyof typeof a)[]) {
+          if (k === "months") continue;
+          const x = a[k];
+          const y = b[k];
+          changeAvsB[k] = x != null && y ? r(x / y - 1) : null;
+          if (k === "occupancy" || k === "operatingMargin") pointsAvsB[k] = x != null && y != null ? r((x - y) * 100, 1) : null;
+        }
+        return { a: { range: `${aFrom}..${aTo}`, ...a }, b: { range: `${bFrom}..${bTo}`, ...b }, changeAvsB, pointsAvsB };
+      },
     }),
     expense_breakdown: tool({
       description: "Operating expenses by category (staff, utilities, housekeeping, maintenance, commissions, food, marketing, other) for a month range.",
@@ -162,7 +202,7 @@ export function studioTools(ds: Dataset) {
   };
 }
 
-export function instructions(ds: Dataset) {
+export function instructions(ds: Dataset, attached: ChatChart[] = []) {
   const k = Object.fromEntries(ds.kpis.map((x) => [x.key, x]));
   return `You are Yoonie, a pocket strategist for the owner of ${ds.property.name}, a ${ds.property.rooms}-room independent hotel.
 You help them understand their own data and decide what to do next. Today is ${new Date().toISOString().slice(0, 10)}.
@@ -181,13 +221,22 @@ How to answer:
 - Never write a paragraph about what your data doesn't include, can't prove, or is missing. No disclaimers, no lists of absent data sources. At most a few words, inside a sentence.
 - Targets (like "+10% bookings") are things to test, not forecasts.
 - If the data truly can't answer something (e.g. individual guests), say so in one short sentence and offer what you can answer.
+- Never write JSON, code or chart data in your answer. Charts are attached for you; at most say "see the chart below".
 - Point to the right tab when useful: Dashboard (charts), Strategy (the actions), Data (data quality, monthly table).
 - Style: for a busy hotel owner. Under 110 words unless asked for detail. Short paragraphs, plain words, no tables, no headings. **Bold** the one or two key numbers. Percentages like 56%, money like ฿12,400.
-- If asked about anything unrelated to running this hotel, steer back in one friendly sentence.`;
+- If asked about anything unrelated to running this hotel, steer back in one friendly sentence.${
+    attached.length
+      ? `
+
+Charts already attached under this answer (built from the owner's data, values are exact; ratios are 0–1):
+${JSON.stringify(attached)}
+Talk about the same periods as these charts and keep your numbers consistent with them. Refer to them as "the chart below", not the Dashboard.`
+      : ""
+  }`;
 }
 
 /** Answers without a language model (no OPENROUTER_API_KEY): same data, fixed phrasing. */
-export function scriptedAnswer(ds: Dataset, question: string): string {
+export function scriptedAnswer(ds: Dataset, question: string, opts: { note?: boolean } = { note: true }): string {
   const q = question.toLowerCase();
   const find = (area: string) => ds.insights.find((i) => i.area === area);
   const say = (i: ReturnType<typeof find>) =>
@@ -199,12 +248,17 @@ export function scriptedAnswer(ds: Dataset, question: string): string {
     return ds.recommendations.length
       ? `Here's where I'd start:\n\n${ds.recommendations.map((x) => `**${x.rank}. ${x.title}**: ${x.effect.target}.`).join("\n")}\n\nEach one is on the Strategy tab, with the numbers behind it and how to measure it.`
       : "Nothing stands out yet. Add a few more months of data and I'll look again.";
+  if (/occupancy this year|how was occupancy/.test(q)) return overview(false);
   if (/occup|july|demand|booking|empty|busy|season/.test(q)) return say(find("demand"));
   if (/cost|expens|utilit|electric|water|bill|margin|profit|spend/.test(q)) return say(find("cost"));
   if (/review|complain|rating|guest|clean|bathroom|shower/.test(q)) return say(find("guest"));
   if (/data|issue|anomal|missing|duplicate|wrong|error|clean/.test(q))
     return `I read **${ds.stats.rowsRead.toLocaleString("en-US")} rows** and set aside ${ds.stats.rowsExcluded} (duplicates, cancelled stays, impossible dates). **${ds.stats.needsOwner} values** need you to confirm them before they count. They're listed under Data health on the Dashboard.`;
-  const occ = ds.kpis.find((x) => x.key === "occupancy");
-  const adr = ds.kpis.find((x) => x.key === "adr");
-  return `Over the last 12 months occupancy was **${occ?.current != null ? pct(occ.current) : "n/a"}**${occ?.current != null && occ.previous != null ? ` (${change(occ.current / occ.previous - 1)} vs the year before)` : ""} at an average rate of **${adr?.current != null ? money(adr.current) : "n/a"}**.\n\nAsk me about occupancy, costs, reviews, or what to do first.\n\n(Scripted answer: set OPENROUTER_API_KEY for free-form questions.)`;
+  return overview(true);
+
+  function overview(withHint: boolean) {
+    const occ = ds.kpis.find((x) => x.key === "occupancy");
+    const adr = ds.kpis.find((x) => x.key === "adr");
+    return `Over the last 12 months (${ds.kpiWindow.current}) occupancy was **${occ?.current != null ? pct(occ.current) : "n/a"}**${occ?.current != null && occ.previous != null ? ` (${change(occ.current / occ.previous - 1)} vs the year before)` : ""} at an average rate of **${adr?.current != null ? money(adr.current) : "n/a"}**.${withHint ? "\n\nAsk me about occupancy, costs, reviews, or what to do first." : ""}${opts.note ? "\n\n(Scripted answer: set OPENROUTER_API_KEY for free-form questions.)" : ""}`;
+  }
 }
