@@ -4,9 +4,11 @@ import * as React from "react";
 import { ArrowUp, Mic, MicOff } from "lucide-react";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 import { ApiError } from "@/lib/domain/api/ApiError";
+import { parseReply, type ChatChart as Chart } from "@/lib/domain/studio/chat-charts";
 import { cn } from "@/lib/utils";
+import { ChatChart } from "./ChatChart";
 
-type Message = { role: "user" | "yoonie"; text: string; failed?: boolean };
+type Message = { role: "user" | "yoonie"; text: string; failed?: boolean; charts?: Chart[] };
 
 /** **bold** and line breaks only: the assistants answer in light markdown. */
 export function Rich({ text }: { text: string }) {
@@ -137,14 +139,18 @@ export function YoonieChat({
         // `streamed` is already true and the user's own message would be overwritten
         const first = !streamed;
         streamed = true;
-        setMessages((m) => (first ? [...m, { role: "yoonie", text: soFar }] : [...m.slice(0, -1), { role: "yoonie", text: soFar }]));
+        // charts arrive after the text; until their JSON is complete, show the text alone
+        const { text } = parseReply(soFar);
+        setMessages((m) => (first ? [...m, { role: "yoonie", text }] : [...m.slice(0, -1), { role: "yoonie", text }]));
       });
       const hadBubble = streamed;
-      setMessages((m) => (hadBubble ? [...m.slice(0, -1), { role: "yoonie", text: reply }] : [...m, { role: "yoonie", text: reply }]));
+      const parsed = parseReply(reply);
+      const done: Message = { role: "yoonie", text: parsed.text, charts: parsed.charts };
+      setMessages((m) => (hadBubble ? [...m.slice(0, -1), done] : [...m, done]));
 
       if (forceVoice && typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
-        const clean = reply.replace(/\*\*/g, "").replace(/\n/g, " ");
+        const clean = parsed.text.replace(/\*\*/g, "").replace(/\n/g, " ");
         const u = new SpeechSynthesisUtterance(clean);
         u.lang = "en-US";
         window.speechSynthesis.speak(u);
@@ -189,14 +195,17 @@ export function YoonieChat({
           ) : (
             <div key={i} className="flex items-end gap-2">
               <YoonieMascot mood={m.failed ? "worried" : "calm"} size="xs" className="shrink-0" />
-              <p
-                className={cn(
-                  "max-w-[85%] rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-[13px] leading-relaxed",
-                  m.failed ? "bg-danger-soft text-destructive" : "bg-muted text-foreground"
-                )}
-              >
-                <Rich text={m.text} />
-              </p>
+              <div className="min-w-0 max-w-[85%] space-y-2">
+                <p
+                  className={cn(
+                    "rounded-2xl rounded-bl-sm px-3.5 py-2.5 text-[13px] leading-relaxed",
+                    m.failed ? "bg-danger-soft text-destructive" : "bg-muted text-foreground"
+                  )}
+                >
+                  <Rich text={m.text} />
+                </p>
+                {m.charts?.map((c) => <ChatChart key={c.title} chart={c} />)}
+              </div>
             </div>
           )
         )}

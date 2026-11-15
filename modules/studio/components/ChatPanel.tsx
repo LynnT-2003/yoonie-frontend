@@ -6,6 +6,7 @@ import { PanelRightClose } from "lucide-react";
 import { YoonieChat } from "@/components/assistant/YoonieChat";
 import { YoonieMascot } from "@/components/mascot/YoonieMascot";
 import { streamChat } from "@/lib/domain/studio/studio-api";
+import { suggestedPrompts } from "@/lib/domain/studio/chat-charts";
 import { useAssistantDock } from "@/providers/assistant-dock";
 import { useStudio } from "@/providers/studio-provider";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,6 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
       dataset ? streamChat({ messages: [...history, { role: "user", content: message }], dataset }, onDelta) : Promise.resolve(""),
     [dataset]
   );
-  const demandMonth = dataset?.insights.find((i) => i.area === "demand")?.title.match(/^(\w+)/)?.[1];
 
   return (
     <>
@@ -85,12 +85,7 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
         <YoonieChat
           key={dataset.generatedAt}
           greeting={`I've read ${dataset.stats.rowsRead.toLocaleString("en-US")} rows from ${dataset.property.name}. Ask me anything about how the hotel is doing.`}
-          suggestions={[
-            demandMonth ? `Why was ${demandMonth} so quiet?` : "How was occupancy this year?",
-            "What should I fix first?",
-            "Are my costs under control?",
-            "What are guests complaining about?",
-          ]}
+          suggestions={suggestedPrompts(dataset).map((p) => p.text)}
           placeholder="Ask about your hotel…"
           send={send}
         />
