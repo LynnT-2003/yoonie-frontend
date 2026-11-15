@@ -3,7 +3,6 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAssistantDock } from "@/providers/assistant-dock";
 import { useAuth } from "@/providers/auth-provider";
@@ -47,6 +46,7 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    data-tour={`nav-${link.label.toLowerCase()}`}
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "relative flex h-14 shrink-0 items-center px-2 text-sm transition-colors sm:px-3",
@@ -74,7 +74,8 @@ export function Navbar() {
                   onClick={dock.toggle}
                   aria-pressed={dock.open}
                   aria-label="Ask Yoonie"
-                  title="Ask Yoonie (⌘J)"
+                  title="Ask Yoonie (⌘K)"
+                  data-tour="ask"
                   className={cn(
                     "mr-1 inline-flex h-8 items-center gap-1.5 rounded-full border px-2 text-sm font-medium transition-colors sm:gap-2 sm:px-3",
                     dock.open ? "border-primary/30 bg-secondary text-secondary-foreground" : "border-border bg-surface text-foreground hover:bg-muted"
@@ -83,7 +84,7 @@ export function Navbar() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/brand/mascot/yoonie-calm.png" alt="" className="size-5 object-contain" />
                   <span className="hidden sm:inline">Ask Yoonie</span>
-                  <PanelRight className="hidden size-3.5 opacity-60 sm:block" />
+                  <kbd className="hidden rounded border border-border bg-background px-1 font-sans text-[10px] font-medium text-muted-foreground sm:inline">⌘K</kbd>
                 </button>
               ) : null}
               <Link

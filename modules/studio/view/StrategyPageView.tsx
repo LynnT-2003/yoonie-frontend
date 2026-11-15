@@ -67,9 +67,10 @@ export function StrategyPageView() {
       )}
 
       <div className="space-y-10">
-        {recs.map((r) => (
+        {recs.map((r, i) => (
           <ActionCard
             key={r.id}
+            tour={i === 0}
             r={r}
             insight={dataset.insights.find((i) => i.id === r.insightId)}
           />

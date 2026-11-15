@@ -139,10 +139,10 @@ function AimFor({ r }: { r: Recommendation }) {
 
 /* ---------------------------------------------------------- action card */
 
-export function ActionCard({ r, insight }: { r: Recommendation; insight?: Insight }) {
+export function ActionCard({ r, insight, tour }: { r: Recommendation; insight?: Insight; tour?: boolean }) {
   const [open, setOpen] = React.useState(false);
   return (
-    <article id={r.id} className="scroll-mt-24 space-y-8 rounded-xl border border-border bg-surface p-6 sm:p-10">
+    <article id={r.id} data-tour={tour ? "action" : undefined} className="scroll-mt-24 space-y-8 rounded-xl border border-border bg-surface p-6 sm:p-10">
       <header className="space-y-4">
         <div className="flex items-center gap-3">
           <span className="flex size-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{r.rank}</span>
@@ -180,6 +180,7 @@ export function ActionCard({ r, insight }: { r: Recommendation; insight?: Insigh
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          data-tour={tour ? "details" : undefined}
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary"
         >
           {open ? "Hide details" : "Show details"}
