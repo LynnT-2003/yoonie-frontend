@@ -70,12 +70,12 @@ function AssistantPanel({ onClose }: { onClose: () => void }) {
           <p className="text-sm font-bold">Ask Yoonie</p>
           <p className="truncate text-[11px] text-muted-foreground">{dataset ? `Answers from ${dataset.property.name}'s own numbers` : "Your pocket strategist"}</p>
         </div>
-        <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground lg:inline">⌘J</kbd>
+        <kbd className="hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground lg:inline">⌘K</kbd>
         <button
           type="button"
           onClick={onClose}
           aria-label="Hide Ask Yoonie"
-          title="Hide (⌘J)"
+          title="Hide (⌘K)"
           className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <PanelRightClose className="size-4" />

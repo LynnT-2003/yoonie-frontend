@@ -4,7 +4,7 @@ import * as React from "react";
 
 /**
  * Open/closed state of the "Ask Yoonie" sidebar. Lives at the root so the top bar can toggle it
- * and the studio shell can render it. Remembered per browser; ⌘J / Ctrl+J toggles.
+ * and the studio shell can render it. Starts closed; remembered per browser. ⌘K (or ⌘J) toggles.
  */
 
 const KEY = "yoonie.dock.open";
@@ -30,8 +30,8 @@ export function AssistantDockProvider({ children }: { children: React.ReactNode 
     } catch {
       /* blocked storage */
     }
-    // first visit: open on wide screens, closed on phones
-    setOpenState(saved === null ? window.matchMedia("(min-width: 1280px)").matches : saved === "1");
+    // closed until the owner asks for it
+    setOpenState(saved === "1");
   }, []);
 
   const setOpen = React.useCallback((v: boolean) => {
@@ -53,7 +53,7 @@ export function AssistantDockProvider({ children }: { children: React.ReactNode 
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (available && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+      if (available && (e.metaKey || e.ctrlKey) && ["k", "j"].includes(e.key.toLowerCase())) {
         e.preventDefault();
         toggle();
       }

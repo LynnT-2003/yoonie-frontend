@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, UploadCloud } from "lucide-react";
+import { ArrowRight, ChevronRight, CircleHelp, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useStudio } from "@/providers/studio-provider";
 import type { Dataset, ExpenseCategory, Insight, MonthMetric } from "@/lib/types/studio";
@@ -13,6 +13,7 @@ import { BaselineBars, CostPerNightTable, RatingSpread, SeasonHeatmap, StayLengt
 import { rowsBreakdown } from "../components/quality";
 import { AREA, InsightCard, KpiStrip, type KpiItem } from "../components/strategy";
 import { PipelinePanel, UploadPanel } from "./dashboard/PipelinePanel";
+import { useTour } from "../components/StudioTour";
 import { cn } from "@/lib/utils";
 
 export function DashboardPageView() {
@@ -52,6 +53,7 @@ function Eda({ dataset, onUpload }: { dataset: Dataset; onUpload: () => void }) 
   const b = prev.length ? aggregate(prev) : null;
   const insight = (area: Insight["area"]) => dataset.insights.find((i) => i.area === area);
   const active = useActiveSection();
+  const tour = useTour();
 
   /** change vs the year before, coloured by whether it's good news */
   const d = (now: number | null, before: number | null | undefined, kind: "rel" | "pts" | "abs", good: Good): KpiItem["delta"] => {
@@ -83,6 +85,9 @@ function Eda({ dataset, onUpload }: { dataset: Dataset; onUpload: () => void }) 
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
+              <Button variant="ghost" size="sm" onClick={tour.start} aria-label="Take the tour">
+                <CircleHelp /> <span className="hidden sm:inline">Tour</span>
+              </Button>
               <Button variant="outline" size="sm" onClick={onUpload}>
                 <UploadCloud /> Upload data
               </Button>
@@ -95,7 +100,7 @@ function Eda({ dataset, onUpload }: { dataset: Dataset; onUpload: () => void }) 
               ) : null}
             </div>
           </div>
-          <nav aria-label="Sections" className="-mb-px flex gap-5 overflow-x-auto">
+          <nav aria-label="Sections" data-tour="sections" className="-mb-px flex gap-5 overflow-x-auto">
             {SECTIONS.map((s) => (
               <a
                 key={s.id}
@@ -115,6 +120,7 @@ function Eda({ dataset, onUpload }: { dataset: Dataset; onUpload: () => void }) 
       <div className="mx-auto mt-8 w-full max-w-6xl space-y-16 px-4 sm:px-6">
         {/* -------------------------------------------------------- overview */}
         <Section id="overview" title="Last 12 months" sub={`${dataset.kpiWindow.current}, compared with the 12 months before.`}>
+          <div data-tour="kpis">
           <KpiStrip
             items={[
               { label: "Occupancy", value: pct(a.occupancy), delta: d(a.occupancy, b?.occupancy, "pts", 1), spark: spark((m) => m.occupancy) },
@@ -125,6 +131,7 @@ function Eda({ dataset, onUpload }: { dataset: Dataset; onUpload: () => void }) 
               { label: "Guest rating", value: a.rating !== null ? a.rating.toFixed(2) : "n/a", delta: d(a.rating, b?.rating, "abs", 1), spark: spark((m) => m.avgRating) },
             ]}
           />
+          </div>
           <AttentionPanel dataset={dataset} />
         </Section>
 
@@ -254,7 +261,7 @@ function AttentionPanel({ dataset }: { dataset: Dataset }) {
   const recs = dataset.recommendations;
   if (!recs.length) return null;
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <div data-tour="attention" className="overflow-hidden rounded-xl border border-border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="font-semibold">
